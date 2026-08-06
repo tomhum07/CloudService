@@ -46,6 +46,7 @@ namespace CloudService.Infrastructure.Data.Configurations
             builder.Property(c => c.Name).HasMaxLength(100).IsRequired();
             builder.Property(c => c.Slug).HasMaxLength(150).IsRequired();
             builder.HasIndex(c => c.Slug).IsUnique();
+            builder.Property(c => c.Description).HasMaxLength(2000);
         }
     }
 
@@ -56,6 +57,7 @@ namespace CloudService.Infrastructure.Data.Configurations
             builder.ToTable("ServicePlans");
             builder.HasKey(p => p.Id);
             builder.Property(p => p.Name).HasMaxLength(100).IsRequired();
+            builder.Property(p => p.Description).HasMaxLength(4000);
             builder.Property(p => p.Cpu).HasMaxLength(50);
             builder.Property(p => p.Ram).HasMaxLength(50);
             builder.Property(p => p.Storage).HasMaxLength(50);
@@ -131,6 +133,7 @@ namespace CloudService.Infrastructure.Data.Configurations
             builder.HasIndex(a => a.Email).IsUnique();
             builder.Property(a => a.Phone).HasMaxLength(20).IsRequired();
             builder.Property(a => a.WebsiteUrl).HasMaxLength(255);
+            builder.Property(a => a.Motivation).HasMaxLength(2000);
         }
     }
 
@@ -142,6 +145,7 @@ namespace CloudService.Infrastructure.Data.Configurations
             builder.HasKey(a => a.Id);
             builder.Property(a => a.Username).HasMaxLength(50).IsRequired();
             builder.Property(a => a.Action).HasMaxLength(100).IsRequired();
+            builder.Property(a => a.Payload).HasColumnType("nvarchar(max)");
 
             builder.HasOne(a => a.User)
                    .WithMany(u => u.AuditLogs)

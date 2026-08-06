@@ -105,9 +105,13 @@ namespace CloudService.UnitTests.Infrastructure.Data
             Assert.Equal("ServiceCategories", categoryType.GetTableName());
             var slugProp = categoryType.FindProperty(nameof(ServiceCategory.Slug))!;
             Assert.Equal(150, slugProp.GetMaxLength());
+            var catDescProp = categoryType.FindProperty(nameof(ServiceCategory.Description))!;
+            Assert.Equal(2000, catDescProp.GetMaxLength());
 
             var planType = context.Model.FindEntityType(typeof(ServicePlan))!;
             Assert.Equal("ServicePlans", planType.GetTableName());
+            var planDescProp = planType.FindProperty(nameof(ServicePlan.Description))!;
+            Assert.Equal(4000, planDescProp.GetMaxLength());
             var planCategoryFk = planType.GetForeignKeys().FirstOrDefault(fk => fk.PrincipalEntityType.ClrType == typeof(ServiceCategory));
             Assert.NotNull(planCategoryFk);
             Assert.Equal(DeleteBehavior.Restrict, planCategoryFk.DeleteBehavior);
@@ -133,16 +137,44 @@ namespace CloudService.UnitTests.Infrastructure.Data
         }
 
         [Fact]
-        public void AuditLog_ShouldConfigureSetNullDeleteBehavior()
+        public void AuditLog_ShouldConfigureSetNullDeleteBehaviorAndPayloadColumnType()
         {
             using var context = CreateDbContext();
             var entityType = context.Model.FindEntityType(typeof(AuditLog))!;
 
             Assert.Equal("AuditLogs", entityType.GetTableName());
 
+            var payloadProp = entityType.FindProperty(nameof(AuditLog.Payload))!;
+            Assert.Equal("nvarchar(max)", payloadProp.GetColumnType());
+
             var userFk = entityType.GetForeignKeys().FirstOrDefault(fk => fk.PrincipalEntityType.ClrType == typeof(AppUser));
             Assert.NotNull(userFk);
             Assert.Equal(DeleteBehavior.SetNull, userFk.DeleteBehavior);
+        }
+
+        [Fact]
+        public void AffiliateApplication_ShouldConfigureMotivationMaxLength()
+        {
+            using var context = CreateDbContext();
+            var entityType = context.Model.FindEntityType(typeof(AffiliateApplication))!;
+
+            var motivationProp = entityType.FindProperty(nameof(AffiliateApplication.Motivation))!;
+            Assert.Equal(2000, motivationProp.GetMaxLength());
+        }
+
+        [Fact]
+        public void BaseEntities_ShouldHaveIsActiveDefaultValueTrue()
+        {
+            using var context = CreateDbContext();
+            foreach (var entityType in context.Model.GetEntityTypes())
+            {
+                if (typeof(CloudService.Domain.Common.BaseEntity).IsAssignableFrom(entityType.ClrType))
+                {
+                    var isActiveProp = entityType.FindProperty("IsActive");
+                    Assert.NotNull(isActiveProp);
+                    Assert.Equal(true, isActiveProp.GetDefaultValue());
+                }
+            }
         }
 
         [Fact]

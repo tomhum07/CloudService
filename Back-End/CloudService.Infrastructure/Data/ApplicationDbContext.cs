@@ -26,6 +26,17 @@ namespace CloudService.Infrastructure.Data
 
             // Tự động load toàn bộ cấu hình IEntityTypeConfiguration trong assembly
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+
+            // Cấu hình giá trị mặc định true cho cột IsActive (Soft Delete) đối với tất cả thực thể kế thừa BaseEntity
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                if (typeof(CloudService.Domain.Common.BaseEntity).IsAssignableFrom(entityType.ClrType))
+                {
+                    modelBuilder.Entity(entityType.ClrType)
+                        .Property("IsActive")
+                        .HasDefaultValue(true);
+                }
+            }
         }
     }
 }
