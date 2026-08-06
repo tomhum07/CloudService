@@ -1,0 +1,6 @@
+@CloudService.WebApi_HostAddress = http://localhost:5074
+
+GET {{CloudService.WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

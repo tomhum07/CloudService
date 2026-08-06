@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="CloudService.Application/CloudService.Application.csproj" />
+  <Project Path="CloudService.Domain/CloudService.Domain.csproj" />
+  <Project Path="CloudService.Infrastructure/CloudService.Infrastructure.csproj" />
+  <Project Path="CloudService.UnitTests/CloudService.UnitTests.csproj" />
+  <Project Path="CloudService.WebApi/CloudService.WebApi.csproj" />
+</Solution>
