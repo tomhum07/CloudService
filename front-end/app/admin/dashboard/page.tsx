@@ -17,6 +17,8 @@ export default function AdminDashboard() {
             router.push("/admin/login");
             return;
           }
+          const data = await res.json();
+          setAccessToken(data.accessToken);
         } catch {
           router.push("/admin/login");
           return;
