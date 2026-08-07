@@ -17,4 +17,11 @@
     <ProjectReference Include="..\CloudService.Application\CloudService.Application.csproj" />
   </ItemGroup>
 
+  <!-- Hủy bỏ bộ sinh mã OpenAPI bị lỗi trong .NET 10 trước khi biên dịch -->
+  <Target Name="DisableCompileTimeOpenApiXmlGenerator" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Analyzer Remove="@(Analyzer)" Condition="'%(FileName)' == 'Microsoft.AspNetCore.OpenApi.SourceGenerators'" />
+    </ItemGroup>
+  </Target>
+
 </Project>
