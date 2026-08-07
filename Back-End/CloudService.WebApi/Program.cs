@@ -1,6 +1,8 @@
 using Scalar.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using CloudService.Infrastructure.Data;
+using CloudService.Application.Interfaces;
+using CloudService.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,7 +10,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
-        b => b.MigrationsAssembly("CloudService.Infrastructure")));
+        b => b.MigrationsAssembly("CloudService.Infrastructure")
+             .EnableRetryOnFailure()));
+
+builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddCors(options =>
 {
