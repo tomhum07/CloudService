@@ -22,7 +22,7 @@ export default function Header() {
           <a href="#" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">Trang Chủ</a>
           <a href="#services" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">Dịch Vụ</a>
           <a href="#features" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">Tính Năng</a>
-          <a href="#pricing" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">Bảng Giá</a>
+          <a href="#services" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">Bảng Giá</a>
         </nav>
 
         {/* Buttons */}
@@ -31,7 +31,7 @@ export default function Header() {
             Đăng Nhập
           </a>
           <a href="#" className="px-5 h-10 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-sm font-semibold text-white flex items-center justify-center shadow-lg shadow-blue-500/10 transition-all duration-300 hover:-translate-y-0.5">
-            Khởi Đăng Nhập
+            Bắt Đầu Ngay
           </a>
         </div>
 
@@ -39,6 +39,8 @@ export default function Header() {
         <button 
           onClick={() => setIsOpen(!isOpen)} 
           className="md:hidden text-gray-300 hover:text-white focus:outline-none"
+          aria-label="Toggle Menu"
+          aria-expanded={isOpen}
         >
           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             {isOpen ? (
@@ -56,7 +58,7 @@ export default function Header() {
           <a href="#" className="text-sm font-medium text-gray-300 hover:text-white" onClick={() => setIsOpen(false)}>Trang Chủ</a>
           <a href="#services" className="text-sm font-medium text-gray-300 hover:text-white" onClick={() => setIsOpen(false)}>Dịch Vụ</a>
           <a href="#features" className="text-sm font-medium text-gray-300 hover:text-white" onClick={() => setIsOpen(false)}>Tính Năng</a>
-          <a href="#pricing" className="text-sm font-medium text-gray-300 hover:text-white" onClick={() => setIsOpen(false)}>Bảng Giá</a>
+          <a href="#services" className="text-sm font-medium text-gray-300 hover:text-white" onClick={() => setIsOpen(false)}>Bảng Giá</a>
           <hr className="border-white/5 my-2" />
           <a href="#" className="text-sm font-medium text-gray-300 hover:text-white text-center py-2">Đăng Nhập</a>
           <a href="#" className="w-full py-2.5 rounded-lg bg-blue-500 text-sm font-semibold text-white text-center block">Bắt Đầu Ngay</a>

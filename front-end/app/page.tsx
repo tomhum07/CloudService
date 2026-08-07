@@ -75,7 +75,7 @@ export default function Home() {
           <a href="#services" className="w-full sm:w-auto px-8 h-14 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold flex items-center justify-center shadow-xl shadow-blue-500/20 transition-all hover:-translate-y-0.5">
             Bắt đầu khám phá
           </a>
-          <a href="#pricing" className="w-full sm:w-auto px-8 h-14 rounded-xl bg-gray-900/60 hover:bg-gray-900 border border-white/10 text-white font-semibold flex items-center justify-center transition-all hover:border-white/20">
+          <a href="#services" className="w-full sm:w-auto px-8 h-14 rounded-xl bg-gray-900/60 hover:bg-gray-900 border border-white/10 text-white font-semibold flex items-center justify-center transition-all hover:border-white/20">
             Xem bảng giá dịch vụ
           </a>
         </div>
