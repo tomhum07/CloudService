@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { apiFetch, setAccessToken, getAccessToken } from "@/utils/api";
+import { apiFetch, setAccessToken, getAccessToken, refreshAccessToken } from "@/utils/api";
 
 export default function AdminDashboard() {
   const [checking, setChecking] = useState(true);
@@ -11,15 +11,8 @@ export default function AdminDashboard() {
     const verifySession = async () => {
       // Nếu chưa có Access Token trong RAM, chạy Silent Refresh để lấy token mới từ Cookie
       if (!getAccessToken()) {
-        try {
-          const res = await apiFetch("/api/auth/refresh-token", { method: "POST" });
-          if (!res.ok) {
-            router.push("/admin/login");
-            return;
-          }
-          const data = await res.json();
-          setAccessToken(data.accessToken);
-        } catch {
+        const success = await refreshAccessToken();
+        if (!success) {
           router.push("/admin/login");
           return;
         }
