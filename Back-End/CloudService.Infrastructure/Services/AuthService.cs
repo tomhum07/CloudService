@@ -73,7 +73,7 @@ namespace CloudService.Infrastructure.Services
             return new AuthResponse
             {
                 AccessToken = newAccessToken,
-                Username = newAccessToken != null ? user.Username : string.Empty,
+                Username = user.Username,
                 FullName = user.FullName,
                 Email = user.Email,
                 Role = user.Role?.Name ?? "Editor"
