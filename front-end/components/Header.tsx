@@ -1,8 +1,14 @@
 "use client";
 import React, { useState } from "react";
+import { usePathname } from "next/navigation";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+
+  if (pathname?.startsWith("/admin")) {
+    return null;
+  }
 
   return (
     <header className="fixed top-0 left-0 w-full z-50 glassmorphism border-b border-white/5">
