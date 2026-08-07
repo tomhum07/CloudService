@@ -34,14 +34,11 @@ namespace CloudService.Infrastructure.Data
             if (!await context.AppUsers.AnyAsync())
             {
                 var adminRole = await context.Roles.FirstAsync(r => r.Name == "Admin");
-                
-                // Mật khẩu hash mặc định của "Admin123!" bằng Bcrypt
-                string defaultPasswordHash = "$2a$11$wK1b0bYV86wJvq3Lptc2Iu2f3qE61PecqE8.V0s2K1Rj9W0qR/s6C"; 
 
                 var defaultAdmin = new AppUser
                 {
                     Username = "admin",
-                    PasswordHash = defaultPasswordHash,
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("123123"),
                     FullName = "Hệ thống Admin",
                     Email = "admin@cloudservice.com",
                     RoleId = adminRole.Id
