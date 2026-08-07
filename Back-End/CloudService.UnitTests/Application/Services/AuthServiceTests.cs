@@ -21,26 +21,19 @@ namespace CloudService.UnitTests.Application.Services
             return new ApplicationDbContext(options);
         }
 
-        private class TestConfiguration : IConfiguration
-        {
-            private readonly Dictionary<string, string?> _data;
-            public TestConfiguration(Dictionary<string, string?> data) => _data = data;
-            public string? this[string key] { get => _data.GetValueOrDefault(key); set => _data[key] = value; }
-            public IEnumerable<IConfigurationSection> GetChildren() => System.Linq.Enumerable.Empty<IConfigurationSection>();
-            public Microsoft.Extensions.Primitives.IChangeToken GetReloadToken() => throw new NotImplementedException();
-            public IConfigurationSection GetSection(string key) => throw new NotImplementedException();
-        }
-
         private IConfiguration GetMockConfiguration()
         {
-            return new TestConfiguration(new Dictionary<string, string?>
-            {
+            var inMemorySettings = new Dictionary<string, string?> {
                 {"Jwt:Key", "ASuperSecretKeyThatIsAtLeast32CharactersLongForJWTValidation"},
                 {"Jwt:Issuer", "CloudServiceAPI"},
                 {"Jwt:Audience", "CloudServiceFE"},
                 {"Jwt:DurationInMinutes", "15"},
                 {"Jwt:RefreshTokenDurationInDays", "7"}
-            });
+            };
+
+            return new ConfigurationBuilder()
+                .AddInMemoryCollection(inMemorySettings)
+                .Build();
         }
 
         [Fact]
