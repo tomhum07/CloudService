@@ -46,7 +46,7 @@ namespace CloudService.UnitTests.Infrastructure.Data
                 Assert.Equal("admin@cloudservice.com", adminUser.Email);
                 Assert.NotNull(adminUser.Role);
                 Assert.Equal("Admin", adminUser.Role.Name);
-                Assert.Equal("$2a$11$wK1b0bYV86wJvq3Lptc2Iu2f3qE61PecqE8.V0s2K1Rj9W0qR/s6C", adminUser.PasswordHash);
+                Assert.True(BCrypt.Net.BCrypt.Verify("123123", adminUser.PasswordHash));
             }
         }
 
