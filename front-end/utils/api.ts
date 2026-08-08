@@ -52,6 +52,7 @@ export async function apiFetch(endpoint: string, options: FetchOptions = {}): Pr
     } else {
       // Nếu Refresh Token cũng hết hạn, chuyển hướng về trang login
       if (typeof window !== "undefined") {
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
         window.location.href = "/admin/login";
       }
     }
