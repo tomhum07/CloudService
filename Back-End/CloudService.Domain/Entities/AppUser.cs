@@ -15,5 +15,6 @@ namespace CloudService.Domain.Entities
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpiryTime { get; set; }
         public virtual ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
+        public virtual ICollection<NewsArticle> NewsArticles { get; set; } = new List<NewsArticle>();
     }
 }

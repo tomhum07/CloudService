@@ -25,6 +25,7 @@ namespace CloudService.Infrastructure.Data
         public DbSet<OrderRequest> OrderRequests => Set<OrderRequest>();
         public DbSet<AffiliateApplication> AffiliateApplications => Set<AffiliateApplication>();
         public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+        public DbSet<NewsArticle> NewsArticles => Set<NewsArticle>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
