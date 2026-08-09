@@ -26,3 +26,16 @@ jobs:
 
     - name: Run Unit Tests
       run: dotnet test Back-End/CloudService.UnitTests/CloudService.UnitTests.csproj --no-build -c Release
+
+    - name: Publish Web App
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      run: dotnet publish Back-End/CloudService.WebApi/CloudService.WebApi.csproj -c Release -o ${{ github.workspace }}/publish
+
+    - name: Deploy to Azure Web App
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      uses: azure/webapps-deploy@v3
+      with:
+        app-name: 'CloudServices'
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        package: ${{ github.workspace }}/publish
+
