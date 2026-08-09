@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: cloudservice-db
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=CloudService@SecuredPass123
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+
+  api:
+    image: cloudservice-api
+    container_name: cloudservice-api-container
+    build:
+      context: ./Back-End
+      dockerfile: CloudService.WebApi/Dockerfile
+    ports:
+      - "5074:8080"
+      - "7108:8081"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=db;Database=CloudServiceDb;User Id=sa;Password=CloudService@SecuredPass123;MultipleActiveResultSets=true;TrustServerCertificate=True;
+    depends_on:
+      - db
+
+volumes:
+  mssql_data:
