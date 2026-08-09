@@ -77,7 +77,7 @@ namespace CloudService.UnitTests.Infrastructure.Data
                 var userCount = await context.AppUsers.CountAsync();
 
                 Assert.Equal(2, roleCount);
-                Assert.Equal(1, userCount);
+                Assert.Equal(5, userCount);
             }
         }
     }
