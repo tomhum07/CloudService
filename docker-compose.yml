@@ -2,15 +2,16 @@ version: '3.8'
 
 services:
   db:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    image: postgres:15-alpine
     container_name: cloudservice-db
     environment:
-      - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=CloudService@SecuredPass123
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=CloudService@SecuredPass123
+      - POSTGRES_DB=CloudServiceDb
     ports:
-      - "1433:1433"
+      - "5432:5432"
     volumes:
-      - mssql_data:/var/opt/mssql
+      - postgres_data:/var/lib/postgresql/data
 
   api:
     image: cloudservice-api
@@ -23,9 +24,9 @@ services:
       - "7108:8081"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=db;Database=CloudServiceDb;User Id=sa;Password=CloudService@SecuredPass123;MultipleActiveResultSets=true;TrustServerCertificate=True;
+      - ConnectionStrings__DefaultConnection=Host=db;Database=CloudServiceDb;Username=postgres;Password=CloudService@SecuredPass123;
     depends_on:
       - db
 
 volumes:
-  mssql_data:
+  postgres_data:

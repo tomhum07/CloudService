@@ -78,7 +78,7 @@ namespace CloudService.Infrastructure.Data.Configurations
             builder.ToTable("PlanPrices");
             builder.HasKey(pr => pr.Id);
             builder.Property(pr => pr.BillingCycle).HasMaxLength(50).IsRequired();
-            builder.Property(pr => pr.Price).HasColumnType("decimal(18,2)").IsRequired();
+            builder.Property(pr => pr.Price).HasPrecision(18, 2).IsRequired();
 
             builder.HasOne(pr => pr.Plan)
                    .WithMany(p => p.Prices)
@@ -145,7 +145,7 @@ namespace CloudService.Infrastructure.Data.Configurations
             builder.HasKey(a => a.Id);
             builder.Property(a => a.Username).HasMaxLength(50).IsRequired();
             builder.Property(a => a.Action).HasMaxLength(100).IsRequired();
-            builder.Property(a => a.Payload).HasColumnType("nvarchar(max)");
+            builder.Property(a => a.Payload);
 
             builder.HasOne(a => a.User)
                    .WithMany(u => u.AuditLogs)
@@ -164,7 +164,7 @@ namespace CloudService.Infrastructure.Data.Configurations
             builder.Property(n => n.Slug).HasMaxLength(300).IsRequired();
             builder.HasIndex(n => n.Slug).IsUnique();
             builder.Property(n => n.Summary).HasMaxLength(1000);
-            builder.Property(n => n.Content).HasColumnType("nvarchar(max)").IsRequired();
+            builder.Property(n => n.Content).IsRequired();
 
             builder.HasOne(n => n.Author)
                    .WithMany(u => u.NewsArticles)
