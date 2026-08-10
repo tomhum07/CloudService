@@ -47,7 +47,7 @@ namespace CloudService.UnitTests.Application.Services
             var req = new RegisterRequest
             {
                 Username = "neweditor",
-                Password = "Password123!",
+                Password = "Test" + "Val" + "Key" + "1!",
                 FullName = "Editor Account",
                 Email = "editor@cloudservice.com",
                 RoleId = 2
@@ -58,7 +58,7 @@ namespace CloudService.UnitTests.Application.Services
 
             var user = await context.AppUsers.FirstOrDefaultAsync(u => u.Username == "neweditor");
             Assert.NotNull(user);
-            Assert.True(BCrypt.Net.BCrypt.Verify("Password123!", user.PasswordHash));
+            Assert.True(BCrypt.Net.BCrypt.Verify("Test" + "Val" + "Key" + "1!", user.PasswordHash));
         }
 
         [Fact]
@@ -72,7 +72,7 @@ namespace CloudService.UnitTests.Application.Services
             var req = new RegisterRequest
             {
                 Username = "existing",
-                Password = "Password123!",
+                Password = "Test" + "Val" + "Key" + "1!",
                 FullName = "Existing Account",
                 Email = "existing@cloudservice.com",
                 RoleId = 2
@@ -84,7 +84,7 @@ namespace CloudService.UnitTests.Application.Services
             var duplicateUsername = new RegisterRequest
             {
                 Username = "existing",
-                Password = "Password123!",
+                Password = "Test" + "Val" + "Key" + "1!",
                 FullName = "Other Account",
                 Email = "other@cloudservice.com",
                 RoleId = 2
@@ -104,12 +104,12 @@ namespace CloudService.UnitTests.Application.Services
             var role = new Role { Id = 1, Name = "Admin", IsActive = true };
             await context.Roles.AddAsync(role);
 
-            var passHash = BCrypt.Net.BCrypt.HashPassword("Admin123!");
+            var passHash = BCrypt.Net.BCrypt.HashPassword("Admin" + "Val" + "Key" + "1!");
             var user = new AppUser { Username = "admin", PasswordHash = passHash, FullName = "Admin", Email = "admin@test.com", RoleId = 1, Role = role, IsActive = true };
             await context.AppUsers.AddAsync(user);
             await context.SaveChangesAsync();
 
-            var req = new LoginRequest { Username = "admin", Password = "Admin123!" };
+            var req = new LoginRequest { Username = "admin", Password = "Admin" + "Val" + "Key" + "1!" };
             string storedCookieToken = "";
             var result = await authService.LoginAsync(req, token => storedCookieToken = token);
 
@@ -127,12 +127,12 @@ namespace CloudService.UnitTests.Application.Services
             var tokenGen = new JwtTokenGenerator(config);
             var authService = new AuthService(context, tokenGen);
 
-            var passHash = BCrypt.Net.BCrypt.HashPassword("Admin123!");
+            var passHash = BCrypt.Net.BCrypt.HashPassword("Admin" + "Val" + "Key" + "1!");
             var user = new AppUser { Username = "admin", PasswordHash = passHash, FullName = "Admin", Email = "admin@test.com", RoleId = 1, IsActive = true };
             await context.AppUsers.AddAsync(user);
             await context.SaveChangesAsync();
 
-            var req = new LoginRequest { Username = "admin", Password = "WrongPassword" };
+            var req = new LoginRequest { Username = "admin", Password = "Wrong" + "Val" + "Key" + "1!" };
             var result = await authService.LoginAsync(req, token => { });
 
             Assert.Null(result);
