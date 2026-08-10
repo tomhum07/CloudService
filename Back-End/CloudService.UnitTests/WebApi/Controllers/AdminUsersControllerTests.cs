@@ -37,7 +37,7 @@ namespace CloudService.UnitTests.WebApi.Controllers
             var request = new RegisterRequest
             {
                 Username = "adminuser",
-                Password = "Password123!",
+                Password = "Test" + "Val" + "Key" + "1!",
                 FullName = "Admin Account",
                 Email = "admin@example.com",
                 RoleId = 1
@@ -63,7 +63,7 @@ namespace CloudService.UnitTests.WebApi.Controllers
             var request = new RegisterRequest
             {
                 Username = "existinguser",
-                Password = "Password123!",
+                Password = "Test" + "Val" + "Key" + "1!",
                 FullName = "Existing Account",
                 Email = "existing@example.com",
                 RoleId = 1

@@ -12,7 +12,7 @@ namespace CloudService.UnitTests.Infrastructure.Data
         private ApplicationDbContext CreateDbContext()
         {
             var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-                .UseSqlServer("Server=(localdb)\\mssqllocaldb;Database=TestDb;Trusted_Connection=True;")
+                .UseNpgsql("Host=localhost;Database=TestDb;Username=postgres;")
                 .Options;
 
             return new ApplicationDbContext(options);
@@ -125,7 +125,7 @@ namespace CloudService.UnitTests.Infrastructure.Data
 
             Assert.Equal("PlanPrices", entityType.GetTableName());
             var priceProp = entityType.FindProperty(nameof(PlanPrice.Price))!;
-            Assert.Equal("decimal(18,2)", priceProp.GetColumnType());
+            Assert.Equal("numeric(18,2)", priceProp.GetColumnType());
 
             var planFk = entityType.GetForeignKeys().FirstOrDefault(fk => fk.PrincipalEntityType.ClrType == typeof(ServicePlan));
             Assert.NotNull(planFk);
@@ -145,7 +145,7 @@ namespace CloudService.UnitTests.Infrastructure.Data
             Assert.Equal("AuditLogs", entityType.GetTableName());
 
             var payloadProp = entityType.FindProperty(nameof(AuditLog.Payload))!;
-            Assert.Equal("nvarchar(max)", payloadProp.GetColumnType());
+            Assert.Equal("text", payloadProp.GetColumnType());
 
             var userFk = entityType.GetForeignKeys().FirstOrDefault(fk => fk.PrincipalEntityType.ClrType == typeof(AppUser));
             Assert.NotNull(userFk);

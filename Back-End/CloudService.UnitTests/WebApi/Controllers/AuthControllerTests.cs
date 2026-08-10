@@ -67,7 +67,7 @@ namespace CloudService.UnitTests.WebApi.Controllers
             var httpContext = new DefaultHttpContext();
             controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
 
-            var loginRequest = new LoginRequest { Username = "testuser", Password = "password" };
+            var loginRequest = new LoginRequest { Username = "testuser", Password = "TestValKey1!" };
 
             // Act
             var result = await controller.Login(loginRequest);
@@ -97,7 +97,7 @@ namespace CloudService.UnitTests.WebApi.Controllers
             controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
 
             // Act
-            var result = await controller.Login(new LoginRequest { Username = "wrong", Password = "wrong" });
+            var result = await controller.Login(new LoginRequest { Username = "wrong", Password = "WrongValKey1!" });
 
             // Assert
             var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);

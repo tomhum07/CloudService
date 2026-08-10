@@ -12,7 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"),
         b => b.MigrationsAssembly("CloudService.Infrastructure")
              .EnableRetryOnFailure()));
 
@@ -44,7 +44,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowNextJS", policy =>
     {
-        policy.WithOrigins("http://localhost:3000") // URL của Next.js
+        policy.WithOrigins("http://localhost:3000", "https://cloudservice-r3rm.onrender.com", "http://cloudservice-r3rm.onrender.com") // URL của Next.js và Render
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -53,7 +53,18 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    {
+        document.Servers = new System.Collections.Generic.List<Microsoft.OpenApi.OpenApiServer>
+        {
+            new Microsoft.OpenApi.OpenApiServer { Url = "https://cloudservice-r3rm.onrender.com", Description = "Production Server" },
+            new Microsoft.OpenApi.OpenApiServer { Url = "http://localhost:5169", Description = "Local Server" }
+        };
+        return Task.CompletedTask;
+    });
+});
 
 var app = builder.Build();
 
@@ -82,7 +93,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowNextJS");
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
