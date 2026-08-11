@@ -52,10 +52,10 @@ namespace CloudService.Infrastructure.Services
                         query = query.OrderByDescending(x => x.Name);
                         break;
                     case "price":
-                        query = query.OrderBy(x => x.Prices.Any(p => p.IsActive) ? x.Prices.Where(p => p.IsActive).Min(p => p.Price) : 0);
+                        query = query.OrderBy(x => x.Prices.Where(p => p.IsActive).Select(p => (decimal?)p.Price).Min() ?? 0);
                         break;
                     case "pricedesc":
-                        query = query.OrderByDescending(x => x.Prices.Any(p => p.IsActive) ? x.Prices.Where(p => p.IsActive).Min(p => p.Price) : 0);
+                        query = query.OrderByDescending(x => x.Prices.Where(p => p.IsActive).Select(p => (decimal?)p.Price).Min() ?? 0);
                         break;
                     case "date":
                         query = query.OrderBy(x => x.CreatedAt);
