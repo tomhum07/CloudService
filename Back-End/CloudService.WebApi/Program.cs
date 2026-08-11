@@ -18,6 +18,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IServiceCategoryService, ServiceCategoryService>();
 
 // Cấu hình JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "SuperSecretDefaultKeyWithAtLeast32BytesLength!";
