@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,10 +13,12 @@ namespace CloudService.WebApi.Controllers
     public class ServicePlansController : ControllerBase
     {
         private readonly IServicePlanService _servicePlanService;
+        private readonly IPlanPriceService _planPriceService;
 
-        public ServicePlansController(IServicePlanService servicePlanService)
+        public ServicePlansController(IServicePlanService servicePlanService, IPlanPriceService planPriceService)
         {
             _servicePlanService = servicePlanService;
+            _planPriceService = planPriceService;
         }
 
         [HttpGet]
@@ -60,6 +63,39 @@ namespace CloudService.WebApi.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _servicePlanService.DeleteAsync(id);
+            if (!result) return NotFound();
+            return NoContent();
+        }
+
+        [HttpGet("{id}/prices")]
+        public async Task<ActionResult<IEnumerable<PlanPriceDto>>> GetPrices(int id)
+        {
+            var prices = await _planPriceService.GetPricesByPlanIdAsync(id);
+            return Ok(prices);
+        }
+
+        [HttpPost("{id}/prices")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<PlanPriceDto>> CreatePrice(int id, [FromBody] CreatePlanPriceRequest request)
+        {
+            var price = await _planPriceService.CreatePriceAsync(id, request);
+            return CreatedAtAction(nameof(GetPrices), new { id = id }, price);
+        }
+
+        [HttpPut("{id}/prices/{priceId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<PlanPriceDto>> UpdatePrice(int id, int priceId, [FromBody] UpdatePlanPriceRequest request)
+        {
+            var price = await _planPriceService.UpdatePriceAsync(id, priceId, request);
+            if (price == null) return NotFound();
+            return Ok(price);
+        }
+
+        [HttpDelete("{id}/prices/{priceId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeletePrice(int id, int priceId)
+        {
+            var result = await _planPriceService.DeletePriceAsync(id, priceId);
             if (!result) return NotFound();
             return NoContent();
         }

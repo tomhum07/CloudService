@@ -20,6 +20,7 @@ builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IServiceCategoryService, ServiceCategoryService>();
 builder.Services.AddScoped<IServicePlanService, ServicePlanService>();
+builder.Services.AddScoped<IPlanPriceService, PlanPriceService>();
 
 // Cấu hình JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "SuperSecretDefaultKeyWithAtLeast32BytesLength!";

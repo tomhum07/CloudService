@@ -109,6 +109,7 @@ namespace CloudService.UnitTests.Application.Services
             Assert.Equal("New Name", result.Name);
             
             var planInDb = await _context.ServicePlans.FindAsync(plan.Id);
+            Assert.NotNull(planInDb);
             Assert.Equal("New Name", planInDb.Name);
         }
 
