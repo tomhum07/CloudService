@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -33,9 +34,9 @@ export default function Header() {
 
         {/* Buttons */}
         <div className="hidden md:flex items-center gap-4">
-          <a href="#" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
+          <Link href="/admin/login" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
             Đăng Nhập
-          </a>
+          </Link>
           <a href="#" className="px-5 h-10 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-sm font-semibold text-white flex items-center justify-center shadow-lg shadow-blue-500/10 transition-all duration-300 hover:-translate-y-0.5">
             Bắt Đầu Ngay
           </a>
@@ -66,7 +67,7 @@ export default function Header() {
           <a href="#features" className="text-sm font-medium text-gray-300 hover:text-white" onClick={() => setIsOpen(false)}>Tính Năng</a>
           <a href="#services" className="text-sm font-medium text-gray-300 hover:text-white" onClick={() => setIsOpen(false)}>Bảng Giá</a>
           <hr className="border-white/5 my-2" />
-          <a href="#" className="text-sm font-medium text-gray-300 hover:text-white text-center py-2">Đăng Nhập</a>
+          <Link href="/admin/login" className="text-sm font-medium text-gray-300 hover:text-white text-center py-2" onClick={() => setIsOpen(false)}>Đăng Nhập</Link>
           <a href="#" className="w-full py-2.5 rounded-lg bg-blue-500 text-sm font-semibold text-white text-center block">Bắt Đầu Ngay</a>
         </div>
       )}
