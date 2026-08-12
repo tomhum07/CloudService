@@ -85,7 +85,7 @@ export default function PlansPage() {
       const res = await apiFetch(`/api/service-plans?${queryParams.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch service plans");
       const data = await res.json();
-      setPlans(data);
+      setPlans(data.items || []);
     } catch (err: any) {
       setError(err.message || "An error occurred while fetching data.");
     } finally {

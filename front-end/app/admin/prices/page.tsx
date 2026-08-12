@@ -83,9 +83,10 @@ export default function PricesPage() {
       const res = await apiFetch("/api/service-plans");
       if (res.ok) {
         const data = await res.json();
-        setPlans(data);
-        if (data.length > 0) {
-          setSelectedPlanId(data[0].id.toString());
+        const planList = data.items || [];
+        setPlans(planList);
+        if (planList.length > 0) {
+          setSelectedPlanId(planList[0].id.toString());
         }
       } else {
         throw new Error("Failed to load plans");
