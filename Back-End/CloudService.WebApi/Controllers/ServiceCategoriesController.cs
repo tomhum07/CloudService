@@ -7,7 +7,7 @@ using CloudService.Application.Interfaces;
 namespace CloudService.WebApi.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/service-categories")]
     public class ServiceCategoriesController : ControllerBase
     {
         private readonly IServiceCategoryService _serviceCategoryService;
