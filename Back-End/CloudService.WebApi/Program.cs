@@ -60,11 +60,32 @@ builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer((document, context, cancellationToken) =>
     {
+        var originalServers = document.Servers != null 
+            ? new System.Collections.Generic.List<Microsoft.OpenApi.OpenApiServer>(document.Servers)
+            : new System.Collections.Generic.List<Microsoft.OpenApi.OpenApiServer>();
+
         document.Servers = new System.Collections.Generic.List<Microsoft.OpenApi.OpenApiServer>
         {
-            new Microsoft.OpenApi.OpenApiServer { Url = "https://cloudservice-r3rm.onrender.com", Description = "Production Server" },
-            new Microsoft.OpenApi.OpenApiServer { Url = "http://localhost:5169", Description = "Local Server" }
+            new Microsoft.OpenApi.OpenApiServer { Url = "https://cloudservice-r3rm.onrender.com", Description = "Production Server" }
         };
+
+        foreach (var server in originalServers)
+        {
+            if (!document.Servers.Any(s => (s.Url ?? "").TrimEnd('/') == (server.Url ?? "").TrimEnd('/')))
+            {
+                document.Servers.Add(server);
+            }
+        }
+
+        var standardLocalUrls = new[] { "https://localhost:7108", "http://localhost:5074" };
+        foreach (var url in standardLocalUrls)
+        {
+            if (!document.Servers.Any(s => (s.Url ?? "").TrimEnd('/') == url.TrimEnd('/')))
+            {
+                document.Servers.Add(new Microsoft.OpenApi.OpenApiServer { Url = url, Description = "Local Development Server" });
+            }
+        }
+
         return Task.CompletedTask;
     });
 });
