@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -222,6 +223,347 @@ namespace CloudService.UnitTests.Application.Services
             Assert.NotNull(updatedUser);
             Assert.Null(updatedUser.RefreshToken);
             Assert.Null(updatedUser.RefreshTokenExpiryTime);
+        }
+
+        [Fact]
+        public async Task GetAllUsersAsync_ShouldReturnAllUsersWithRoles()
+        {
+            var context = GetInMemoryDbContext();
+            var config = GetMockConfiguration();
+            var tokenGen = new JwtTokenGenerator(config);
+            var authService = new AuthService(context, tokenGen);
+
+            var adminRole = new Role { Id = 1, Name = "Admin", IsActive = true };
+            var editorRole = new Role { Id = 2, Name = "Editor", IsActive = true };
+            await context.Roles.AddRangeAsync(adminRole, editorRole);
+
+            var user1 = new AppUser
+            {
+                Id = 1,
+                Username = "admin_user",
+                FullName = "Admin User",
+                Email = "admin@example.com",
+                PasswordHash = "hash1",
+                RoleId = 1,
+                Role = adminRole,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            var user2 = new AppUser
+            {
+                Id = 2,
+                Username = "editor_user",
+                FullName = "Editor User",
+                Email = "editor@example.com",
+                PasswordHash = "hash2",
+                RoleId = 2,
+                Role = editorRole,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            await context.AppUsers.AddRangeAsync(user1, user2);
+            await context.SaveChangesAsync();
+
+            var users = (await authService.GetAllUsersAsync()).ToList();
+
+            Assert.Equal(2, users.Count);
+            var u1 = users.FirstOrDefault(u => u.Username == "admin_user");
+            Assert.NotNull(u1);
+            Assert.Equal(1, u1.Id);
+            Assert.Equal("Admin User", u1.FullName);
+            Assert.Equal("admin@example.com", u1.Email);
+            Assert.Equal("Admin", u1.Role);
+            Assert.True(u1.IsActive);
+
+            var u2 = users.FirstOrDefault(u => u.Username == "editor_user");
+            Assert.NotNull(u2);
+            Assert.Equal(2, u2.Id);
+            Assert.Equal("Editor User", u2.FullName);
+            Assert.Equal("editor@example.com", u2.Email);
+            Assert.Equal("Editor", u2.Role);
+            Assert.True(u2.IsActive);
+        }
+
+        [Fact]
+        public async Task UpdateUserAsync_WithValidData_ShouldUpdateUserAndRole()
+        {
+            var context = GetInMemoryDbContext();
+            var config = GetMockConfiguration();
+            var tokenGen = new JwtTokenGenerator(config);
+            var authService = new AuthService(context, tokenGen);
+
+            var adminRole = new Role { Id = 1, Name = "Admin", IsActive = true };
+            var editorRole = new Role { Id = 2, Name = "Editor", IsActive = true };
+            await context.Roles.AddRangeAsync(adminRole, editorRole);
+
+            var user = new AppUser
+            {
+                Id = 1,
+                Username = "user_to_update",
+                FullName = "Old Name",
+                Email = "old@example.com",
+                PasswordHash = "hash",
+                RoleId = 1,
+                Role = adminRole,
+                IsActive = true
+            };
+            await context.AppUsers.AddAsync(user);
+            await context.SaveChangesAsync();
+
+            var updateReq = new UpdateUserRequest
+            {
+                FullName = "New Name",
+                Email = "new@example.com",
+                Role = "Editor",
+                IsActive = false
+            };
+
+            var result = await authService.UpdateUserAsync(1, updateReq);
+
+            Assert.True(result);
+            var updatedUser = await context.AppUsers.FindAsync(1);
+            Assert.NotNull(updatedUser);
+            Assert.Equal("New Name", updatedUser.FullName);
+            Assert.Equal("new@example.com", updatedUser.Email);
+            Assert.Equal(2, updatedUser.RoleId);
+            Assert.False(updatedUser.IsActive);
+        }
+
+        [Fact]
+        public async Task UpdateUserAsync_WithInvalidRole_ShouldReturnFalse()
+        {
+            var context = GetInMemoryDbContext();
+            var config = GetMockConfiguration();
+            var tokenGen = new JwtTokenGenerator(config);
+            var authService = new AuthService(context, tokenGen);
+
+            var role = new Role { Id = 1, Name = "Admin", IsActive = true };
+            await context.Roles.AddAsync(role);
+
+            var user = new AppUser
+            {
+                Id = 1,
+                Username = "user_invalid_role",
+                FullName = "Original Name",
+                Email = "orig@example.com",
+                PasswordHash = "hash",
+                RoleId = 1,
+                Role = role,
+                IsActive = true
+            };
+            await context.AppUsers.AddAsync(user);
+            await context.SaveChangesAsync();
+
+            var updateReq = new UpdateUserRequest
+            {
+                FullName = "Changed Name",
+                Email = "changed@example.com",
+                Role = "NonExistentRole",
+                IsActive = true
+            };
+
+            var result = await authService.UpdateUserAsync(1, updateReq);
+
+            Assert.False(result);
+            var unchangedUser = await context.AppUsers.FindAsync(1);
+            Assert.NotNull(unchangedUser);
+            Assert.Equal("Original Name", unchangedUser.FullName);
+            Assert.Equal("orig@example.com", unchangedUser.Email);
+            Assert.Equal(1, unchangedUser.RoleId);
+        }
+
+        [Fact]
+        public async Task UpdateUserAsync_WithNonExistentUser_ShouldReturnFalse()
+        {
+            var context = GetInMemoryDbContext();
+            var config = GetMockConfiguration();
+            var tokenGen = new JwtTokenGenerator(config);
+            var authService = new AuthService(context, tokenGen);
+
+            var role = new Role { Id = 1, Name = "Admin", IsActive = true };
+            await context.Roles.AddAsync(role);
+            await context.SaveChangesAsync();
+
+            var updateReq = new UpdateUserRequest
+            {
+                FullName = "Any Name",
+                Email = "any@example.com",
+                Role = "Admin",
+                IsActive = true
+            };
+
+            var result = await authService.UpdateUserAsync(999, updateReq);
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task DeleteUserAsync_ShouldSoftDeleteUser()
+        {
+            var context = GetInMemoryDbContext();
+            var config = GetMockConfiguration();
+            var tokenGen = new JwtTokenGenerator(config);
+            var authService = new AuthService(context, tokenGen);
+
+            var user = new AppUser
+            {
+                Id = 10,
+                Username = "user_to_delete",
+                PasswordHash = "hash",
+                Email = "del@example.com",
+                IsActive = true
+            };
+            await context.AppUsers.AddAsync(user);
+            await context.SaveChangesAsync();
+
+            var result = await authService.DeleteUserAsync(10);
+
+            Assert.True(result);
+            var deletedUser = await context.AppUsers.FindAsync(10);
+            Assert.NotNull(deletedUser);
+            Assert.False(deletedUser.IsActive);
+        }
+
+        [Fact]
+        public async Task DeleteUserAsync_WithNonExistentUser_ShouldReturnFalse()
+        {
+            var context = GetInMemoryDbContext();
+            var config = GetMockConfiguration();
+            var tokenGen = new JwtTokenGenerator(config);
+            var authService = new AuthService(context, tokenGen);
+
+            var result = await authService.DeleteUserAsync(999);
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task ChangePasswordAsync_WithCorrectOldPassword_ShouldUpdatePassword()
+        {
+            var context = GetInMemoryDbContext();
+            var config = GetMockConfiguration();
+            var tokenGen = new JwtTokenGenerator(config);
+            var authService = new AuthService(context, tokenGen);
+
+            var oldPass = "OldPassword123!";
+            var newPass = "NewPassword456!";
+            var user = new AppUser
+            {
+                Id = 20,
+                Username = "user_change_pass",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(oldPass),
+                Email = "changepass@example.com",
+                IsActive = true
+            };
+            await context.AppUsers.AddAsync(user);
+            await context.SaveChangesAsync();
+
+            var req = new ChangePasswordRequest
+            {
+                OldPassword = oldPass,
+                NewPassword = newPass
+            };
+
+            var result = await authService.ChangePasswordAsync("user_change_pass", req);
+
+            Assert.True(result);
+            var updatedUser = await context.AppUsers.FindAsync(20);
+            Assert.NotNull(updatedUser);
+            Assert.True(BCrypt.Net.BCrypt.Verify(newPass, updatedUser.PasswordHash));
+            Assert.False(BCrypt.Net.BCrypt.Verify(oldPass, updatedUser.PasswordHash));
+        }
+
+        [Fact]
+        public async Task ChangePasswordAsync_WithIncorrectOldPassword_ShouldReturnFalse()
+        {
+            var context = GetInMemoryDbContext();
+            var config = GetMockConfiguration();
+            var tokenGen = new JwtTokenGenerator(config);
+            var authService = new AuthService(context, tokenGen);
+
+            var initialPass = "CorrectPassword123!";
+            var initialHash = BCrypt.Net.BCrypt.HashPassword(initialPass);
+            var user = new AppUser
+            {
+                Id = 21,
+                Username = "user_wrong_pass",
+                PasswordHash = initialHash,
+                Email = "wrongpass@example.com",
+                IsActive = true
+            };
+            await context.AppUsers.AddAsync(user);
+            await context.SaveChangesAsync();
+
+            var req = new ChangePasswordRequest
+            {
+                OldPassword = "WrongPassword999!",
+                NewPassword = "NewAttemptedPassword123!"
+            };
+
+            var result = await authService.ChangePasswordAsync("user_wrong_pass", req);
+
+            Assert.False(result);
+            var unchangedUser = await context.AppUsers.FindAsync(21);
+            Assert.NotNull(unchangedUser);
+            Assert.Equal(initialHash, unchangedUser.PasswordHash);
+        }
+
+        [Fact]
+        public async Task ChangePasswordAsync_WithNonExistentUser_ShouldReturnFalse()
+        {
+            var context = GetInMemoryDbContext();
+            var config = GetMockConfiguration();
+            var tokenGen = new JwtTokenGenerator(config);
+            var authService = new AuthService(context, tokenGen);
+
+            var req = new ChangePasswordRequest
+            {
+                OldPassword = "OldPassword123!",
+                NewPassword = "NewPassword456!"
+            };
+
+            var result = await authService.ChangePasswordAsync("non_existent_user", req);
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task AdminResetPasswordAsync_ShouldUpdatePasswordDirectly()
+        {
+            var context = GetInMemoryDbContext();
+            var config = GetMockConfiguration();
+            var tokenGen = new JwtTokenGenerator(config);
+            var authService = new AuthService(context, tokenGen);
+
+            var oldPass = "UserOldPass123!";
+            var newAdminPass = "AdminResetPass456!";
+            var user = new AppUser
+            {
+                Id = 30,
+                Username = "user_admin_reset",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(oldPass),
+                Email = "adminreset@example.com",
+                IsActive = true
+            };
+            await context.AppUsers.AddAsync(user);
+            await context.SaveChangesAsync();
+
+            var result = await authService.AdminResetPasswordAsync(30, newAdminPass);
+
+            Assert.True(result);
+            var updatedUser = await context.AppUsers.FindAsync(30);
+            Assert.NotNull(updatedUser);
+            Assert.True(BCrypt.Net.BCrypt.Verify(newAdminPass, updatedUser.PasswordHash));
+            Assert.False(BCrypt.Net.BCrypt.Verify(oldPass, updatedUser.PasswordHash));
+        }
+
+        [Fact]
+        public async Task AdminResetPasswordAsync_WithNonExistentUser_ShouldReturnFalse()
+        {
+            var context = GetInMemoryDbContext();
+            var config = GetMockConfiguration();
+            var tokenGen = new JwtTokenGenerator(config);
+            var authService = new AuthService(context, tokenGen);
+
+            var result = await authService.AdminResetPasswordAsync(999, "NewPassword123!");
+            Assert.False(result);
         }
     }
 }
