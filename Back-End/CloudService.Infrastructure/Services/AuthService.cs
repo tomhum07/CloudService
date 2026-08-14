@@ -162,6 +162,11 @@ namespace CloudService.Infrastructure.Services
             var user = await _context.AppUsers.FirstOrDefaultAsync(u => u.Username == username);
             if (user == null) return false;
 
+            if (string.IsNullOrWhiteSpace(request.NewPassword) || request.NewPassword.Length < 6)
+            {
+                return false;
+            }
+
             if (!BCrypt.Net.BCrypt.Verify(request.OldPassword, user.PasswordHash))
             {
                 return false;
@@ -176,6 +181,11 @@ namespace CloudService.Infrastructure.Services
         {
             var user = await _context.AppUsers.FindAsync(id);
             if (user == null) return false;
+
+            if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 6)
+            {
+                return false;
+            }
 
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
             await _context.SaveChangesAsync();

@@ -79,14 +79,28 @@ export default function UsersPage() {
 
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (addForm.password.length < 6) {
+      setFormError("Mật khẩu phải dài ít nhất 6 ký tự.");
+      return;
+    }
     setIsSubmitting(true);
     setFormError(null);
     try {
+      const roleId = addForm.role === "Admin" ? 1 : 2;
       const res = await apiFetch("/api/admin/users", {
         method: "POST",
-        body: JSON.stringify(addForm),
+        body: JSON.stringify({
+          username: addForm.username,
+          password: addForm.password,
+          fullName: addForm.fullName,
+          email: addForm.email,
+          roleId: roleId
+        }),
       });
-      if (!res.ok) throw new Error("Failed to create user");
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || "Failed to create user");
+      }
       setIsAddModalOpen(false);
       fetchUsers();
     } catch (err: any) {
@@ -106,7 +120,10 @@ export default function UsersPage() {
         method: "PUT",
         body: JSON.stringify(editForm),
       });
-      if (!res.ok) throw new Error("Failed to update user");
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || "Failed to update user");
+      }
       setIsEditModalOpen(false);
       fetchUsers();
     } catch (err: any) {
@@ -116,7 +133,7 @@ export default function UsersPage() {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteSubmit = async () => {
     if (!currentUser) return;
     setIsSubmitting(true);
     setFormError(null);
@@ -124,7 +141,10 @@ export default function UsersPage() {
       const res = await apiFetch(`/api/admin/users/${currentUser.id}`, {
         method: "DELETE",
       });
-      if (!res.ok) throw new Error("Failed to deactivate user");
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || "Failed to deactivate user");
+      }
       setIsDeleteModalOpen(false);
       fetchUsers();
     } catch (err: any) {
@@ -137,6 +157,10 @@ export default function UsersPage() {
   const handleResetSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser) return;
+    if (resetForm.newPassword.length < 6) {
+      setFormError("Mật khẩu mới phải dài ít nhất 6 ký tự.");
+      return;
+    }
     setIsSubmitting(true);
     setFormError(null);
     try {
@@ -144,7 +168,10 @@ export default function UsersPage() {
         method: "POST",
         body: JSON.stringify({ newPassword: resetForm.newPassword }),
       });
-      if (!res.ok) throw new Error("Failed to reset password");
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || "Failed to reset password");
+      }
       setIsResetModalOpen(false);
     } catch (err: any) {
       setFormError(err.message || "Failed to reset password.");
@@ -361,7 +388,7 @@ export default function UsersPage() {
             </div>
             <div className="flex gap-3">
               <button type="button" onClick={() => setIsDeleteModalOpen(false)} className="flex-1 px-4 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white font-medium transition-colors border border-gray-700">Cancel</button>
-              <button type="button" onClick={handleDelete} disabled={isSubmitting} className="flex-1 px-4 py-3 rounded-xl bg-red-600 hover:bg-red-500 disabled:bg-red-800 disabled:opacity-50 text-white font-medium transition-colors shadow-[0_0_15px_rgba(220,38,38,0.3)]">{isSubmitting ? "Deactivating..." : "Yes, Deactivate"}</button>
+              <button type="button" onClick={handleDeleteSubmit} disabled={isSubmitting} className="flex-1 px-4 py-3 rounded-xl bg-red-600 hover:bg-red-500 disabled:bg-red-800 disabled:opacity-50 text-white font-medium transition-colors shadow-[0_0_15px_rgba(220,38,38,0.3)]">{isSubmitting ? "Deactivating..." : "Yes, Deactivate"}</button>
             </div>
           </div>
         </div>
