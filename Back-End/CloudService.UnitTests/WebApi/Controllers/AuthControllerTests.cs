@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -17,6 +19,7 @@ namespace CloudService.UnitTests.WebApi.Controllers
             public Func<string, Action<string>, Task<AuthResponse?>>? RefreshTokenHandler { get; set; }
             public Func<string, Task<bool>>? LogoutHandler { get; set; }
             public Func<RegisterRequest, Task<bool>>? RegisterUserHandler { get; set; }
+            public Func<string, ChangePasswordRequest, Task<bool>>? ChangePasswordHandler { get; set; }
 
             public Task<AuthResponse?> LoginAsync(LoginRequest request, Action<string> setRefreshTokenCookie)
             {
@@ -41,7 +44,20 @@ namespace CloudService.UnitTests.WebApi.Controllers
                 if (RegisterUserHandler != null) return RegisterUserHandler(request);
                 return Task.FromResult(true);
             }
+
+            public Task<IEnumerable<UserDto>> GetAllUsersAsync() => Task.FromResult<IEnumerable<UserDto>>(new List<UserDto>());
+            public Task<bool> UpdateUserAsync(int id, UpdateUserRequest request) => Task.FromResult(true);
+            public Task<bool> DeleteUserAsync(int id) => Task.FromResult(true);
+
+            public Task<bool> ChangePasswordAsync(string username, ChangePasswordRequest request)
+            {
+                if (ChangePasswordHandler != null) return ChangePasswordHandler(username, request);
+                return Task.FromResult(true);
+            }
+
+            public Task<bool> AdminResetPasswordAsync(int id, string newPassword) => Task.FromResult(true);
         }
+
 
         [Fact]
         public async Task Login_ValidCredentials_ReturnsOkAndSetsCookie()
@@ -230,5 +246,95 @@ namespace CloudService.UnitTests.WebApi.Controllers
             var setCookieHeader = httpContext.Response.Headers["Set-Cookie"].ToString();
             Assert.Contains("refreshToken=", setCookieHeader);
         }
+
+        [Fact]
+        public async Task ChangePassword_Unauthenticated_ReturnsUnauthorized()
+        {
+            // Arrange
+            var fakeService = new FakeAuthService();
+            var controller = new AuthController(fakeService);
+            controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+
+            var request = new ChangePasswordRequest
+            {
+                OldPassword = "OldPassword123!",
+                NewPassword = "NewPassword123!"
+            };
+
+            // Act
+            var result = await controller.ChangePassword(request);
+
+            // Assert
+            var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
+            Assert.NotNull(unauthorizedResult.Value);
+        }
+
+        [Fact]
+        public async Task ChangePassword_ValidRequest_ReturnsOk()
+        {
+            // Arrange
+            var passedUsername = "";
+            var fakeService = new FakeAuthService
+            {
+                ChangePasswordHandler = (username, req) =>
+                {
+                    passedUsername = username;
+                    return Task.FromResult(true);
+                }
+            };
+            var controller = new AuthController(fakeService);
+            var httpContext = new DefaultHttpContext();
+            var claims = new[] { new Claim(ClaimTypes.Name, "testuser") };
+            var identity = new ClaimsIdentity(claims, "TestAuth");
+            httpContext.User = new ClaimsPrincipal(identity);
+            controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
+
+            var request = new ChangePasswordRequest
+            {
+                OldPassword = "OldPassword123!",
+                NewPassword = "NewPassword123!"
+            };
+
+            // Act
+            var result = await controller.ChangePassword(request);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal("testuser", passedUsername);
+            Assert.NotNull(okResult.Value);
+        }
+
+        [Fact]
+        public async Task ChangePassword_WrongOldPassword_ReturnsBadRequest()
+        {
+            // Arrange
+            var fakeService = new FakeAuthService
+            {
+                ChangePasswordHandler = (username, req) => Task.FromResult(false)
+            };
+            var controller = new AuthController(fakeService);
+            var httpContext = new DefaultHttpContext();
+            var claims = new[] { new Claim(ClaimTypes.Name, "testuser") };
+            var identity = new ClaimsIdentity(claims, "TestAuth");
+            httpContext.User = new ClaimsPrincipal(identity);
+            controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
+
+            var request = new ChangePasswordRequest
+            {
+                OldPassword = "WrongOldPassword!",
+                NewPassword = "NewPassword123!"
+            };
+
+            // Act
+            var result = await controller.ChangePassword(request);
+
+            // Assert
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.NotNull(badRequestResult.Value);
+        }
     }
 }
+
