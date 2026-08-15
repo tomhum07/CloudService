@@ -8,6 +8,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const router = useRouter();
   const [checking, setChecking] = useState(true);
+  const [role, setRole] = useState("Editor");
 
   useEffect(() => {
     if (pathname === "/admin/login") {
@@ -17,13 +18,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     const verifySession = async () => {
       // Nếu chưa có Access Token trong RAM, chạy Silent Refresh để lấy token mới từ Cookie
-      if (!getAccessToken()) {
+      let token = getAccessToken();
+      if (!token) {
         const success = await refreshAccessToken();
         if (!success) {
           router.push("/admin/login");
           return;
         }
+        token = getAccessToken();
       }
+
+      if (token) {
+        try {
+          const payloadPart = token.split(".")[1];
+          if (payloadPart) {
+            const payload = JSON.parse(window.atob(payloadPart));
+            setRole(payload["role"] || payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || "Editor");
+          }
+        } catch (e) {
+          console.error("Lỗi giải mã JWT:", e);
+        }
+      }
+
       setChecking(false);
     };
 
@@ -59,6 +75,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { label: "Quản lý Gói cước", href: "/admin/plans", icon: "📦" },
     { label: "Bảng giá & Khuyến mãi", href: "/admin/prices", icon: "💰" },
   ];
+
+  if (role === "Admin") {
+    navLinks.push({ label: "Quản lý Tài khoản", href: "/admin/users", icon: "👤" });
+  }
+
+  navLinks.push({ label: "Đổi mật khẩu", href: "/admin/change-password", icon: "🔑" });
 
   return (
     <div className="min-h-screen bg-[#030712] text-white flex overflow-hidden">

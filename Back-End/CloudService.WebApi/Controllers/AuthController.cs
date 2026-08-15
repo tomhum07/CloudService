@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using CloudService.Application.DTOs.Auth;
 using CloudService.Application.Interfaces;
@@ -68,6 +70,25 @@ namespace CloudService.WebApi.Controllers
             return Ok(new { message = "Đã đăng xuất thành công." });
         }
 
+        [HttpPost("change-password")]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            var username = User.Identity?.Name ?? User.FindFirst(ClaimTypes.Name)?.Value;
+            if (string.IsNullOrEmpty(username))
+            {
+                return Unauthorized(new { message = "Không xác định được danh tính người dùng." });
+            }
+
+            var result = await _authService.ChangePasswordAsync(username, request);
+            if (!result)
+            {
+                return BadRequest(new { message = "Mật khẩu cũ không chính xác hoặc tài khoản không tồn tại." });
+            }
+
+            return Ok(new { message = "Đổi mật khẩu thành công." });
+        }
+
         private void SetRefreshTokenCookie(string token)
         {
             var cookieOptions = new CookieOptions
@@ -81,3 +102,4 @@ namespace CloudService.WebApi.Controllers
         }
     }
 }
+
