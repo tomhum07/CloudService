@@ -1,0 +1,67 @@
+# =========================================================================
+# 1. Bo qua thu muc trao doi tai lieu va cac tệp tin cấu hình (Theo de xuat cua ban)
+# =========================================================================
+/In_Out/
+/Test_template/
+/Docs/
+/docs/
+/.github/
+/docker-compose.yml
+/docker-compose.override.yml
+
+# =========================================================================
+# 2. Bo qua cac file cau hinh va thu muc tam cua IDE (Visual Studio / VS Code)
+# =========================================================================
+**/.vs/
+**/.vscode/
+**/.idea/
+**/*.user
+**/*.suo
+**/*.userosscache
+**/*.sln.docstates
+**/.DS_Store
+**/Thumbs.db
+**/AGENTS.md
+**/CLAUDE.md
+
+# =========================================================================
+# 3. Bo qua cac thu muc build va thu vien Backend .NET (C#)
+# =========================================================================
+**/bin/
+**/obj/
+App_Data/
+**/TestResults/
+
+# =========================================================================
+# 4. Bo qua cac thu muc build va thu vien Frontend (Next.js / React)
+# =========================================================================
+**/node_modules/
+**/.next/
+**/out/
+**/build/
+**/dist/
+**/.vercel/
+**/.pnp/
+.pnp.*
+**/.yarn/
+**/*.tsbuildinfo
+**/next-env.d.ts
+
+# =========================================================================
+# 5. Bo qua cac file nhat ky (Logs) va kiem thu (Coverage)
+# =========================================================================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+**/coverage/
+**/coveragereport/
+
+# =========================================================================
+# 6. Bo qua cac file bao mat, moi truong (Security & Env)
+# =========================================================================
+.env
+.env*.local
+*.pem
+*.key
