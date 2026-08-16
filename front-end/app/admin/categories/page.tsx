@@ -31,7 +31,7 @@ export default function CategoriesPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await apiFetch("/api/service-categories");
+      const res = await apiFetch("/api/service-categories?includeInactive=true");
       if (!res.ok) throw new Error("Failed to fetch categories");
       const data = await res.json();
       setCategories(data);

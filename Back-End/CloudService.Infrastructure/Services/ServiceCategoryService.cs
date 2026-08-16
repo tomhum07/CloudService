@@ -42,7 +42,7 @@ namespace CloudService.Infrastructure.Services
 
         public async Task<ServiceCategoryDto?> GetByIdAsync(int id)
         {
-            var category = await _context.ServiceCategories.FindAsync(id);
+            var category = await _context.ServiceCategories.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == id);
             if (category == null) return null;
 
             return new ServiceCategoryDto
@@ -81,7 +81,7 @@ namespace CloudService.Infrastructure.Services
 
         public async Task<ServiceCategoryDto?> UpdateAsync(int id, UpdateServiceCategoryRequest request)
         {
-            var category = await _context.ServiceCategories.FindAsync(id);
+            var category = await _context.ServiceCategories.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == id);
             if (category == null) return null;
 
             category.Name = request.Name;
@@ -105,6 +105,7 @@ namespace CloudService.Infrastructure.Services
         public async Task<bool> DeleteAsync(int id)
         {
             var category = await _context.ServiceCategories
+                .IgnoreQueryFilters()
                 .Include(c => c.Plans)
                     .ThenInclude(p => p.Prices)
                 .FirstOrDefaultAsync(c => c.Id == id);

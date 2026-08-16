@@ -64,7 +64,7 @@ export default function PlansPage() {
 
   const fetchCategories = async () => {
     try {
-      const res = await apiFetch("/api/service-categories");
+      const res = await apiFetch("/api/service-categories?includeInactive=true");
       if (res.ok) {
         const data = await res.json();
         setCategories(data);
@@ -82,6 +82,7 @@ export default function PlansPage() {
       if (searchTerm) queryParams.append("search", searchTerm);
       if (filterCategory) queryParams.append("categoryId", filterCategory);
       if (sortBy) queryParams.append("sortBy", sortBy);
+      queryParams.append("includeInactive", "true");
       
       const res = await apiFetch(`/api/service-plans?${queryParams.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch service plans");

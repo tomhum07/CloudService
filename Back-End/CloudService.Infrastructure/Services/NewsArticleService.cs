@@ -94,6 +94,7 @@ namespace CloudService.Infrastructure.Services
         public async Task<NewsArticleDto?> GetByIdAsync(int id)
         {
             return await _context.NewsArticles
+                .IgnoreQueryFilters()
                 .Include(x => x.Author)
                 .Where(x => x.Id == id)
                 .Select(x => new NewsArticleDto
@@ -114,6 +115,7 @@ namespace CloudService.Infrastructure.Services
         public async Task<NewsArticleDto?> GetBySlugAsync(string slug)
         {
             return await _context.NewsArticles
+                .IgnoreQueryFilters()
                 .Include(x => x.Author)
                 .Where(x => x.Slug == slug)
                 .Select(x => new NewsArticleDto
@@ -155,6 +157,7 @@ namespace CloudService.Infrastructure.Services
             UpdateNewsArticleRequest request)
         {
             var article = await _context.NewsArticles
+                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             if (article == null)
@@ -175,6 +178,7 @@ namespace CloudService.Infrastructure.Services
         public async Task<bool> DeleteAsync(int id)
         {
             var article = await _context.NewsArticles
+                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             if (article == null)

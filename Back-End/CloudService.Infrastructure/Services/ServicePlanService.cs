@@ -118,6 +118,7 @@ namespace CloudService.Infrastructure.Services
         public async Task<ServicePlanDto?> GetByIdAsync(int id)
         {
             var plan = await _context.ServicePlans
+                .IgnoreQueryFilters()
                 .Include(p => p.Category)
                 .FirstOrDefaultAsync(x => x.Id == id);
 
@@ -187,6 +188,7 @@ namespace CloudService.Infrastructure.Services
         public async Task<ServicePlanDto?> UpdateAsync(int id, UpdateServicePlanRequest request)
         {
             var plan = await _context.ServicePlans
+                .IgnoreQueryFilters()
                 .Include(p => p.Category)
                 .FirstOrDefaultAsync(x => x.Id == id);
                 
@@ -223,6 +225,7 @@ namespace CloudService.Infrastructure.Services
         public async Task<bool> DeleteAsync(int id)
         {
             var plan = await _context.ServicePlans
+                .IgnoreQueryFilters()
                 .Include(p => p.Prices)
                 .FirstOrDefaultAsync(x => x.Id == id);
                 

@@ -64,6 +64,7 @@ namespace CloudService.Infrastructure.Services
         public async Task<PlanPriceDto?> UpdatePriceAsync(int planId, int priceId, UpdatePlanPriceRequest request)
         {
             var planPrice = await _context.PlanPrices
+                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(p => p.Id == priceId && p.PlanId == planId);
 
             if (planPrice == null)
@@ -82,6 +83,7 @@ namespace CloudService.Infrastructure.Services
         public async Task<bool> DeletePriceAsync(int planId, int priceId)
         {
             var planPrice = await _context.PlanPrices
+                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(p => p.Id == priceId && p.PlanId == planId);
 
             if (planPrice == null)
@@ -137,6 +139,7 @@ namespace CloudService.Infrastructure.Services
         private async Task<PlanPriceDto> GetPriceDtoByIdAsync(int priceId)
         {
             var price = await _context.PlanPrices
+                .IgnoreQueryFilters()
                 .Include(p => p.Promotion)
                 .Where(p => p.Id == priceId)
                 .Select(p => new PlanPriceDto

@@ -42,7 +42,7 @@ export default function AdminNewsPage() {
   const fetchNews = async () => {
     setLoading(true);
     try {
-      const res = await apiFetch("/api/news?pageSize=100");
+      const res = await apiFetch("/api/news?pageSize=100&includeInactive=true");
       if (res.ok) {
         const data = await res.json();
         const items = data.items || data;

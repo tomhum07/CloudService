@@ -81,7 +81,7 @@ export default function PricesPage() {
   const fetchPlans = async () => {
     setIsLoadingPlans(true);
     try {
-      const res = await apiFetch("/api/service-plans");
+      const res = await apiFetch("/api/service-plans?includeInactive=true");
       if (res.ok) {
         const data = await res.json();
         const planList = data.items || [];
@@ -119,7 +119,7 @@ export default function PricesPage() {
   const fetchPrices = async (planId: string) => {
     setIsLoadingPrices(true);
     try {
-      const res = await apiFetch(`/api/service-plans/${planId}/prices`);
+      const res = await apiFetch(`/api/service-plans/${planId}/prices?includeInactive=true`);
       if (res.ok) {
         const data = await res.json();
         setPrices(data);
