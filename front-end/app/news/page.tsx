@@ -75,7 +75,8 @@ function NewsContent() {
           const data = await res.json();
           // Backend returns PagedNewsResult: { items: [...], totalCount: 15, page: 1, pageSize: 6 }
           if (data && Array.isArray(data.items) && data.items.length > 0) {
-            setNews(data.items);
+            const activeItems = data.items.filter((n: any) => n.isActive !== false);
+            setNews(activeItems);
             setTotalPages(Math.ceil(data.totalCount / 6) || 1);
             setLoading(false);
             return;
@@ -86,7 +87,7 @@ function NewsContent() {
       }
 
       // Local Mock Filter Fallback
-      let filtered = MOCK_ALL_NEWS;
+      let filtered = MOCK_ALL_NEWS.filter((n: any) => n.isActive !== false);
       if (selectedCategory !== "Tất cả") {
         filtered = filtered.filter((n) => n.categoryName === selectedCategory);
       }

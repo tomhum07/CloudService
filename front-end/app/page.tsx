@@ -95,11 +95,12 @@ export default function Home() {
     async function fetchData() {
       try {
         // Fetch Plans
-        const plansRes = await apiFetch("/api/service-plans?pageSize=3");
+        const plansRes = await apiFetch("/api/service-plans?pageSize=50");
         if (plansRes.ok) {
           const plansData = await plansRes.json();
-          const items = plansData.items || plansData;
-          if (Array.isArray(items) && items.length > 0) {
+          const rawItems = plansData.items || plansData;
+          if (Array.isArray(rawItems) && rawItems.length > 0) {
+            const items = rawItems.filter((p: any) => p.isActive !== false);
             // Get prices for each plan
             const enriched = await Promise.all(
               items.slice(0, 3).map(async (p: any) => {
@@ -107,7 +108,8 @@ export default function Home() {
                   const priceRes = await apiFetch(`/api/service-plans/${p.id}/prices`);
                   if (priceRes.ok) {
                     const prices = await priceRes.json();
-                    const activePrice = prices.find((pr: any) => pr.isActive) || prices[0];
+                    const activePrices = prices.filter((pr: any) => pr.isActive !== false);
+                    const activePrice = activePrices[0];
                     return {
                       ...p,
                       price: activePrice
@@ -138,7 +140,7 @@ export default function Home() {
         if (testRes.ok) {
           const testData = await testRes.json();
           if (Array.isArray(testData) && testData.length > 0) {
-            setTestimonials(testData.slice(0, 3));
+            setTestimonials(testData.filter((t: any) => t.isActive !== false).slice(0, 3));
           } else {
             setTestimonials(MOCK_TESTIMONIALS);
           }
@@ -152,11 +154,12 @@ export default function Home() {
 
       try {
         // Fetch News
-        const newsRes = await apiFetch("/api/news?pageSize=3");
+        const newsRes = await apiFetch("/api/news?pageSize=50");
         if (newsRes.ok) {
           const newsData = await newsRes.json();
-          const items = newsData.items || newsData;
-          if (Array.isArray(items) && items.length > 0) {
+          const rawItems = newsData.items || newsData;
+          if (Array.isArray(rawItems) && rawItems.length > 0) {
+            const items = rawItems.filter((n: any) => n.isActive !== false);
             setNews(items.slice(0, 3));
           } else {
             setNews(MOCK_NEWS);

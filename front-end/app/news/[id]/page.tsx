@@ -60,7 +60,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
         const res = await apiFetch(`/api/news/${idStr}`);
         if (res.ok) {
           const data = await res.json();
-          if (data && data.title) {
+          if (data && data.title && data.isActive !== false) {
             setArticle(data);
             setLoading(false);
             return;
@@ -71,7 +71,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
       }
 
       // Local Fallback
-      const found = MOCK_ALL_NEWS.find((n) => n.id === idNum);
+      const found = MOCK_ALL_NEWS.find((n) => n.id === idNum && (n as any).isActive !== false);
       setArticle(found || null);
       setLoading(false);
     }

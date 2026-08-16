@@ -84,16 +84,20 @@ export default function PricingPage() {
         if (catRes.ok) {
           const catData = await catRes.json();
           if (Array.isArray(catData) && catData.length > 0) {
-            loadedCats = catData;
-            setCategories(catData);
-            setSelectedCategory(catData[0].id);
+            const activeCats = catData.filter((c: any) => c.isActive !== false);
+            if (activeCats.length > 0) {
+              loadedCats = activeCats;
+              setCategories(activeCats);
+              setSelectedCategory(activeCats[0].id);
+            }
           }
         }
 
         if (plansRes.ok) {
           const plansData = await plansRes.json();
-          const items = plansData.items || plansData;
-          if (Array.isArray(items) && items.length > 0) {
+          const rawItems = plansData.items || plansData;
+          if (Array.isArray(rawItems) && rawItems.length > 0) {
+            const items = rawItems.filter((p: any) => p.isActive !== false);
             // Get prices for all plans
             const enriched = await Promise.all(
               items.map(async (p: any) => {
@@ -103,8 +107,8 @@ export default function PricingPage() {
                   const prRes = await apiFetch(`/api/service-plans/${p.id}/prices`);
                   if (prRes.ok) {
                     const prices = await prRes.json();
-                    const mPriceObj = prices.find((pr: any) => pr.billingCycle === "Monthly" && pr.isActive);
-                    const yPriceObj = prices.find((pr: any) => pr.billingCycle === "Yearly" && pr.isActive);
+                    const mPriceObj = prices.find((pr: any) => pr.billingCycle === "Monthly" && pr.isActive !== false);
+                    const yPriceObj = prices.find((pr: any) => pr.billingCycle === "Yearly" && pr.isActive !== false);
                     if (mPriceObj) monthlyPrice = Number(mPriceObj.price);
                     if (yPriceObj) {
                       yearlyPrice = Number(yPriceObj.price);
