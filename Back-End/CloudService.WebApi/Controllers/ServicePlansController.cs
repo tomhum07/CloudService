@@ -27,9 +27,10 @@ namespace CloudService.WebApi.Controllers
             [FromQuery] int pageSize = 10,
             [FromQuery] int? categoryId = null,
             [FromQuery] string? search = null,
-            [FromQuery] string? sort = null)
+            [FromQuery] string? sort = null,
+            [FromQuery] bool includeInactive = false)
         {
-            var result = await _servicePlanService.GetPagedAsync(page, pageSize, categoryId, search, sort);
+            var result = await _servicePlanService.GetPagedAsync(page, pageSize, categoryId, search, sort, includeInactive);
             return Ok(result);
         }
 
@@ -68,9 +69,9 @@ namespace CloudService.WebApi.Controllers
         }
 
         [HttpGet("{id}/prices")]
-        public async Task<ActionResult<IEnumerable<PlanPriceDto>>> GetPrices(int id)
+        public async Task<ActionResult<IEnumerable<PlanPriceDto>>> GetPrices(int id, [FromQuery] bool includeInactive = false)
         {
-            var prices = await _planPriceService.GetPricesByPlanIdAsync(id);
+            var prices = await _planPriceService.GetPricesByPlanIdAsync(id, includeInactive);
             return Ok(prices);
         }
 

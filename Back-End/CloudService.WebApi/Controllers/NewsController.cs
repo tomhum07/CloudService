@@ -20,18 +20,20 @@ namespace CloudService.WebApi.Controllers
         }
 
         [HttpGet]
-public async Task<ActionResult<PagedNewsResult>> GetAll(
-    int page = 1,
-    int pageSize = 10,
-    string? search = null)
-{
-    var articles = await _newsArticleService.GetAllAsync(
-        page,
-        pageSize,
-        search);
+        public async Task<ActionResult<PagedNewsResult>> GetAll(
+            int page = 1,
+            int pageSize = 10,
+            string? search = null,
+            bool includeInactive = false)
+        {
+            var articles = await _newsArticleService.GetAllAsync(
+                page,
+                pageSize,
+                search,
+                includeInactive);
 
-    return Ok(articles);
-}
+            return Ok(articles);
+        }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<NewsArticleDto>> GetById(int id)

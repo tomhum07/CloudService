@@ -9,7 +9,8 @@ namespace CloudService.Application.Interfaces
         Task<PagedNewsResult> GetAllAsync(
             int page = 1,
             int pageSize = 10,
-            string? search = null);
+            string? search = null,
+            bool includeInactive = false);
 
         Task<NewsArticleDto?> GetByIdAsync(int id);
 

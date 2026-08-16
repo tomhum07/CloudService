@@ -116,6 +116,7 @@ namespace CloudService.Infrastructure.Services
         public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
         {
             return await _context.AppUsers
+                .IgnoreQueryFilters()
                 .Include(u => u.Role)
                 .Select(u => new UserDto
                 {
@@ -132,7 +133,7 @@ namespace CloudService.Infrastructure.Services
 
         public async Task<bool> UpdateUserAsync(int id, UpdateUserRequest request)
         {
-            var user = await _context.AppUsers.FindAsync(id);
+            var user = await _context.AppUsers.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == id);
             if (user == null) return false;
 
             var role = await _context.Roles.FirstOrDefaultAsync(r => r.Name.ToLower() == request.Role.ToLower());
@@ -149,7 +150,7 @@ namespace CloudService.Infrastructure.Services
 
         public async Task<bool> DeleteUserAsync(int id)
         {
-            var user = await _context.AppUsers.FindAsync(id);
+            var user = await _context.AppUsers.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == id);
             if (user == null) return false;
 
             user.IsActive = false;
@@ -179,7 +180,7 @@ namespace CloudService.Infrastructure.Services
 
         public async Task<bool> AdminResetPasswordAsync(int id, string newPassword)
         {
-            var user = await _context.AppUsers.FindAsync(id);
+            var user = await _context.AppUsers.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == id);
             if (user == null) return false;
 
             if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 6)

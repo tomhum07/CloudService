@@ -18,9 +18,15 @@ namespace CloudService.Infrastructure.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<PlanPriceDto>> GetPricesByPlanIdAsync(int planId)
+        public async Task<IEnumerable<PlanPriceDto>> GetPricesByPlanIdAsync(int planId, bool includeInactive = false)
         {
-            var prices = await _context.PlanPrices
+            var query = _context.PlanPrices.AsQueryable();
+            if (includeInactive)
+            {
+                query = query.IgnoreQueryFilters();
+            }
+
+            var prices = await query
                 .Include(p => p.Promotion)
                 .Where(p => p.PlanId == planId)
                 .Select(p => new PlanPriceDto

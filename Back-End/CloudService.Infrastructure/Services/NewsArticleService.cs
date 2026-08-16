@@ -19,22 +19,28 @@ namespace CloudService.Infrastructure.Services
         }
 
         public async Task<PagedNewsResult> GetAllAsync(
-    int page = 1,
-    int pageSize = 10,
-    string? search = null)
-{
-    if (page < 1)
-        page = 1;
+            int page = 1,
+            int pageSize = 10,
+            string? search = null,
+            bool includeInactive = false)
+        {
+            if (page < 1)
+                page = 1;
 
-    if (pageSize < 1)
-        pageSize = 10;
+            if (pageSize < 1)
+                pageSize = 10;
 
-    if (pageSize > 100)
-        pageSize = 100;
+            if (pageSize > 100)
+                pageSize = 100;
 
-    var query = _context.NewsArticles
-        .Include(x => x.Author)
-        .AsQueryable();
+            var query = _context.NewsArticles
+                .Include(x => x.Author)
+                .AsQueryable();
+
+            if (includeInactive)
+            {
+                query = query.IgnoreQueryFilters();
+            }
 
     // Tìm kiếm theo tiêu đề, tóm tắt hoặc nội dung
     if (!string.IsNullOrWhiteSpace(search))
@@ -70,7 +76,8 @@ namespace CloudService.Infrastructure.Services
             AuthorName = x.Author != null
                 ? x.Author.FullName
                 : null,
-            PublishedAt = x.PublishedAt
+            PublishedAt = x.PublishedAt,
+            IsActive = x.IsActive
         })
         .ToListAsync();
 
@@ -98,7 +105,8 @@ namespace CloudService.Infrastructure.Services
                     Content = x.Content,
                     AuthorId = x.AuthorId,
                     AuthorName = x.Author != null ? x.Author.FullName : null,
-                    PublishedAt = x.PublishedAt
+                    PublishedAt = x.PublishedAt,
+                    IsActive = x.IsActive
                 })
                 .FirstOrDefaultAsync();
         }
@@ -117,7 +125,8 @@ namespace CloudService.Infrastructure.Services
                     Content = x.Content,
                     AuthorId = x.AuthorId,
                     AuthorName = x.Author != null ? x.Author.FullName : null,
-                    PublishedAt = x.PublishedAt
+                    PublishedAt = x.PublishedAt,
+                    IsActive = x.IsActive
                 })
                 .FirstOrDefaultAsync();
         }

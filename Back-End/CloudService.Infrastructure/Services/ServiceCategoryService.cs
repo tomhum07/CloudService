@@ -19,9 +19,15 @@ namespace CloudService.Infrastructure.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<ServiceCategoryDto>> GetAllAsync()
+        public async Task<IEnumerable<ServiceCategoryDto>> GetAllAsync(bool includeInactive = false)
         {
-            return await _context.ServiceCategories
+            var query = _context.ServiceCategories.AsQueryable();
+            if (includeInactive)
+            {
+                query = query.IgnoreQueryFilters();
+            }
+
+            return await query
                 .Select(c => new ServiceCategoryDto
                 {
                     Id = c.Id,

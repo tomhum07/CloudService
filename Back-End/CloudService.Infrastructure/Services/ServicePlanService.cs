@@ -22,12 +22,23 @@ namespace CloudService.Infrastructure.Services
             _configuration = configuration;
         }
 
-        public async Task<PagedResult<ServicePlanDto>> GetPagedAsync(int page, int pageSize, int? categoryId, string? search, string? sort)
+        public async Task<PagedResult<ServicePlanDto>> GetPagedAsync(
+            int page = 1,
+            int pageSize = 10,
+            int? categoryId = null,
+            string? search = null,
+            string? sort = null,
+            bool includeInactive = false)
         {
-            var query = _context.ServicePlans
+            var query = _context.ServicePlans.AsQueryable();
+            if (includeInactive)
+            {
+                query = query.IgnoreQueryFilters();
+            }
+
+            query = query
                 .Include(p => p.Category)
-                .Include(p => p.Prices)
-                .AsQueryable();
+                .Include(p => p.Prices);
 
             if (categoryId.HasValue)
             {
