@@ -81,6 +81,7 @@ namespace CloudService.Infrastructure.Services
             category.Name = request.Name;
             category.Slug = request.Slug;
             category.Description = request.Description;
+            category.IsActive = request.IsActive;
 
             await _context.SaveChangesAsync();
 

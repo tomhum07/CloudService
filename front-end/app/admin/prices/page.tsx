@@ -51,7 +51,8 @@ export default function PricesPage() {
   const [priceForm, setPriceForm] = useState({
     billingCycle: "Monthly",
     price: 0,
-    promotionId: "" as string | number
+    promotionId: "" as string | number,
+    isActive: true
   });
 
   const [promoForm, setPromoForm] = useState({
@@ -140,14 +141,16 @@ export default function PricesPage() {
       setPriceForm({
         billingCycle: price.billingCycle,
         price: price.price,
-        promotionId: price.promotionId || ""
+        promotionId: price.promotionId || "",
+        isActive: price.isActive
       });
     } else {
       setCurrentPrice(null);
       setPriceForm({
         billingCycle: "Monthly",
         price: 0,
-        promotionId: ""
+        promotionId: "",
+        isActive: true
       });
     }
     setIsPriceModalOpen(true);
@@ -169,7 +172,8 @@ export default function PricesPage() {
       const payload = {
         billingCycle: priceForm.billingCycle,
         price: Number(priceForm.price),
-        promotionId: priceForm.promotionId ? Number(priceForm.promotionId) : null
+        promotionId: priceForm.promotionId ? Number(priceForm.promotionId) : null,
+        isActive: priceForm.isActive
       };
 
       const res = await apiFetch(endpoint, {
@@ -198,15 +202,30 @@ export default function PricesPage() {
     setIsSubmitting(true);
     setFormError(null);
     try {
-      const res = await apiFetch(`/api/service-plans/${selectedPlanId}/prices/${currentPrice.id}`, {
-        method: "DELETE"
-      });
-      if (!res.ok) throw new Error("Failed to delete price");
+      let res;
+      if (currentPrice.isActive) {
+        // Ẩn bảng giá
+        res = await apiFetch(`/api/service-plans/${selectedPlanId}/prices/${currentPrice.id}`, {
+          method: "DELETE"
+        });
+      } else {
+        // Hiện bảng giá (PUT)
+        res = await apiFetch(`/api/service-plans/${selectedPlanId}/prices/${currentPrice.id}`, {
+          method: "PUT",
+          body: JSON.stringify({
+            billingCycle: currentPrice.billingCycle,
+            price: Number(currentPrice.price),
+            promotionId: currentPrice.promotionId ? Number(currentPrice.promotionId) : null,
+            isActive: true
+          })
+        });
+      }
+      if (!res.ok) throw new Error(currentPrice.isActive ? "Ẩn bảng giá thất bại" : "Kích hoạt lại bảng giá thất bại");
       
       setIsDeletePriceModalOpen(false);
       fetchPrices(selectedPlanId);
     } catch (err: any) {
-      setFormError(err.message || "Failed to delete price.");
+      setFormError(err.message || "Failed to toggle price visibility.");
     } finally {
       setIsSubmitting(false);
     }
@@ -314,21 +333,22 @@ export default function PricesPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-800/30 text-gray-400 text-xs uppercase tracking-wider">
-                  <th className="p-4 font-semibold">Billing Cycle</th>
-                  <th className="p-4 font-semibold">Price</th>
-                  <th className="p-4 font-semibold">Promotion</th>
-                  <th className="p-4 font-semibold">Final Price</th>
-                  <th className="p-4 font-semibold text-right">Actions</th>
+                  <th className="p-4 font-semibold">Chu kỳ thanh toán</th>
+                  <th className="p-4 font-semibold">Giá niêm yết</th>
+                  <th className="p-4 font-semibold">Khuyến mãi</th>
+                  <th className="p-4 font-semibold">Giá thực tế</th>
+                  <th className="p-4 font-semibold">Trạng thái</th>
+                  <th className="p-4 font-semibold text-right">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-800/50">
                 {isLoadingPrices ? (
                   <tr>
-                    <td colSpan={5} className="p-8 text-center text-gray-500">Loading prices...</td>
+                    <td colSpan={6} className="p-8 text-center text-gray-500">Đang tải bảng giá...</td>
                   </tr>
                 ) : prices.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="p-8 text-center text-gray-500">No prices configured for this plan.</td>
+                    <td colSpan={6} className="p-8 text-center text-gray-500">Chưa có bảng giá nào cho gói cước này.</td>
                   </tr>
                 ) : (
                   prices.map(price => {
@@ -350,22 +370,44 @@ export default function PricesPage() {
                           )}
                         </td>
                         <td className="p-4 text-green-400 font-semibold">{formatCurrency(finalPrice)}</td>
+                        <td className="p-4">
+                          {price.isActive !== false ? (
+                            <span className="px-2.5 py-1 text-xs rounded-md bg-green-950/30 text-green-400 border border-green-800/50 font-medium">Đang hiện</span>
+                          ) : (
+                            <span className="px-2.5 py-1 text-xs rounded-md bg-red-950/30 text-red-400 border border-red-800/50 font-medium">Đang ẩn</span>
+                          )}
+                        </td>
                         <td className="p-4 text-right">
                           <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button 
                               onClick={() => handleOpenPriceModal(price)}
                               className="p-1.5 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded-lg transition-colors"
-                              title="Edit"
+                              title="Sửa"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                             </button>
-                            <button 
-                              onClick={() => handleOpenDeletePrice(price)}
-                              className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors"
-                              title="Ẩn bảng giá"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                            </button>
+                            {price.isActive !== false ? (
+                              <button 
+                                onClick={() => handleOpenDeletePrice(price)}
+                                className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors"
+                                title="Ẩn bảng giá"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                                </svg>
+                              </button>
+                            ) : (
+                              <button 
+                                onClick={() => handleOpenDeletePrice(price)}
+                                className="p-1.5 text-green-400 hover:text-green-300 hover:bg-green-400/10 rounded-lg transition-colors"
+                                title="Hiện bảng giá"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -482,6 +524,19 @@ export default function PricesPage() {
                 </select>
               </div>
 
+              {currentPrice && (
+                <div className="flex items-center gap-2 mt-4">
+                  <input 
+                    type="checkbox" 
+                    id="priceIsActive" 
+                    checked={priceForm.isActive} 
+                    onChange={(e) => setPriceForm({...priceForm, isActive: e.target.checked})} 
+                    className="w-4 h-4 text-blue-600 bg-gray-900 border-gray-700 rounded focus:ring-blue-500 focus:ring-2" 
+                  />
+                  <label htmlFor="priceIsActive" className="text-sm font-medium text-gray-300">Hiển thị bảng giá</label>
+                </div>
+              )}
+
               <div className="flex gap-3 pt-4 mt-6">
                 <button 
                   type="button" 
@@ -506,12 +561,16 @@ export default function PricesPage() {
       {/* Delete Price Confirmation Modal */}
       {isDeletePriceModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="glassmorphism w-full max-w-md rounded-2xl border border-red-900/50 shadow-2xl p-6 animate-in fade-in zoom-in duration-200">
-            <div className="flex items-center gap-4 mb-4 text-red-400">
-              <div className="p-3 bg-red-500/10 rounded-full">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+          <div className={`glassmorphism w-full max-w-md rounded-2xl border shadow-2xl p-6 animate-in fade-in zoom-in duration-200 ${currentPrice?.isActive ? 'border-red-900/50' : 'border-green-900/50'}`}>
+            <div className={`flex items-center gap-4 mb-4 ${currentPrice?.isActive ? 'text-red-400' : 'text-green-400'}`}>
+              <div className={`p-3 rounded-full ${currentPrice?.isActive ? 'bg-red-500/10' : 'bg-green-500/10'}`}>
+                {currentPrice?.isActive ? (
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                ) : (
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                )}
               </div>
-              <h2 className="text-2xl font-bold text-white">Ẩn Bảng giá?</h2>
+              <h2 className="text-2xl font-bold text-white">{currentPrice?.isActive ? "Ẩn Bảng giá?" : "Hiện Bảng giá?"}</h2>
             </div>
             
             {formError && (
@@ -521,7 +580,11 @@ export default function PricesPage() {
             )}
             
             <p className="text-gray-300 mb-6">
-              Bạn có chắc chắn muốn ẩn bảng giá chu kỳ <span className="font-semibold text-white">{currentPrice?.billingCycle}</span> này?
+              {currentPrice?.isActive ? (
+                `Bạn có chắc chắn muốn ẩn bảng giá chu kỳ ${currentPrice?.billingCycle} này?`
+              ) : (
+                `Bạn có chắc chắn muốn hiển thị lại bảng giá chu kỳ ${currentPrice?.billingCycle} này?`
+              )}
             </p>
             
             <div className="flex gap-3">
@@ -536,9 +599,9 @@ export default function PricesPage() {
                 type="button" 
                 onClick={handleDeletePrice}
                 disabled={isSubmitting}
-                className="flex-1 px-4 py-3 rounded-xl bg-red-600 hover:bg-red-500 disabled:bg-red-800 disabled:opacity-50 text-white font-medium transition-colors shadow-[0_0_15px_rgba(220,38,38,0.3)]"
+                className={`flex-1 px-4 py-3 rounded-xl text-white font-medium transition-colors shadow-lg ${currentPrice?.isActive ? 'bg-red-600 hover:bg-red-500 shadow-red-950/30' : 'bg-green-600 hover:bg-green-500 shadow-green-950/30'}`}
               >
-                {isSubmitting ? "Đang ẩn..." : "Đồng ý Ẩn"}
+                {isSubmitting ? (currentPrice?.isActive ? "Đang ẩn..." : "Đang hiện...") : (currentPrice?.isActive ? "Đồng ý Ẩn" : "Đồng ý Hiện")}
               </button>
             </div>
           </div>

@@ -42,7 +42,8 @@ export default function PlansPage() {
     cpu: "",
     ram: "",
     storage: "",
-    bandwidth: ""
+    bandwidth: "",
+    isActive: true
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -104,7 +105,8 @@ export default function PlansPage() {
         cpu: plan.cpu || "",
         ram: plan.ram || "",
         storage: plan.storage || "",
-        bandwidth: plan.bandwidth || ""
+        bandwidth: plan.bandwidth || "",
+        isActive: plan.isActive !== false
       });
     } else {
       setCurrentPlan(null);
@@ -115,7 +117,8 @@ export default function PlansPage() {
         cpu: "",
         ram: "",
         storage: "",
-        bandwidth: ""
+        bandwidth: "",
+        isActive: true
       });
     }
     setIsFormModalOpen(true);
@@ -168,15 +171,33 @@ export default function PlansPage() {
     setIsSubmitting(true);
     setFormError(null);
     try {
-      const res = await apiFetch(`/api/service-plans/${currentPlan.id}`, {
-        method: "DELETE"
-      });
-      if (!res.ok) throw new Error("Failed to delete service plan");
+      let res;
+      if (currentPlan.isActive !== false) {
+        // Ẩn gói cước
+        res = await apiFetch(`/api/service-plans/${currentPlan.id}`, {
+          method: "DELETE"
+        });
+      } else {
+        // Hiện gói cước (PUT)
+        res = await apiFetch(`/api/service-plans/${currentPlan.id}`, {
+          method: "PUT",
+          body: JSON.stringify({
+            name: currentPlan.name,
+            description: currentPlan.description || "",
+            cpu: currentPlan.cpu || "",
+            ram: currentPlan.ram || "",
+            storage: currentPlan.storage || "",
+            bandwidth: currentPlan.bandwidth || "",
+            isActive: true
+          })
+        });
+      }
+      if (!res.ok) throw new Error(currentPlan.isActive !== false ? "Ẩn gói cước thất bại" : "Kích hoạt lại gói cước thất bại");
       
       handleCloseDeleteModal();
       fetchPlans();
     } catch (err: any) {
-      setFormError(err.message || "Failed to delete service plan.");
+      setFormError(err.message || "Failed to toggle service plan visibility.");
     } finally {
       setIsSubmitting(false);
     }
@@ -329,26 +350,43 @@ export default function PlansPage() {
                       </div>
                     </td>
                     <td className="p-5">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium border ${plan.isActive !== false ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
-                        {plan.isActive !== false ? 'Active' : 'Inactive'}
-                      </span>
+                      {plan.isActive !== false ? (
+                        <span className="px-2.5 py-1 text-xs rounded-md bg-green-950/30 text-green-400 border border-green-800/50 font-medium">Đang hiện</span>
+                      ) : (
+                        <span className="px-2.5 py-1 text-xs rounded-md bg-red-950/30 text-red-400 border border-red-800/50 font-medium">Đang ẩn</span>
+                      )}
                     </td>
                     <td className="p-5 text-right">
                       <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
                           onClick={() => handleOpenFormModal(plan)}
                           className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded-lg transition-colors"
-                          title="Edit"
+                          title="Sửa"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                         </button>
-                        <button 
-                          onClick={() => handleOpenDeleteModal(plan)}
-                          className="p-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors"
-                          title="Ẩn gói cước"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                        </button>
+                        {plan.isActive !== false ? (
+                          <button 
+                            onClick={() => handleOpenDeleteModal(plan)}
+                            className="p-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors"
+                            title="Ẩn gói cước"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                            </svg>
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={() => handleOpenDeleteModal(plan)}
+                            className="p-2 text-green-400 hover:text-green-300 hover:bg-green-400/10 rounded-lg transition-colors"
+                            title="Hiện gói cước"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -455,6 +493,19 @@ export default function PlansPage() {
                 </div>
               </div>
               
+              {currentPlan && (
+                <div className="flex items-center gap-2 mt-4">
+                  <input 
+                    type="checkbox" 
+                    id="planIsActive" 
+                    checked={formData.isActive} 
+                    onChange={(e) => setFormData({...formData, isActive: e.target.checked})} 
+                    className="w-4 h-4 text-blue-600 bg-gray-900 border-gray-700 rounded focus:ring-blue-500 focus:ring-2" 
+                  />
+                  <label htmlFor="planIsActive" className="text-sm font-medium text-gray-300">Hiển thị gói cước</label>
+                </div>
+              )}
+              
               <div className="flex gap-3 pt-4 mt-6">
                 <button 
                   type="button" 
@@ -476,15 +527,19 @@ export default function PlansPage() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete/Hide Confirmation Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="glassmorphism w-full max-w-md rounded-2xl border border-red-900/50 shadow-2xl p-6 animate-in fade-in zoom-in duration-200">
-            <div className="flex items-center gap-4 mb-4 text-red-400">
-              <div className="p-3 bg-red-500/10 rounded-full">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+          <div className={`glassmorphism w-full max-w-md rounded-2xl border shadow-2xl p-6 animate-in fade-in zoom-in duration-200 ${currentPlan?.isActive !== false ? 'border-red-900/50' : 'border-green-900/50'}`}>
+            <div className={`flex items-center gap-4 mb-4 ${currentPlan?.isActive !== false ? 'text-red-400' : 'text-green-400'}`}>
+              <div className={`p-3 rounded-full ${currentPlan?.isActive !== false ? 'bg-red-500/10' : 'bg-green-500/10'}`}>
+                {currentPlan?.isActive !== false ? (
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                ) : (
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                )}
               </div>
-              <h2 className="text-2xl font-bold text-white">Ẩn Gói cước?</h2>
+              <h2 className="text-2xl font-bold text-white">{currentPlan?.isActive !== false ? "Ẩn Gói cước?" : "Hiện Gói cước?"}</h2>
             </div>
             
             {formError && (
@@ -493,11 +548,22 @@ export default function PlansPage() {
               </div>
             )}
             
-            <div className="mb-6 bg-red-900/20 border border-red-800/30 p-4 rounded-xl">
-              <p className="text-red-200 font-medium">Cảnh báo: Hành động này sẽ đồng thời ẩn toàn bộ bảng giá của gói cước này!</p>
-              <p className="text-gray-400 text-sm mt-2">
-                Bạn có chắc chắn muốn ẩn gói cước <span className="text-white font-semibold">{currentPlan?.name}</span>?
-              </p>
+            <div className={`mb-6 p-4 rounded-xl ${currentPlan?.isActive !== false ? 'bg-red-900/20 border border-red-800/30' : 'bg-green-900/20 border border-green-800/30'}`}>
+              {currentPlan?.isActive !== false ? (
+                <>
+                  <p className="text-red-200 font-medium">Cảnh báo: Hành động này sẽ đồng thời ẩn toàn bộ bảng giá của gói cước này!</p>
+                  <p className="text-gray-400 text-sm mt-2">
+                    Bạn có chắc chắn muốn ẩn gói cước <span className="text-white font-semibold">{currentPlan?.name}</span>?
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-green-200 font-medium">Hành động này sẽ hiển thị lại gói cước này trên trang dịch vụ!</p>
+                  <p className="text-gray-400 text-sm mt-2">
+                    Bạn có chắc chắn muốn hiển thị lại gói cước <span className="text-white font-semibold">{currentPlan?.name}</span>?
+                  </p>
+                </>
+              )}
             </div>
             
             <div className="flex gap-3">
@@ -512,9 +578,9 @@ export default function PlansPage() {
                 type="button" 
                 onClick={handleDelete}
                 disabled={isSubmitting}
-                className="flex-1 px-4 py-3 rounded-xl bg-red-600 hover:bg-red-500 disabled:bg-red-800 disabled:opacity-50 text-white font-medium transition-colors shadow-[0_0_15px_rgba(220,38,38,0.3)]"
+                className={`flex-1 px-4 py-3 rounded-xl text-white font-medium transition-colors shadow-lg ${currentPlan?.isActive !== false ? 'bg-red-600 hover:bg-red-500 shadow-red-950/30' : 'bg-green-600 hover:bg-green-500 shadow-green-950/30'}`}
               >
-                {isSubmitting ? "Đang ẩn..." : "Đồng ý Ẩn"}
+                {isSubmitting ? (currentPlan?.isActive !== false ? "Đang ẩn..." : "Đang hiện...") : (currentPlan?.isActive !== false ? "Đồng ý Ẩn" : "Đồng ý Hiện")}
               </button>
             </div>
           </div>

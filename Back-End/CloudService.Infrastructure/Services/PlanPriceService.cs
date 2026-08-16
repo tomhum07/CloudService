@@ -66,6 +66,7 @@ namespace CloudService.Infrastructure.Services
             planPrice.BillingCycle = request.BillingCycle;
             planPrice.Price = request.Price;
             planPrice.PromotionId = request.PromotionId;
+            planPrice.IsActive = request.IsActive;
 
             await _context.SaveChangesAsync();
 

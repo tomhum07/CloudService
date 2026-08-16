@@ -187,6 +187,7 @@ namespace CloudService.Infrastructure.Services
             plan.Ram = request.Ram;
             plan.Storage = request.Storage;
             plan.Bandwidth = request.Bandwidth;
+            plan.IsActive = request.IsActive;
             plan.LastModifiedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();

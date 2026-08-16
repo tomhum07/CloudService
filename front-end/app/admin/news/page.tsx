@@ -36,6 +36,7 @@ export default function AdminNewsPage() {
   const [summary, setSummary] = useState("");
   const [content, setContent] = useState("");
   const [categoryName, setCategoryName] = useState("Tin Tức");
+  const [isActive, setIsActive] = useState(true);
 
   // Load News from API
   const fetchNews = async () => {
@@ -68,15 +69,17 @@ export default function AdminNewsPage() {
     setSummary("");
     setContent("");
     setCategoryName("Tin Tức");
+    setIsActive(true);
     setShowModal(true);
   };
 
   const openEditModal = (article: any) => {
     setEditingArticle(article);
-    setTitle(article.title || "");
+    setTitle(article.title);
     setSummary(article.summary || "");
-    setContent(article.content || "");
+    setContent(article.content);
     setCategoryName(article.categoryName || "Tin Tức");
+    setIsActive(article.isActive !== false);
     setShowModal(true);
   };
 
@@ -92,7 +95,8 @@ export default function AdminNewsPage() {
       summary,
       content,
       categoryName,
-      slug: title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "")
+      slug: title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, ""),
+      isActive
     };
 
     try {
@@ -141,22 +145,41 @@ export default function AdminNewsPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Bạn có chắc chắn muốn ẩn bài viết này không?")) return;
+    const art = articles.find(a => a.id === id);
+    if (!art) return;
+    const isCurrentlyActive = art.isActive !== false;
+
+    if (!confirm(isCurrentlyActive ? "Bạn có chắc chắn muốn ẩn bài viết này không?" : "Bạn có chắc chắn muốn hiển thị lại bài viết này không?")) return;
 
     try {
-      const res = await apiFetch(`/api/news/${id}`, {
-        method: "DELETE"
-      });
+      let res;
+      if (isCurrentlyActive) {
+        res = await apiFetch(`/api/news/${id}`, {
+          method: "DELETE"
+        });
+      } else {
+        res = await apiFetch(`/api/news/${id}`, {
+          method: "PUT",
+          body: JSON.stringify({
+            title: art.title,
+            summary: art.summary,
+            content: art.content,
+            categoryName: art.categoryName || "Tin Tức",
+            slug: art.slug || art.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, ""),
+            isActive: true
+          })
+        });
+      }
       if (res.ok) {
-        alert("Ẩn bài viết thành công!");
+        alert(isCurrentlyActive ? "Ẩn bài viết thành công!" : "Hiển thị lại bài viết thành công!");
         fetchNews();
       } else {
-        setArticles(prev => prev.filter(art => art.id !== id));
-        alert("Ẩn thành công (Chế độ lưu trữ tạm thời).");
+        setArticles(prev => prev.map(a => a.id === id ? { ...a, isActive: !isCurrentlyActive } : a));
+        alert(isCurrentlyActive ? "Ẩn thành công (Chế độ lưu trữ tạm thời)." : "Hiện thành công (Chế độ lưu trữ tạm thời).");
       }
     } catch (err) {
       console.error(err);
-      alert("Đã xảy ra lỗi khi ẩn bài viết.");
+      alert("Đã xảy ra lỗi khi cập nhật trạng thái bài viết.");
     }
   };
 
@@ -193,6 +216,7 @@ export default function AdminNewsPage() {
                   <th className="pb-3">Tiêu đề bài viết</th>
                   <th className="pb-3">Danh mục</th>
                   <th className="pb-3">Ngày đăng</th>
+                  <th className="pb-3">Trạng thái</th>
                   <th className="pb-3 text-right">Thao tác</th>
                 </tr>
               </thead>
@@ -210,6 +234,13 @@ export default function AdminNewsPage() {
                     <td className="py-3.5 text-slate-500">
                       {new Date(art.createdAt).toLocaleDateString("vi-VN")}
                     </td>
+                    <td className="py-3.5">
+                      {art.isActive !== false ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-green-500/10 text-green-400 border border-green-500/20">Đang hiện</span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-red-500/10 text-red-400 border border-red-500/20">Đang ẩn</span>
+                      )}
+                    </td>
                     <td className="py-3.5 text-right space-x-2">
                       <button
                         onClick={() => openEditModal(art)}
@@ -217,13 +248,23 @@ export default function AdminNewsPage() {
                       >
                         Sửa
                       </button>
-                      <button
-                        onClick={() => handleDelete(art.id)}
-                        className="px-2.5 py-1.5 bg-slate-850 hover:bg-slate-800 border border-white/5 text-[10px] font-semibold rounded text-red-400 transition-colors"
-                        title="Ẩn bài viết"
-                      >
-                        Ẩn
-                      </button>
+                      {art.isActive !== false ? (
+                        <button
+                          onClick={() => handleDelete(art.id)}
+                          className="px-2.5 py-1.5 bg-slate-850 hover:bg-slate-800 border border-white/5 text-[10px] font-semibold rounded text-red-400 transition-colors"
+                          title="Ẩn bài viết"
+                        >
+                          Ẩn
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleDelete(art.id)}
+                          className="px-2.5 py-1.5 bg-slate-850 hover:bg-slate-800 border border-white/5 text-[10px] font-semibold rounded text-green-400 transition-colors"
+                          title="Hiện bài viết"
+                        >
+                          Hiện
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -301,6 +342,19 @@ export default function AdminNewsPage() {
                   className="w-full px-4 py-2 bg-slate-950 border border-white/10 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
                 />
               </div>
+
+              {editingArticle && (
+                <div className="flex items-center gap-2 mt-4">
+                  <input
+                    type="checkbox"
+                    id="newsIsActive"
+                    checked={isActive}
+                    onChange={(e) => setIsActive(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 bg-slate-950 border-white/10 rounded focus:ring-blue-500 focus:ring-2"
+                  />
+                  <label htmlFor="newsIsActive" className="text-xs font-semibold text-slate-300">Hiển thị bài viết</label>
+                </div>
+              )}
 
               <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
                 <button

@@ -156,6 +156,7 @@ namespace CloudService.Infrastructure.Services
             article.Summary = request.Summary;
             article.Content = request.Content;
             article.PublishedAt = request.PublishedAt;
+            article.IsActive = request.IsActive;
 
             await _context.SaveChangesAsync();
 

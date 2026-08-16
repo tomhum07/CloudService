@@ -9,5 +9,6 @@ namespace CloudService.Application.DTOs.News
         public string? Summary { get; set; }
         public string Content { get; set; } = string.Empty;
         public DateTime? PublishedAt { get; set; }
+        public bool IsActive { get; set; } = true;
     }
 }

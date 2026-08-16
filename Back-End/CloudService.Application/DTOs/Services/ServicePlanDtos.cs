@@ -37,5 +37,6 @@ namespace CloudService.Application.DTOs.Services
         public string? Ram { get; set; }
         public string? Storage { get; set; }
         public string? Bandwidth { get; set; }
+        public bool IsActive { get; set; } = true;
     }
 }
