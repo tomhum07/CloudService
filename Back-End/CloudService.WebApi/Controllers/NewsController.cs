@@ -56,10 +56,20 @@ public async Task<ActionResult<PagedNewsResult>> GetAll(
         }
 
         [HttpPost]
-[Authorize(Roles = "Admin,Editor")]
-public async Task<ActionResult<NewsArticleDto>> Create(
+        [Authorize(Roles = "Admin,Editor")]
+        public async Task<ActionResult<NewsArticleDto>> Create(
             [FromBody] CreateNewsArticleRequest request)
         {
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(userIdClaim, out var userId))
+            {
+                request.AuthorId = userId;
+            }
+            else
+            {
+                return Unauthorized(new { message = "Không xác định được danh tính người viết bài." });
+            }
+
             var article = await _newsArticleService.CreateAsync(request);
 
             return CreatedAtAction(
