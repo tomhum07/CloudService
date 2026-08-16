@@ -43,7 +43,7 @@ namespace CloudService.Infrastructure.Services
 
         query = query.Where(x =>
             x.Title.Contains(search) ||
-            x.Summary.Contains(search) ||
+            (x.Summary != null && x.Summary.Contains(search)) ||
             x.Content.Contains(search));
     }
 
@@ -170,8 +170,7 @@ namespace CloudService.Infrastructure.Services
             if (article == null)
                 return false;
 
-            _context.NewsArticles.Remove(article);
-
+            article.IsActive = false;
             await _context.SaveChangesAsync();
 
             return true;

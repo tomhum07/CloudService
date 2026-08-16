@@ -1,11 +1,12 @@
 using CloudService.Application.DTOs.Testimonial;
 using CloudService.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CloudService.WebApi.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/testimonials")]
     public class TestimonialsController : ControllerBase
     {
         private readonly ITestimonialService _service;
@@ -33,6 +34,7 @@ namespace CloudService.WebApi.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Editor")]
         public async Task<ActionResult<TestimonialDto>> Create(
             CreateTestimonialRequest request)
         {
@@ -45,6 +47,7 @@ namespace CloudService.WebApi.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,Editor")]
         public async Task<ActionResult<TestimonialDto>> Update(
             int id,
             UpdateTestimonialRequest request)
@@ -58,6 +61,7 @@ namespace CloudService.WebApi.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin,Editor")]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _service.DeleteAsync(id);
