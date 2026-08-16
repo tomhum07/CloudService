@@ -63,7 +63,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (checking) {
     return (
-      <div className="min-h-screen bg-[#030712] flex items-center justify-center">
+      <div className="min-h-screen bg-[#0b0f19] flex items-center justify-center">
         <span className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></span>
       </div>
     );
@@ -74,6 +74,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { label: "Quản lý Danh mục", href: "/admin/categories", icon: "📂" },
     { label: "Quản lý Gói cước", href: "/admin/plans", icon: "📦" },
     { label: "Bảng giá & Khuyến mãi", href: "/admin/prices", icon: "💰" },
+    { label: "Duyệt Đơn & CTV", href: "/admin/orders", icon: "🛒" },
+    { label: "Quản lý Tin tức", href: "/admin/news", icon: "📰" },
+    { label: "Nhật ký hệ thống", href: "/admin/audit-logs", icon: "📜" },
   ];
 
   if (role === "Admin") {
@@ -83,11 +86,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   navLinks.push({ label: "Đổi mật khẩu", href: "/admin/change-password", icon: "🔑" });
 
   return (
-    <div className="min-h-screen bg-[#030712] text-white flex overflow-hidden">
+    <div className="min-h-screen bg-[#0b0f19] text-white flex overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-64 border-r border-white/5 bg-[#030712]/50 backdrop-blur-xl flex-col hidden md:flex z-20">
-        <div className="p-6 border-b border-white/5">
-          <h2 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+      <aside className="w-64 border-r border-white/10 bg-[#0b0f19] flex-col hidden md:flex z-20">
+        <div className="p-6 border-b border-white/10">
+          <h2 className="text-xl font-bold text-blue-400">
             CloudAdmin
           </h2>
           <p className="text-xs text-gray-400 mt-1">Management Portal</p>
@@ -113,7 +116,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           })}
         </nav>
 
-        <div className="p-4 border-t border-white/5">
+        <div className="p-4 border-t border-white/10">
           <button
             onClick={handleLogout}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 text-red-400 text-sm font-medium border border-red-500/20 hover:bg-red-500/20 transition-all"
@@ -127,8 +130,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* Mobile Header (Visible only on small screens) */}
-        <header className="md:hidden p-4 border-b border-white/5 flex justify-between items-center bg-[#030712]/80 backdrop-blur-md z-20">
-          <h2 className="text-lg font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+        <header className="md:hidden p-4 border-b border-white/10 flex justify-between items-center bg-[#0b0f19] z-20">
+          <h2 className="text-lg font-bold text-blue-400">
             CloudAdmin
           </h2>
           <button
@@ -140,7 +143,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
         
         {/* Mobile Navigation (Horizontal scroll) */}
-        <nav className="md:hidden flex overflow-x-auto p-3 gap-2 border-b border-white/5 bg-[#030712]/50 no-scrollbar">
+        <nav className="md:hidden flex overflow-x-auto p-3 gap-2 border-b border-white/10 bg-[#0b0f19] no-scrollbar">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
@@ -161,7 +164,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </nav>
 
         {/* Page Content */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar bg-[#0f172a]/20">
           {children}
         </div>
       </main>
