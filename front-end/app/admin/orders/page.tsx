@@ -19,6 +19,12 @@ export default function AdminOrdersPage() {
   const [activeTab, setActiveTab] = useState<"orders" | "partners">("orders");
   const [orders, setOrders] = useState(INITIAL_ORDERS);
   const [partners, setPartners] = useState(INITIAL_PARTNERS);
+  const [ordersPage, setOrdersPage] = useState(1);
+  const [partnersPage, setPartnersPage] = useState(1);
+  const ordersPerPage = 8;
+  const partnersPerPage = 8;
+  const totalOrderPages = Math.ceil(orders.length / ordersPerPage) || 1;
+  const totalPartnerPages = Math.ceil(partners.length / partnersPerPage) || 1;
 
   // Tab 1: Orders Approval Actions
   const handleOrderStatus = (id: number, newStatus: "Hoàn tất" | "Đã hủy") => {
@@ -139,7 +145,7 @@ export default function AdminOrdersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5 text-slate-300">
-                {orders.map((ord) => (
+                {orders.slice((ordersPage - 1) * ordersPerPage, ordersPage * ordersPerPage).map((ord) => (
                   <tr key={ord.id} className="hover:bg-white/5 transition-colors">
                     <td className="py-3.5 font-mono font-bold text-slate-200">{ord.code}</td>
                     <td className="py-3.5">{ord.client}</td>
@@ -181,6 +187,17 @@ export default function AdminOrdersPage() {
                 ))}
               </tbody>
             </table>
+            {totalOrderPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 border-t border-white/5 text-slate-400 text-xs">
+                <div>Trang {ordersPage}/{totalOrderPages} — {orders.length} đơn hàng</div>
+                <div className="flex gap-2">
+                  <button type="button" disabled={ordersPage === 1} onClick={() => setOrdersPage(1)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Đầu</button>
+                  <button type="button" disabled={ordersPage === 1} onClick={() => setOrdersPage(p => p - 1)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Trước</button>
+                  <button type="button" disabled={ordersPage === totalOrderPages} onClick={() => setOrdersPage(p => p + 1)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Sau</button>
+                  <button type="button" disabled={ordersPage === totalOrderPages} onClick={() => setOrdersPage(totalOrderPages)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Cuối</button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -201,7 +218,7 @@ export default function AdminOrdersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5 text-slate-300">
-                {partners.map((part) => (
+                {partners.slice((partnersPage - 1) * partnersPerPage, partnersPage * partnersPerPage).map((part) => (
                   <tr key={part.id} className="hover:bg-white/5 transition-colors">
                     <td className="py-3.5 font-bold text-slate-200">
                       {part.name}
@@ -245,6 +262,17 @@ export default function AdminOrdersPage() {
                 ))}
               </tbody>
             </table>
+            {totalPartnerPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 border-t border-white/5 text-slate-400 text-xs">
+                <div>Trang {partnersPage}/{totalPartnerPages} — {partners.length} CTV</div>
+                <div className="flex gap-2">
+                  <button type="button" disabled={partnersPage === 1} onClick={() => setPartnersPage(1)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Đầu</button>
+                  <button type="button" disabled={partnersPage === 1} onClick={() => setPartnersPage(p => p - 1)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Trước</button>
+                  <button type="button" disabled={partnersPage === totalPartnerPages} onClick={() => setPartnersPage(p => p + 1)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Sau</button>
+                  <button type="button" disabled={partnersPage === totalPartnerPages} onClick={() => setPartnersPage(totalPartnerPages)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Cuối</button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

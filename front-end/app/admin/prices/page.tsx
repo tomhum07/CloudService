@@ -39,6 +39,10 @@ export default function PricesPage() {
   const [isLoadingPrices, setIsLoadingPrices] = useState(false);
   const [isLoadingPromotions, setIsLoadingPromotions] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+  const totalPriceItems = prices.length;
+  const totalPricePages = Math.ceil(totalPriceItems / itemsPerPage) || 1;
 
   // Modals state
   const [isPriceModalOpen, setIsPriceModalOpen] = useState(false);
@@ -351,7 +355,7 @@ export default function PricesPage() {
                     <td colSpan={6} className="p-8 text-center text-gray-500">Chưa có bảng giá nào cho gói cước này.</td>
                   </tr>
                 ) : (
-                  prices.map(price => {
+                  prices.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(price => {
                     const finalPrice = price.discountPercentage 
                       ? price.price * (1 - price.discountPercentage / 100)
                       : price.price;
@@ -416,6 +420,20 @@ export default function PricesPage() {
                 )}
               </tbody>
             </table>
+            {totalPricePages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t border-gray-800 text-gray-400 text-xs sm:text-sm bg-gray-900/10">
+                <div>
+                  Hiển thị <span className="text-white font-medium">{Math.min((currentPage - 1) * itemsPerPage + 1, totalPriceItems)}</span> đến <span className="text-white font-medium">{Math.min(currentPage * itemsPerPage, totalPriceItems)}</span> trong số <span className="text-white font-medium">{totalPriceItems}</span> bảng giá
+                </div>
+                <div className="flex gap-2">
+                  <button type="button" disabled={currentPage === 1} onClick={() => setCurrentPage(1)} className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-30 text-white font-medium transition-colors">Đầu</button>
+                  <button type="button" disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)} className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-30 text-white font-medium transition-colors">Trước</button>
+                  <span className="px-3 py-1.5 rounded-lg bg-gray-900 border border-gray-800 text-white font-semibold">Trang {currentPage} / {totalPricePages}</span>
+                  <button type="button" disabled={currentPage === totalPricePages} onClick={() => setCurrentPage(prev => prev + 1)} className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-30 text-white font-medium transition-colors">Sau</button>
+                  <button type="button" disabled={currentPage === totalPricePages} onClick={() => setCurrentPage(totalPricePages)} className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-30 text-white font-medium transition-colors">Cuối</button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

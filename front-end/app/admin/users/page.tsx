@@ -17,6 +17,9 @@ export default function UsersPage() {
   const [users, setUsers] = useState<UserDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+  const totalPages = Math.ceil(users.length / itemsPerPage) || 1;
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -284,7 +287,7 @@ export default function UsersPage() {
                   <td colSpan={6} className="p-8 text-center text-gray-500">No users found. Create one to get started.</td>
                 </tr>
               ) : (
-                users.map((user) => (
+                users.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((user) => (
                   <tr key={user.id} className="hover:bg-gray-800/30 transition-colors group">
                     <td className="p-5 text-gray-200 font-medium">
                       {user.username}
@@ -296,7 +299,11 @@ export default function UsersPage() {
                       {user.email}
                     </td>
                     <td className="p-5">
-                      <span className={`px-3 py-1 rounded-md text-sm font-mono border ${user.role === 'Admin' ? 'bg-purple-900/20 text-purple-400 border-purple-700' : 'bg-gray-800 text-gray-400 border-gray-700'}`}>
+                      <span className={`px-3 py-1 rounded-md text-sm font-mono border ${
+                        user.role === 'Admin' ? 'bg-purple-900/20 text-purple-400 border-purple-700'
+                        : user.role === 'Customer' ? 'bg-blue-900/20 text-blue-400 border-blue-700'
+                        : 'bg-gray-800 text-gray-400 border-gray-700'
+                      }`}>
                         {user.role}
                       </span>
                     </td>
@@ -304,7 +311,10 @@ export default function UsersPage() {
                       {user.isActive ? (
                         <span className="px-3 py-1 bg-green-900/20 text-green-400 rounded-md text-sm font-mono border border-green-700/50">Active</span>
                       ) : (
-                        <span className="px-3 py-1 bg-red-900/20 text-red-400 rounded-md text-sm font-mono border border-red-700/50">Inactive</span>
+                        <span className="px-3 py-1 bg-red-900/20 text-red-400 rounded-md text-sm font-mono border border-red-700/50 flex items-center gap-1.5 w-fit">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                          Bị khóa
+                        </span>
                       )}
                     </td>
                     <td className="p-5 text-right">
@@ -349,10 +359,21 @@ export default function UsersPage() {
                   </tr>
                 ))
               )}
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+            {totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t border-gray-800 text-gray-400 text-xs sm:text-sm bg-gray-900/10">
+                <div>Trang {currentPage}/{totalPages} — Tổng {users.length} tài khoản</div>
+                <div className="flex gap-2">
+                  <button type="button" disabled={currentPage === 1} onClick={() => setCurrentPage(1)} className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-30 text-white font-medium transition-colors">Đầu</button>
+                  <button type="button" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-30 text-white font-medium transition-colors">Trước</button>
+                  <button type="button" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-30 text-white font-medium transition-colors">Sau</button>
+                  <button type="button" disabled={currentPage === totalPages} onClick={() => setCurrentPage(totalPages)} className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-30 text-white font-medium transition-colors">Cuối</button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
       {/* Add Modal */}
       {isAddModalOpen && (

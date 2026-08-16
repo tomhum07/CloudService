@@ -26,6 +26,9 @@ const INITIAL_MOCK_NEWS = [
 export default function AdminNewsPage() {
   const [articles, setArticles] = useState<any[]>(INITIAL_MOCK_NEWS);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+  const totalPages = Math.ceil(articles.length / itemsPerPage) || 1;
   
   // Form/Modal states
   const [showModal, setShowModal] = useState(false);
@@ -221,7 +224,7 @@ export default function AdminNewsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5 text-slate-300">
-                {articles.map((art) => (
+                {articles.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((art) => (
                   <tr key={art.id} className="hover:bg-white/5 transition-colors">
                     <td className="py-3.5 pr-4 max-w-sm truncate font-bold text-slate-200">
                       {art.title}
@@ -270,6 +273,17 @@ export default function AdminNewsPage() {
                 ))}
               </tbody>
             </table>
+            {totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 border-t border-white/5 text-slate-400 text-xs">
+                <div>Trang {currentPage}/{totalPages} — {articles.length} bài viết</div>
+                <div className="flex gap-2">
+                  <button type="button" disabled={currentPage === 1} onClick={() => setCurrentPage(1)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Đầu</button>
+                  <button type="button" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Trước</button>
+                  <button type="button" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Sau</button>
+                  <button type="button" disabled={currentPage === totalPages} onClick={() => setCurrentPage(totalPages)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Cuối</button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
