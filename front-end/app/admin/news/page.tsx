@@ -141,22 +141,22 @@ export default function AdminNewsPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Bạn có chắc chắn muốn xóa bài viết này không?")) return;
+    if (!confirm("Bạn có chắc chắn muốn ẩn bài viết này không?")) return;
 
     try {
       const res = await apiFetch(`/api/news/${id}`, {
         method: "DELETE"
       });
       if (res.ok) {
-        alert("Xóa bài viết thành công!");
+        alert("Ẩn bài viết thành công!");
         fetchNews();
       } else {
         setArticles(prev => prev.filter(art => art.id !== id));
-        alert("Xóa thành công (Chế độ lưu trữ tạm thời).");
+        alert("Ẩn thành công (Chế độ lưu trữ tạm thời).");
       }
     } catch (err) {
       console.error(err);
-      alert("Đã xảy ra lỗi khi xóa bài viết.");
+      alert("Đã xảy ra lỗi khi ẩn bài viết.");
     }
   };
 
@@ -220,8 +220,9 @@ export default function AdminNewsPage() {
                       <button
                         onClick={() => handleDelete(art.id)}
                         className="px-2.5 py-1.5 bg-slate-850 hover:bg-slate-800 border border-white/5 text-[10px] font-semibold rounded text-red-400 transition-colors"
+                        title="Ẩn bài viết"
                       >
-                        Xóa
+                        Ẩn
                       </button>
                     </td>
                   </tr>

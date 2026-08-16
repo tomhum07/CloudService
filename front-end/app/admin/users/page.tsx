@@ -98,8 +98,17 @@ export default function UsersPage() {
         }),
       });
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || "Failed to create user");
+        let errMsg = "Đã xảy ra lỗi khi tạo tài khoản.";
+        try {
+          const errData = await res.json();
+          errMsg = errData.message || errData.error || (errData.errors ? Object.values(errData.errors).flat().join(", ") : "") || errMsg;
+        } catch {
+          try {
+            const txt = await res.text();
+            if (txt) errMsg = txt;
+          } catch {}
+        }
+        throw new Error(errMsg);
       }
       setIsAddModalOpen(false);
       fetchUsers();
@@ -121,8 +130,17 @@ export default function UsersPage() {
         body: JSON.stringify(editForm),
       });
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || "Failed to update user");
+        let errMsg = "Đã xảy ra lỗi khi cập nhật tài khoản.";
+        try {
+          const errData = await res.json();
+          errMsg = errData.message || errData.error || (errData.errors ? Object.values(errData.errors).flat().join(", ") : "") || errMsg;
+        } catch {
+          try {
+            const txt = await res.text();
+            if (txt) errMsg = txt;
+          } catch {}
+        }
+        throw new Error(errMsg);
       }
       setIsEditModalOpen(false);
       fetchUsers();
@@ -138,17 +156,41 @@ export default function UsersPage() {
     setIsSubmitting(true);
     setFormError(null);
     try {
-      const res = await apiFetch(`/api/admin/users/${currentUser.id}`, {
-        method: "DELETE",
-      });
+      let res;
+      if (currentUser.isActive) {
+        // Khóa tài khoản
+        res = await apiFetch(`/api/admin/users/${currentUser.id}`, {
+          method: "DELETE",
+        });
+      } else {
+        // Mở khóa tài khoản (bằng cách gọi PUT để đặt isActive = true)
+        res = await apiFetch(`/api/admin/users/${currentUser.id}`, {
+          method: "PUT",
+          body: JSON.stringify({
+            fullName: currentUser.fullName,
+            email: currentUser.email,
+            role: currentUser.role,
+            isActive: true
+          }),
+        });
+      }
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || "Failed to deactivate user");
+        let errMsg = currentUser.isActive ? "Khóa tài khoản thất bại." : "Mở khóa tài khoản thất bại.";
+        try {
+          const errData = await res.json();
+          errMsg = errData.message || errData.error || (errData.errors ? Object.values(errData.errors).flat().join(", ") : "") || errMsg;
+        } catch {
+          try {
+            const txt = await res.text();
+            if (txt) errMsg = txt;
+          } catch {}
+        }
+        throw new Error(errMsg);
       }
       setIsDeleteModalOpen(false);
       fetchUsers();
     } catch (err: any) {
-      setFormError(err.message || "Failed to deactivate user.");
+      setFormError(err.message || "Failed to toggle user lock status.");
     } finally {
       setIsSubmitting(false);
     }
@@ -169,10 +211,20 @@ export default function UsersPage() {
         body: JSON.stringify({ newPassword: resetForm.newPassword }),
       });
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || "Failed to reset password");
+        let errMsg = "Đã xảy ra lỗi khi đặt lại mật khẩu.";
+        try {
+          const errData = await res.json();
+          errMsg = errData.message || errData.error || (errData.errors ? Object.values(errData.errors).flat().join(", ") : "") || errMsg;
+        } catch {
+          try {
+            const txt = await res.text();
+            if (txt) errMsg = txt;
+          } catch {}
+        }
+        throw new Error(errMsg);
       }
       setIsResetModalOpen(false);
+      alert("Đặt lại mật khẩu thành công!");
     } catch (err: any) {
       setFormError(err.message || "Failed to reset password.");
     } finally {
@@ -271,13 +323,25 @@ export default function UsersPage() {
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
                         </button>
-                        {user.isActive && (
+                        {user.isActive ? (
                           <button 
                             onClick={() => handleOpenDelete(user)}
                             className="p-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors"
-                            title="Deactivate/Delete"
+                            title="Khóa tài khoản"
                           >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={() => handleOpenDelete(user)}
+                            className="p-2 text-green-400 hover:text-green-300 hover:bg-green-400/10 rounded-lg transition-colors"
+                            title="Mở khóa tài khoản"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                            </svg>
                           </button>
                         )}
                       </div>
@@ -371,24 +435,34 @@ export default function UsersPage() {
       {/* Delete/Deactivate Confirmation Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="glassmorphism w-full max-w-md rounded-2xl border border-red-900/50 shadow-2xl p-6 animate-in fade-in zoom-in duration-200">
-            <div className="flex items-center gap-4 mb-4 text-red-400">
-              <div className="p-3 bg-red-500/10 rounded-full">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+          <div className={`glassmorphism w-full max-w-md rounded-2xl border shadow-2xl p-6 animate-in fade-in zoom-in duration-200 ${currentUser?.isActive ? 'border-red-900/50' : 'border-green-900/50'}`}>
+            <div className={`flex items-center gap-4 mb-4 ${currentUser?.isActive ? 'text-red-400' : 'text-green-400'}`}>
+              <div className={`p-3 rounded-full ${currentUser?.isActive ? 'bg-red-500/10' : 'bg-green-500/10'}`}>
+                {currentUser?.isActive ? (
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                ) : (
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>
+                )}
               </div>
-              <h2 className="text-2xl font-bold text-white">Deactivate User?</h2>
+              <h2 className="text-2xl font-bold text-white">{currentUser?.isActive ? "Khóa tài khoản?" : "Mở khóa tài khoản?"}</h2>
             </div>
             {formError && (
               <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg mb-4 text-sm">{formError}</div>
             )}
-            <div className="mb-6 bg-red-900/20 border border-red-800/30 p-4 rounded-xl">
+            <div className={`mb-6 p-4 rounded-xl ${currentUser?.isActive ? 'bg-red-900/20 border border-red-800/30' : 'bg-green-900/20 border border-green-800/30'}`}>
               <p className="text-gray-400 text-sm">
-                Are you sure you want to deactivate <span className="text-white font-semibold">{currentUser?.username}</span>? They will not be able to log in.
+                {currentUser?.isActive ? (
+                  <>Bạn có chắc chắn muốn khóa tài khoản <span className="text-white font-semibold">{currentUser?.username}</span>? Người dùng này sẽ không thể đăng nhập vào hệ thống.</>
+                ) : (
+                  <>Bạn có chắc chắn muốn mở khóa tài khoản <span className="text-white font-semibold">{currentUser?.username}</span>? Người dùng này sẽ khôi phục lại khả năng đăng nhập hệ thống.</>
+                )}
               </p>
             </div>
             <div className="flex gap-3">
-              <button type="button" onClick={() => setIsDeleteModalOpen(false)} className="flex-1 px-4 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white font-medium transition-colors border border-gray-700">Cancel</button>
-              <button type="button" onClick={handleDeleteSubmit} disabled={isSubmitting} className="flex-1 px-4 py-3 rounded-xl bg-red-600 hover:bg-red-500 disabled:bg-red-800 disabled:opacity-50 text-white font-medium transition-colors shadow-[0_0_15px_rgba(220,38,38,0.3)]">{isSubmitting ? "Deactivating..." : "Yes, Deactivate"}</button>
+              <button type="button" onClick={() => setIsDeleteModalOpen(false)} className="flex-1 px-4 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white font-medium transition-colors border border-gray-700">Hủy</button>
+              <button type="button" onClick={handleDeleteSubmit} disabled={isSubmitting} className={`flex-1 px-4 py-3 rounded-xl text-white font-medium transition-colors shadow-lg ${currentUser?.isActive ? 'bg-red-600 hover:bg-red-500 shadow-red-950/30' : 'bg-green-600 hover:bg-green-500 shadow-green-950/30'}`}>
+                {isSubmitting ? (currentUser?.isActive ? "Đang khóa..." : "Đang mở...") : (currentUser?.isActive ? "Đồng ý Khóa" : "Đồng ý Mở khóa")}
+              </button>
             </div>
           </div>
         </div>

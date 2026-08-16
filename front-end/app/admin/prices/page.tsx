@@ -362,7 +362,7 @@ export default function PricesPage() {
                             <button 
                               onClick={() => handleOpenDeletePrice(price)}
                               className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors"
-                              title="Delete"
+                              title="Ẩn bảng giá"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                             </button>
@@ -511,7 +511,7 @@ export default function PricesPage() {
               <div className="p-3 bg-red-500/10 rounded-full">
                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
               </div>
-              <h2 className="text-2xl font-bold text-white">Delete Price?</h2>
+              <h2 className="text-2xl font-bold text-white">Ẩn Bảng giá?</h2>
             </div>
             
             {formError && (
@@ -521,7 +521,7 @@ export default function PricesPage() {
             )}
             
             <p className="text-gray-300 mb-6">
-              Are you sure you want to delete the <span className="font-semibold text-white">{currentPrice?.billingCycle}</span> pricing?
+              Bạn có chắc chắn muốn ẩn bảng giá chu kỳ <span className="font-semibold text-white">{currentPrice?.billingCycle}</span> này?
             </p>
             
             <div className="flex gap-3">
@@ -530,7 +530,7 @@ export default function PricesPage() {
                 onClick={() => setIsDeletePriceModalOpen(false)}
                 className="flex-1 px-4 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white font-medium transition-colors border border-gray-700"
               >
-                Cancel
+                Hủy
               </button>
               <button 
                 type="button" 
@@ -538,7 +538,7 @@ export default function PricesPage() {
                 disabled={isSubmitting}
                 className="flex-1 px-4 py-3 rounded-xl bg-red-600 hover:bg-red-500 disabled:bg-red-800 disabled:opacity-50 text-white font-medium transition-colors shadow-[0_0_15px_rgba(220,38,38,0.3)]"
               >
-                {isSubmitting ? "Deleting..." : "Yes, Delete"}
+                {isSubmitting ? "Đang ẩn..." : "Đồng ý Ẩn"}
               </button>
             </div>
           </div>
