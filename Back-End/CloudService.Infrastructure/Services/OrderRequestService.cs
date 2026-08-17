@@ -165,6 +165,77 @@ namespace CloudService.Infrastructure.Services
             return await GetByIdAsync(id);
         }
 
+        public async Task<IEnumerable<OrderRequestDto>> GetCustomerOrdersAsync(string emailOrUsername)
+        {
+            var search = emailOrUsername.ToLower().Trim();
+            var orders = await _context.OrderRequests
+                .Include(o => o.PlanPrice)
+                    .ThenInclude(p => p!.Plan)
+                        .ThenInclude(sp => sp!.Category)
+                .Where(o => o.CustomerEmail.ToLower() == search || o.CustomerName.ToLower().Contains(search))
+                .OrderByDescending(o => o.CreatedAt)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return orders.Select(MapToDto);
+        }
+
+        public async Task<byte[]> ExportOrdersToExcelAsync()
+        {
+            var orders = await _context.OrderRequests
+                .IgnoreQueryFilters()
+                .Include(o => o.PlanPrice)
+                    .ThenInclude(p => p!.Plan)
+                .OrderByDescending(o => o.CreatedAt)
+                .AsNoTracking()
+                .ToListAsync();
+
+            using var workbook = new ClosedXML.Excel.XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("DanhSachDonHang");
+
+            // Header titles
+            var headers = new[]
+            {
+                "Mã Đơn Hàng", "Khách Hàng", "Email", "Số Điện Thoại", "Công Ty",
+                "Gói Dịch Vụ", "Chu Kỳ", "Giá Tiền (VNĐ)", "Trạng Thái", "Ngày Đặt", "Ghi Chú"
+            };
+
+            for (int col = 0; col < headers.Length; col++)
+            {
+                var cell = worksheet.Cell(1, col + 1);
+                cell.Value = headers[col];
+                cell.Style.Font.Bold = true;
+                cell.Style.Font.FontColor = ClosedXML.Excel.XLColor.White;
+                cell.Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.FromArgb(37, 99, 235); // Blue 600
+                cell.Style.Alignment.Horizontal = ClosedXML.Excel.XLAlignmentHorizontalValues.Center;
+            }
+
+            int row = 2;
+            foreach (var o in orders)
+            {
+                var dto = MapToDto(o);
+                worksheet.Cell(row, 1).Value = dto.OrderCode;
+                worksheet.Cell(row, 2).Value = dto.CustomerName;
+                worksheet.Cell(row, 3).Value = dto.CustomerEmail;
+                worksheet.Cell(row, 4).Value = dto.CustomerPhone;
+                worksheet.Cell(row, 5).Value = dto.CompanyName ?? "";
+                worksheet.Cell(row, 6).Value = dto.PlanName;
+                worksheet.Cell(row, 7).Value = dto.BillingCycle;
+                worksheet.Cell(row, 8).Value = (double)dto.Price;
+                worksheet.Cell(row, 8).Style.NumberFormat.Format = "#,##0";
+                worksheet.Cell(row, 9).Value = dto.StatusName;
+                worksheet.Cell(row, 10).Value = dto.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss");
+                worksheet.Cell(row, 11).Value = dto.Notes ?? "";
+                row++;
+            }
+
+            worksheet.Columns().AdjustToContents();
+
+            using var stream = new System.IO.MemoryStream();
+            workbook.SaveAs(stream);
+            return stream.ToArray();
+        }
+
         public async Task<byte[]> ExportOrdersToCsvAsync()
         {
             var orders = await _context.OrderRequests

@@ -125,5 +125,73 @@ namespace CloudService.UnitTests.Infrastructure.Services
             Assert.NotNull(bytes);
             Assert.True(bytes.Length > 0);
         }
+
+        [Fact]
+        public async Task ExportOrdersToExcelAsync_ShouldReturnValidExcelBytes()
+        {
+            using var context = CreateInMemoryDbContext();
+            var category = new ServiceCategory { Name = "Cloud VPS", Slug = "cloud-vps" };
+            context.ServiceCategories.Add(category);
+            await context.SaveChangesAsync();
+
+            var plan = new ServicePlan { Name = "VPS Basic", CategoryId = category.Id, Cpu = "1 vCPU", Ram = "2GB", Storage = "20GB", Bandwidth = "500GB" };
+            context.ServicePlans.Add(plan);
+            await context.SaveChangesAsync();
+
+            var price = new PlanPrice { PlanId = plan.Id, BillingCycle = "Monthly", Price = 100000 };
+            context.PlanPrices.Add(price);
+            await context.SaveChangesAsync();
+
+            var order = new OrderRequest
+            {
+                PlanPriceId = price.Id,
+                CustomerName = "Lê Văn Excel",
+                CustomerEmail = "excel@gmail.com",
+                CustomerPhone = "0909090909",
+                Status = 2
+            };
+            context.OrderRequests.Add(order);
+            await context.SaveChangesAsync();
+
+            var service = new OrderRequestService(context);
+            var bytes = await service.ExportOrdersToExcelAsync();
+
+            Assert.NotNull(bytes);
+            Assert.True(bytes.Length > 0);
+        }
+
+        [Fact]
+        public async Task GetCustomerOrdersAsync_ShouldReturnCustomerOrders()
+        {
+            using var context = CreateInMemoryDbContext();
+            var category = new ServiceCategory { Name = "Cloud VPS", Slug = "cloud-vps" };
+            context.ServiceCategories.Add(category);
+            await context.SaveChangesAsync();
+
+            var plan = new ServicePlan { Name = "VPS Basic", CategoryId = category.Id, Cpu = "1 vCPU", Ram = "2GB", Storage = "20GB", Bandwidth = "500GB" };
+            context.ServicePlans.Add(plan);
+            await context.SaveChangesAsync();
+
+            var price = new PlanPrice { PlanId = plan.Id, BillingCycle = "Monthly", Price = 100000 };
+            context.PlanPrices.Add(price);
+            await context.SaveChangesAsync();
+
+            var order = new OrderRequest
+            {
+                PlanPriceId = price.Id,
+                CustomerName = "Nguyễn Khách Hàng",
+                CustomerEmail = "customer@example.com",
+                CustomerPhone = "0909090909",
+                Status = 2
+            };
+            context.OrderRequests.Add(order);
+            await context.SaveChangesAsync();
+
+            var service = new OrderRequestService(context);
+            var result = await service.GetCustomerOrdersAsync("customer@example.com");
+
+            Assert.NotNull(result);
+            Assert.Single(result);
+        }
     }
 }

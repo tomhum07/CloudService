@@ -79,10 +79,31 @@ namespace CloudService.WebApi.Controllers
         }
 
         [HttpGet("export")]
-        public async Task<IActionResult> ExportOrders()
+        [HttpGet("export-excel")]
+        public async Task<IActionResult> ExportOrdersExcel()
+        {
+            var bytes = await _orderService.ExportOrdersToExcelAsync();
+            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"orders_export_{System.DateTime.UtcNow:yyyyMMdd_HHmmss}.xlsx");
+        }
+
+        [HttpGet("export-csv")]
+        public async Task<IActionResult> ExportOrdersCsv()
         {
             var bytes = await _orderService.ExportOrdersToCsvAsync();
             return File(bytes, "text/csv; charset=utf-8", $"orders_export_{System.DateTime.UtcNow:yyyyMMdd_HHmmss}.csv");
+        }
+
+        [HttpGet("my-orders")]
+        public async Task<IActionResult> GetMyOrders([FromQuery] string? email)
+        {
+            var user = User.Identity?.Name ?? email;
+            if (string.IsNullOrWhiteSpace(user))
+            {
+                return BadRequest(new { message = "Vui lòng cung cấp email hoặc đăng nhập để tra cứu." });
+            }
+
+            var orders = await _orderService.GetCustomerOrdersAsync(user);
+            return Ok(orders);
         }
     }
 }

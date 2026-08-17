@@ -109,17 +109,17 @@ export default function AdminOrdersPage() {
     );
   };
 
-  // Excel (CSV) Export Handler
+  // Excel (.xlsx) Export Handler
   const handleExportExcel = async () => {
     if (activeTab === "orders") {
       try {
-        const res = await apiFetch("/api/order-requests/export");
+        const res = await apiFetch("/api/order-requests/export-excel");
         if (res.ok) {
           const blob = await res.blob();
           const url = window.URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = url;
-          a.download = `danh_sach_don_hang_${new Date().toISOString().slice(0, 10)}.csv`;
+          a.download = `danh_sach_don_hang_${new Date().toISOString().slice(0, 10)}.xlsx`;
           document.body.appendChild(a);
           a.click();
           window.URL.revokeObjectURL(url);
@@ -127,7 +127,7 @@ export default function AdminOrdersPage() {
           return;
         }
       } catch (err) {
-        console.warn("Backend CSV export error, falling back to client CSV:", err);
+        console.warn("Backend Excel export error, falling back to CSV:", err);
       }
     }
 

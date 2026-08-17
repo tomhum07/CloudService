@@ -20,14 +20,43 @@ export default function RegisterPage() {
     setSuccess("");
     setLoading(true);
 
+    const trimmedUsername = username.trim();
+    const trimmedFullName = fullName.trim();
+    const trimmedEmail = email.trim();
+
+    if (trimmedUsername.length < 3) {
+      setError("Tên đăng nhập phải có ít nhất 3 ký tự.");
+      setLoading(false);
+      return;
+    }
+
+    if (trimmedFullName.length < 2) {
+      setError("Họ và tên phải có ít nhất 2 ký tự.");
+      setLoading(false);
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      setError("Địa chỉ email không đúng định dạng hợp lệ.");
+      setLoading(false);
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Mật khẩu phải có độ dài tối thiểu 6 ký tự.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await apiFetch("/api/auth/register", {
         method: "POST",
         body: JSON.stringify({
-          username,
+          username: trimmedUsername,
           password,
-          fullName,
-          email,
+          fullName: trimmedFullName,
+          email: trimmedEmail,
           roleId: 0 // defaults to Customer on Backend
         })
       });
@@ -35,8 +64,8 @@ export default function RegisterPage() {
       if (res.ok) {
         setSuccess("Đăng ký tài khoản khách hàng thành công! Đang chuyển hướng đăng nhập...");
         setTimeout(() => {
-          router.push("/admin/login");
-        }, 2000);
+          router.push("/login");
+        }, 1500);
       } else {
         const errData = await res.json();
         setError(errData.message || "Đăng ký thất bại. Tên đăng nhập hoặc email đã tồn tại.");

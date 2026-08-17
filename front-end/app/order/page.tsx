@@ -123,10 +123,30 @@ function OrderFormContent() {
     }).format(val);
   };
 
+  const [formError, setFormError] = useState<string | null>(null);
+
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName || !email || !phone) {
-      alert("Vui lòng điền đầy đủ các thông tin cá nhân bắt buộc.");
+    setFormError(null);
+
+    const trimmedName = fullName.trim();
+    const trimmedEmail = email.trim();
+    const trimmedPhone = phone.trim();
+
+    if (!trimmedName || trimmedName.length < 2) {
+      setFormError("Vui lòng nhập Họ và Tên hợp lệ (tối thiểu 2 ký tự).");
+      return;
+    }
+
+    const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
+    if (!phoneRegex.test(trimmedPhone)) {
+      setFormError("Số điện thoại không đúng định dạng (Ví dụ: 0912345678).");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      setFormError("Địa chỉ email không đúng định dạng hợp lệ (Ví dụ: name@example.com).");
       return;
     }
 
@@ -137,12 +157,12 @@ function OrderFormContent() {
       serviceType: selectedPlan.type,
       os: selectedPlan.type === "VPS" ? os : "N/A",
       billingCycle,
-      customerName: fullName,
-      customerEmail: email,
-      customerPhone: phone,
-      fullName,
-      email,
-      phone,
+      customerName: trimmedName,
+      customerEmail: trimmedEmail,
+      customerPhone: trimmedPhone,
+      fullName: trimmedName,
+      email: trimmedEmail,
+      phone: trimmedPhone,
       promoCode,
       notes: `${notes || ""}${promoCode ? ` [Mã KM: ${promoCode}]` : ""}${selectedPlan.type === "VPS" ? ` [HĐH: ${os}]` : ""}`.trim(),
       totalAmount: calculateTotal(),
@@ -322,6 +342,13 @@ function OrderFormContent() {
           {step === 2 && (
             <form onSubmit={handleSubmitOrder}>
               <h2 className="text-lg font-bold text-white mb-6">Bước 2: Thông tin đăng ký khách hàng</h2>
+
+              {formError && (
+                <div className="p-3.5 rounded-xl mb-5 bg-red-500/10 border border-red-500/20 text-xs font-semibold text-red-400 flex items-center gap-2">
+                  <span>⚠️</span>
+                  <span>{formError}</span>
+                </div>
+              )}
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>

@@ -13,31 +13,62 @@ export default function AffiliatePage() {
   const [bankHolder, setBankHolder] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [registered, setRegistered] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName || !email || !phone || !bankName || !bankAccount || !bankHolder) {
-      alert("Vui lòng điền đầy đủ các thông tin bắt buộc.");
+    setFormError(null);
+
+    const trimmedName = fullName.trim();
+    const trimmedEmail = email.trim();
+    const trimmedPhone = phone.trim();
+
+    if (!trimmedName || trimmedName.length < 2) {
+      setFormError("Vui lòng nhập Họ và Tên hợp lệ (tối thiểu 2 ký tự).");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      setFormError("Địa chỉ email không đúng định dạng hợp lệ.");
+      return;
+    }
+
+    const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
+    if (!phoneRegex.test(trimmedPhone)) {
+      setFormError("Số điện thoại không đúng định dạng (Ví dụ: 0912345678).");
+      return;
+    }
+
+    if (!bankName.trim() || !bankAccount.trim() || !bankHolder.trim()) {
+      setFormError("Vui lòng nhập đầy đủ thông tin ngân hàng để nhận hoa hồng.");
       return;
     }
 
     setSubmitting(true);
     try {
-      await apiFetch("/api/affiliates", {
+      const res = await apiFetch("/api/affiliates", {
         method: "POST",
         body: JSON.stringify({
-          fullName,
-          email,
-          phone,
-          websiteUrl: channel,
-          motivation: `Ngân hàng: ${bankName} | STK: ${bankAccount} | Chủ TK: ${bankHolder}`
+          fullName: trimmedName,
+          email: trimmedEmail,
+          phone: trimmedPhone,
+          websiteUrl: channel.trim(),
+          motivation: `Ngân hàng: ${bankName.trim()} | STK: ${bankAccount.trim()} | Chủ TK: ${bankHolder.trim()}`
         })
       });
+
+      if (res.ok) {
+        setRegistered(true);
+      } else {
+        const data = await res.json();
+        setFormError(data.message || "Gửi đơn thất bại. Vui lòng thử lại.");
+      }
     } catch (err) {
       console.warn("Affiliate API error:", err);
+      setRegistered(true);
     } finally {
       setSubmitting(false);
-      setRegistered(true);
     }
   };
 
@@ -133,6 +164,12 @@ export default function AffiliatePage() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
+                {formError && (
+                  <div className="p-3 rounded-xl mb-3 bg-red-500/10 border border-red-500/20 text-xs font-semibold text-red-400 flex items-center gap-2">
+                    <span>⚠️</span>
+                    <span>{formError}</span>
+                  </div>
+                )}
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Họ và Tên *</label>
                   <input

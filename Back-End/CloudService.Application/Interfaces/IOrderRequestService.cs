@@ -13,5 +13,7 @@ namespace CloudService.Application.Interfaces
         Task<OrderRequestDto> CreateOrderRequestAsync(CreateOrderRequestDto dto);
         Task<OrderRequestDto?> UpdateStatusAsync(int id, UpdateOrderStatusDto dto);
         Task<byte[]> ExportOrdersToCsvAsync();
+        Task<byte[]> ExportOrdersToExcelAsync();
+        Task<IEnumerable<OrderRequestDto>> GetCustomerOrdersAsync(string emailOrUsername);
     }
 }

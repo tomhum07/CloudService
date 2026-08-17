@@ -15,13 +15,23 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  
+  // Modals state
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   
   // Profile edit form state
   const [editFullName, setEditFullName] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editLoading, setEditLoading] = useState(false);
   const [editMsg, setEditMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
+
+  // Change password form state
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pwdLoading, setPwdLoading] = useState(false);
+  const [pwdMsg, setPwdMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
   const pathname = usePathname();
   const router = useRouter();
@@ -101,18 +111,32 @@ export default function Header() {
     setEditLoading(true);
     setEditMsg(null);
 
+    // Validation
+    if (!editFullName.trim() || editFullName.trim().length < 2) {
+      setEditMsg({ text: "Họ và tên phải có tối thiểu 2 ký tự.", type: "error" });
+      setEditLoading(false);
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(editEmail.trim())) {
+      setEditMsg({ text: "Địa chỉ email không đúng định dạng hợp lệ.", type: "error" });
+      setEditLoading(false);
+      return;
+    }
+
     try {
       const res = await apiFetch("/api/auth/profile", {
         method: "PUT",
         body: JSON.stringify({
-          fullName: editFullName,
-          email: editEmail
+          fullName: editFullName.trim(),
+          email: editEmail.trim()
         })
       });
 
       if (res.ok) {
         setEditMsg({ text: "Cập nhật thông tin thành công!", type: "success" });
-        setUser(prev => prev ? { ...prev, fullName: editFullName, email: editEmail } : null);
+        setUser(prev => prev ? { ...prev, fullName: editFullName.trim(), email: editEmail.trim() } : null);
         setTimeout(() => {
           setShowEditModal(false);
           setEditMsg(null);
@@ -125,6 +149,59 @@ export default function Header() {
       setEditMsg({ text: "Không thể kết nối đến máy chủ.", type: "error" });
     } finally {
       setEditLoading(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwdLoading(true);
+    setPwdMsg(null);
+
+    // Validation
+    if (!oldPassword) {
+      setPwdMsg({ text: "Vui lòng nhập mật khẩu hiện tại.", type: "error" });
+      setPwdLoading(false);
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPwdMsg({ text: "Mật khẩu mới phải có tối thiểu 6 ký tự.", type: "error" });
+      setPwdLoading(false);
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPwdMsg({ text: "Xác nhận mật khẩu mới không khớp.", type: "error" });
+      setPwdLoading(false);
+      return;
+    }
+
+    try {
+      const res = await apiFetch("/api/auth/change-password", {
+        method: "POST",
+        body: JSON.stringify({
+          oldPassword,
+          newPassword
+        })
+      });
+
+      if (res.ok) {
+        setPwdMsg({ text: "Đổi mật khẩu thành công!", type: "success" });
+        setOldPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+        setTimeout(() => {
+          setShowPasswordModal(false);
+          setPwdMsg(null);
+        }, 1500);
+      } else {
+        const data = await res.json();
+        setPwdMsg({ text: data.message || "Mật khẩu cũ không chính xác.", type: "error" });
+      }
+    } catch {
+      setPwdMsg({ text: "Không thể kết nối đến máy chủ Backend.", type: "error" });
+    } finally {
+      setPwdLoading(false);
     }
   };
 
@@ -200,7 +277,7 @@ export default function Header() {
 
                 {/* Dropdown Menu */}
                 {showProfileMenu && (
-                  <div className="absolute right-0 mt-2 w-56 bg-slate-900 border border-white/10 rounded-xl shadow-2xl p-2 z-50 text-xs animate-in fade-in slide-in-from-top-2">
+                  <div className="absolute right-0 mt-2 w-60 bg-slate-900 border border-white/10 rounded-xl shadow-2xl p-2 z-50 text-xs animate-in fade-in slide-in-from-top-2">
                     <div className="px-3 py-2 border-b border-white/5 mb-1">
                       <p className="font-bold text-white truncate">{user.fullName}</p>
                       <p className="text-[11px] text-slate-400 truncate">@{user.username}</p>
@@ -218,6 +295,15 @@ export default function Header() {
                       </Link>
                     )}
 
+                    <Link
+                      href="/my-plans"
+                      onClick={() => setShowProfileMenu(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 font-medium transition-colors"
+                    >
+                      <span>📦</span>
+                      <span>Quản lý gói cước của tôi</span>
+                    </Link>
+
                     <button
                       type="button"
                       onClick={() => {
@@ -228,6 +314,18 @@ export default function Header() {
                     >
                       <span>✏️</span>
                       <span>Đổi thông tin cá nhân</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        setShowPasswordModal(true);
+                      }}
+                      className="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 font-medium transition-colors"
+                    >
+                      <span>🔑</span>
+                      <span>Đổi mật khẩu</span>
                     </button>
 
                     <button
@@ -321,6 +419,13 @@ export default function Header() {
                       Trang Quản Trị Admin
                     </Link>
                   )}
+                  <Link
+                    href="/my-plans"
+                    className="text-sm font-medium text-slate-300 hover:text-white text-center py-2"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    📦 Quản lý gói cước của tôi
+                  </Link>
                   <button
                     type="button"
                     onClick={() => {
@@ -329,7 +434,17 @@ export default function Header() {
                     }}
                     className="text-sm font-medium text-slate-300 hover:text-white text-center py-2"
                   >
-                    Đổi thông tin cá nhân
+                    ✏️ Đổi thông tin cá nhân
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsOpen(false);
+                      setShowPasswordModal(true);
+                    }}
+                    className="text-sm font-medium text-slate-300 hover:text-white text-center py-2"
+                  >
+                    🔑 Đổi mật khẩu
                   </button>
                   <button
                     type="button"
@@ -339,7 +454,7 @@ export default function Header() {
                     }}
                     className="text-sm font-medium text-red-400 hover:text-red-300 text-center py-2"
                   >
-                    Đăng xuất
+                    🚪 Đăng xuất
                   </button>
                 </>
               ) : (
@@ -409,7 +524,7 @@ export default function Header() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Họ Và Tên</label>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Họ Và Tên <span className="text-red-400">*</span></label>
                 <input
                   type="text"
                   required
@@ -421,7 +536,7 @@ export default function Header() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Địa Chỉ Email</label>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Địa Chỉ Email <span className="text-red-400">*</span></label>
                 <input
                   type="email"
                   required
@@ -446,6 +561,91 @@ export default function Header() {
                   className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white transition-colors disabled:opacity-50"
                 >
                   {editLoading ? "Đang lưu..." : "Lưu Thay Đổi"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Đổi Mật Khẩu Khách Hàng */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-base font-bold text-white">Đổi Mật Khẩu Cá Nhân</h3>
+              <button
+                onClick={() => {
+                  setShowPasswordModal(false);
+                  setPwdMsg(null);
+                }}
+                className="text-slate-400 hover:text-white text-lg font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {pwdMsg && (
+              <div className={`p-3 rounded-xl mb-4 text-xs font-medium ${
+                pwdMsg.type === "success" ? "bg-green-500/10 border border-green-500/20 text-green-400" : "bg-red-500/10 border border-red-500/20 text-red-400"
+              }`}>
+                {pwdMsg.text}
+              </div>
+            )}
+
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Mật Khẩu Hiện Tại <span className="text-red-400">*</span></label>
+                <input
+                  type="password"
+                  required
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                  placeholder="Nhập mật khẩu hiện tại..."
+                  className="w-full h-10 px-3.5 rounded-xl bg-slate-950 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Mật Khẩu Mới (Tối thiểu 6 ký tự) <span className="text-red-400">*</span></label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Nhập mật khẩu mới..."
+                  className="w-full h-10 px-3.5 rounded-xl bg-slate-950 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Xác Nhận Mật Khẩu Mới <span className="text-red-400">*</span></label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Nhập lại mật khẩu mới..."
+                  className="w-full h-10 px-3.5 rounded-xl bg-slate-950 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordModal(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition-colors"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={pwdLoading}
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white transition-colors disabled:opacity-50"
+                >
+                  {pwdLoading ? "Đang xử lý..." : "Cập Nhật Mật Khẩu"}
                 </button>
               </div>
             </form>
