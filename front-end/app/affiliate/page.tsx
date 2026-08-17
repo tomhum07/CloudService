@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
+import { apiFetch } from "@/utils/api";
 
 export default function AffiliatePage() {
   const [fullName, setFullName] = useState("");
@@ -13,7 +14,7 @@ export default function AffiliatePage() {
   const [submitting, setSubmitting] = useState(false);
   const [registered, setRegistered] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName || !email || !phone || !bankName || !bankAccount || !bankHolder) {
       alert("Vui lòng điền đầy đủ các thông tin bắt buộc.");
@@ -21,11 +22,23 @@ export default function AffiliatePage() {
     }
 
     setSubmitting(true);
-    // Simulate API request to register affiliate
-    setTimeout(() => {
+    try {
+      await apiFetch("/api/affiliates", {
+        method: "POST",
+        body: JSON.stringify({
+          fullName,
+          email,
+          phone,
+          websiteUrl: channel,
+          motivation: `Ngân hàng: ${bankName} | STK: ${bankAccount} | Chủ TK: ${bankHolder}`
+        })
+      });
+    } catch (err) {
+      console.warn("Affiliate API error:", err);
+    } finally {
       setSubmitting(false);
       setRegistered(true);
-    }, 1000);
+    }
   };
 
   const commissionPolicies = [

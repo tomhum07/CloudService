@@ -14,6 +14,10 @@ interface Category {
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+  const totalItems = categories.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
   const [error, setError] = useState<string | null>(null);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -35,6 +39,7 @@ export default function CategoriesPage() {
       if (!res.ok) throw new Error("Failed to fetch categories");
       const data = await res.json();
       setCategories(data);
+      setCurrentPage(1);
     } catch (err: any) {
       setError(err.message || "An error occurred while fetching data.");
     } finally {
@@ -181,7 +186,7 @@ export default function CategoriesPage() {
                   <td colSpan={5} className="p-8 text-center text-gray-500">Không tìm thấy danh mục nào.</td>
                 </tr>
               ) : (
-                categories.map((category) => (
+                categories.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((category) => (
                   <tr key={category.id} className="hover:bg-gray-800/30 transition-colors group">
                     <td className="p-5 text-gray-200 font-medium">
                       {category.name}
@@ -239,6 +244,50 @@ export default function CategoriesPage() {
               )}
             </tbody>
           </table>
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t border-gray-800 text-gray-400 text-xs sm:text-sm bg-gray-900/10">
+              <div>
+                Hiển thị <span className="text-white font-medium">{Math.min((currentPage - 1) * itemsPerPage + 1, totalItems)}</span> đến <span className="text-white font-medium">{Math.min(currentPage * itemsPerPage, totalItems)}</span> trong số <span className="text-white font-medium">{totalItems}</span> danh mục
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(1)}
+                  className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-30 disabled:hover:bg-gray-800 text-white font-medium transition-colors"
+                >
+                  Đầu
+                </button>
+                <button
+                  type="button"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(prev => prev - 1)}
+                  className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-30 disabled:hover:bg-gray-800 text-white font-medium transition-colors"
+                >
+                  Trước
+                </button>
+                <span className="px-3 py-1.5 rounded-lg bg-gray-900 border border-gray-800 text-white font-semibold">
+                  Trang {currentPage} / {totalPages}
+                </span>
+                <button
+                  type="button"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(prev => prev + 1)}
+                  className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-30 disabled:hover:bg-gray-800 text-white font-medium transition-colors"
+                >
+                  Sau
+                </button>
+                <button
+                  type="button"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(totalPages)}
+                  className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-30 disabled:hover:bg-gray-800 text-white font-medium transition-colors"
+                >
+                  Cuối
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

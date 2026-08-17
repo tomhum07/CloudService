@@ -23,12 +23,19 @@ namespace CloudService.WebApi.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            var response = await _authService.LoginAsync(request, token => SetRefreshTokenCookie(token));
-            if (response == null)
+            try
             {
-                return Unauthorized(new { message = "Tài khoản hoặc mật khẩu không chính xác." });
+                var response = await _authService.LoginAsync(request, token => SetRefreshTokenCookie(token));
+                if (response == null)
+                {
+                    return Unauthorized(new { message = "Tài khoản hoặc mật khẩu không chính xác." });
+                }
+                return Ok(response);
             }
-            return Ok(response);
+            catch (Exception ex) when (ex.Message == "LockedAccount")
+            {
+                return Unauthorized(new { message = "Tài khoản của bạn đã bị khóa." });
+            }
         }
 
         [HttpPost("refresh-token")]
@@ -87,6 +94,17 @@ namespace CloudService.WebApi.Controllers
             }
 
             return Ok(new { message = "Đổi mật khẩu thành công." });
+        }
+
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        {
+            var result = await _authService.RegisterUserAsync(request);
+            if (!result)
+            {
+                return BadRequest(new { message = "Tên đăng nhập hoặc Email đã tồn tại trong hệ thống." });
+            }
+            return Ok(new { message = "Đăng ký tài khoản thành công." });
         }
 
         private void SetRefreshTokenCookie(string token)

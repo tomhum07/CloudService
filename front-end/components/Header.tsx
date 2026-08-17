@@ -52,12 +52,18 @@ export default function Header() {
         </nav>
 
         {/* Buttons */}
-        <div className="hidden md:flex items-center gap-4">
+        <div className="hidden md:flex items-center gap-5">
           <Link
             href="/admin/login"
-            className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
+            className="text-sm font-medium text-slate-400 hover:text-white transition-colors"
           >
             Đăng Nhập
+          </Link>
+          <Link
+            href="/register"
+            className="text-sm font-medium text-slate-400 hover:text-white transition-colors"
+          >
+            Đăng Ký
           </Link>
           <Link
             href="/order"
@@ -103,20 +109,29 @@ export default function Header() {
             );
           })}
           <hr className="border-white/10 my-2" />
-          <Link
-            href="/admin/login"
-            className="text-sm font-medium text-slate-300 hover:text-white text-center py-2"
-            onClick={() => setIsOpen(false)}
-          >
-            Đăng Nhập
-          </Link>
-          <Link
-            href="/order"
-            className="w-full py-2.5 rounded-lg bg-blue-600 text-sm font-semibold text-white text-center block hover:bg-blue-500 transition-colors"
-            onClick={() => setIsOpen(false)}
-          >
-            Đặt Hàng Ngay
-          </Link>
+          <div className="flex flex-col gap-3">
+            <Link
+              href="/admin/login"
+              className="text-sm font-medium text-slate-300 hover:text-white text-center py-2"
+              onClick={() => setIsOpen(false)}
+            >
+              Đăng Nhập
+            </Link>
+            <Link
+              href="/register"
+              className="text-sm font-medium text-slate-300 hover:text-white text-center py-2"
+              onClick={() => setIsOpen(false)}
+            >
+              Đăng Ký
+            </Link>
+            <Link
+              href="/order"
+              className="w-full py-2.5 rounded-lg bg-blue-600 text-sm font-semibold text-white text-center block hover:bg-blue-500 transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+              Đặt Hàng Ngay
+            </Link>
+          </div>
         </div>
       )}
     </header>

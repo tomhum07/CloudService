@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { apiFetch } from "@/utils/api";
 
 const INITIAL_ORDERS = [
   { id: 1, code: "ORD-94812", client: "Nguyễn Văn Hùng", plan: "VPS Pro", amount: 150000, status: "Hoàn tất", date: "2026-08-16 14:32" },
@@ -19,6 +20,7 @@ export default function AdminOrdersPage() {
   const [activeTab, setActiveTab] = useState<"orders" | "partners">("orders");
   const [orders, setOrders] = useState(INITIAL_ORDERS);
   const [partners, setPartners] = useState(INITIAL_PARTNERS);
+  const [loading, setLoading] = useState(false);
   const [ordersPage, setOrdersPage] = useState(1);
   const [partnersPage, setPartnersPage] = useState(1);
   const ordersPerPage = 8;
@@ -26,22 +28,110 @@ export default function AdminOrdersPage() {
   const totalOrderPages = Math.ceil(orders.length / ordersPerPage) || 1;
   const totalPartnerPages = Math.ceil(partners.length / partnersPerPage) || 1;
 
+  useEffect(() => {
+    fetchOrdersAndPartners();
+  }, []);
+
+  const fetchOrdersAndPartners = async () => {
+    setLoading(true);
+    try {
+      // Fetch Orders
+      const orderRes = await apiFetch("/api/order-requests/all");
+      if (orderRes.ok) {
+        const orderData = await orderRes.json();
+        if (Array.isArray(orderData) && orderData.length > 0) {
+          setOrders(orderData.map((o: any) => ({
+            id: o.id,
+            code: o.orderCode || `ORD-${o.id}`,
+            client: o.customerName,
+            plan: o.planName,
+            amount: o.price || 0,
+            status: o.statusName || (o.status === 2 ? "Hoàn tất" : o.status === 3 ? "Đã hủy" : "Chờ duyệt"),
+            date: new Date(o.createdAt).toLocaleString("vi-VN")
+          })));
+        }
+      }
+
+      // Fetch Partners
+      const partnerRes = await apiFetch("/api/affiliates/all");
+      if (partnerRes.ok) {
+        const partnerData = await partnerRes.json();
+        if (Array.isArray(partnerData) && partnerData.length > 0) {
+          setPartners(partnerData.map((p: any) => ({
+            id: p.id,
+            name: p.fullName,
+            email: p.email,
+            channel: p.websiteUrl || "Không có",
+            bank: p.motivation || "Chưa cập nhật",
+            status: p.statusName || (p.status === 2 ? "Đã duyệt" : p.status === 3 ? "Đã từ chối" : "Chờ duyệt"),
+            date: new Date(p.createdAt).toLocaleDateString("vi-VN")
+          })));
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to fetch orders/partners, using initial dataset:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Tab 1: Orders Approval Actions
-  const handleOrderStatus = (id: number, newStatus: "Hoàn tất" | "Đã hủy") => {
+  const handleOrderStatus = async (id: number, newStatus: "Hoàn tất" | "Đã hủy") => {
+    const statusCode = newStatus === "Hoàn tất" ? 2 : 3;
+    try {
+      await apiFetch(`/api/order-requests/${id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: statusCode, notes: `Admin cập nhật: ${newStatus}` })
+      });
+    } catch (err) {
+      console.warn("API status update error:", err);
+    }
+
     setOrders(prev =>
       prev.map(ord => (ord.id === id ? { ...ord, status: newStatus } : ord))
     );
   };
 
   // Tab 2: Partner Approval Actions
-  const handlePartnerStatus = (id: number, newStatus: "Đã duyệt" | "Đã từ chối") => {
+  const handlePartnerStatus = async (id: number, newStatus: "Đã duyệt" | "Đã từ chối") => {
+    const statusCode = newStatus === "Đã duyệt" ? 2 : 3;
+    try {
+      await apiFetch(`/api/affiliates/${id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: statusCode })
+      });
+    } catch (err) {
+      console.warn("API affiliate status update error:", err);
+    }
+
     setPartners(prev =>
       prev.map(part => (part.id === id ? { ...part, status: newStatus } : part))
     );
   };
 
   // Excel (CSV) Export Handler
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
+    if (activeTab === "orders") {
+      try {
+        const res = await apiFetch("/api/order-requests/export");
+        if (res.ok) {
+          const blob = await res.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `danh_sach_don_hang_${new Date().toISOString().slice(0, 10)}.csv`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+          return;
+        }
+      } catch (err) {
+        console.warn("Backend CSV export error, falling back to client CSV:", err);
+      }
+    }
+
+    // Client fallback export
     let headers = "";
     let rows = "";
     let filename = "";
@@ -66,7 +156,6 @@ export default function AdminOrdersPage() {
       filename = `danh_sach_ctv_${new Date().toISOString().slice(0, 10)}.csv`;
     }
 
-    // Dynamic CSV generation as a download link
     const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + encodeURIComponent(headers + rows);
     const link = document.createElement("a");
     link.setAttribute("href", csvContent);
@@ -74,8 +163,6 @@ export default function AdminOrdersPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
-    alert(`Xuất dữ liệu thành công! File report ${filename} đang tự động tải về.`);
   };
 
   const formatPrice = (val: number) => {
@@ -114,7 +201,7 @@ export default function AdminOrdersPage() {
               : "bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-white/5"
           }`}
         >
-          📦 Duyệt Đơn Hàng ({orders.filter(o => o.status === "Chờ duyệt").length})
+          📦 Duyệt Đơn Hàng ({orders.filter(o => o.status === "Chờ duyệt" || o.status === "Đang xử lý").length})
         </button>
         <button
           onClick={() => setActiveTab("partners")}
@@ -155,7 +242,7 @@ export default function AdminOrdersPage() {
                       <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold ${
                         ord.status === "Hoàn tất"
                           ? "bg-green-950 text-green-400"
-                          : ord.status === "Chờ duyệt"
+                          : ord.status === "Chờ duyệt" || ord.status === "Đang xử lý"
                           ? "bg-yellow-950 text-yellow-400"
                           : "bg-red-950 text-red-400"
                       }`}>
@@ -164,7 +251,7 @@ export default function AdminOrdersPage() {
                     </td>
                     <td className="py-3.5 text-slate-500">{ord.date}</td>
                     <td className="py-3.5 text-right space-x-2">
-                      {ord.status === "Chờ duyệt" ? (
+                      {ord.status === "Chờ duyệt" || ord.status === "Đang xử lý" ? (
                         <>
                           <button
                             onClick={() => handleOrderStatus(ord.id, "Hoàn tất")}

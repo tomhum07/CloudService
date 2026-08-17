@@ -24,12 +24,18 @@ namespace CloudService.Infrastructure.Services
         public async Task<AuthResponse?> LoginAsync(LoginRequest request, Action<string> setRefreshTokenCookie)
         {
             var user = await _context.AppUsers
+                .IgnoreQueryFilters()
                 .Include(u => u.Role)
                 .FirstOrDefaultAsync(u => u.Username == request.Username);
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
                 return null;
+            }
+
+            if (!user.IsActive)
+            {
+                throw new System.Exception("LockedAccount");
             }
 
             var accessToken = _tokenGenerator.GenerateAccessToken(user);
@@ -99,13 +105,26 @@ namespace CloudService.Infrastructure.Services
 
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
+            int roleId = request.RoleId;
+            if (roleId == 0)
+            {
+                var customerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Customer");
+                if (customerRole == null)
+                {
+                    customerRole = new Role { Name = "Customer", Description = "Khách hàng sử dụng dịch vụ" };
+                    _context.Roles.Add(customerRole);
+                    await _context.SaveChangesAsync();
+                }
+                roleId = customerRole.Id;
+            }
+
             var newUser = new AppUser
             {
                 Username = request.Username,
                 PasswordHash = passwordHash,
                 FullName = request.FullName,
                 Email = request.Email,
-                RoleId = request.RoleId
+                RoleId = roleId
             };
 
             await _context.AppUsers.AddAsync(newUser);

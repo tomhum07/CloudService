@@ -109,32 +109,45 @@ function OrderFormContent() {
       serviceType: selectedPlan.type,
       os: selectedPlan.type === "VPS" ? os : "N/A",
       billingCycle,
+      customerName: fullName,
+      customerEmail: email,
+      customerPhone: phone,
       fullName,
       email,
       phone,
       promoCode,
-      notes,
+      notes: `${notes || ""}${promoCode ? ` [Mã KM: ${promoCode}]` : ""}${selectedPlan.type === "VPS" ? ` [HĐH: ${os}]` : ""}`.trim(),
       totalAmount: calculateTotal(),
       createdAt: new Date().toISOString(),
       orderCode: "ORD-" + Math.floor(100000 + Math.random() * 900000)
     };
 
     try {
-      // Try posting to API
+      // Post to Backend API
       const res = await apiFetch("/api/order-requests", {
         method: "POST",
-        body: JSON.stringify(orderData)
+        body: JSON.stringify({
+          planId: selectedPlan.id,
+          planName: selectedPlan.name,
+          billingCycle,
+          customerName: fullName,
+          customerEmail: email,
+          customerPhone: phone,
+          notes: orderData.notes
+        })
       });
       if (res.ok) {
         const responseData = await res.json();
-        setCreatedOrder(responseData);
+        setCreatedOrder({
+          ...orderData,
+          orderCode: responseData.orderCode || orderData.orderCode,
+          id: responseData.id
+        });
       } else {
-        // Fallback simulate locally
         setCreatedOrder(orderData);
       }
     } catch (err) {
       console.warn("API order submission error. Using mock response:", err);
-      // Fallback
       setCreatedOrder(orderData);
     }
 

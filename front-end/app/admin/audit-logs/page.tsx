@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { apiFetch } from "@/utils/api";
 
 const INITIAL_LOGS = [
   { id: 1, timestamp: "2026-08-16 14:35:12", actor: "admin@cloudservice.vn", action: "Phê duyệt đơn hàng ORD-94812 (VPS Pro)", ip: "14.232.89.4", type: "Đơn Hàng", status: "Thành công" },
@@ -16,8 +17,41 @@ export default function AuditLogsPage() {
   const [logs, setLogs] = useState(INITIAL_LOGS);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState("Tất cả");
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   const typesList = ["Tất cả", "Bảo Mật", "Đơn Hàng", "Tin Tức", "Hệ Thống"];
+
+  useEffect(() => {
+    fetchLogs();
+  }, []);
+
+  const fetchLogs = async () => {
+    setLoading(true);
+    try {
+      const res = await apiFetch("/api/admin/audit-logs?pageSize=100");
+      if (res.ok) {
+        const data = await res.json();
+        const items = data.items || data;
+        if (Array.isArray(items) && items.length > 0) {
+          setLogs(items.map((l: any) => ({
+            id: l.id,
+            timestamp: new Date(l.timestamp).toLocaleString("vi-VN"),
+            actor: l.username || "system",
+            action: l.action,
+            ip: l.payload || "127.0.0.1",
+            type: l.type || "Hệ Thống",
+            status: l.status || "Thành công"
+          })));
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to load audit logs, using initial dataset:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredLogs = logs.filter(log => {
     const matchesSearch =
@@ -29,6 +63,9 @@ export default function AuditLogsPage() {
 
     return matchesSearch && matchesType;
   });
+
+  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage) || 1;
+  const paginatedLogs = filteredLogs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="space-y-6">
@@ -48,7 +85,10 @@ export default function AuditLogsPage() {
           {typesList.map((t) => (
             <button
               key={t}
-              onClick={() => setSelectedType(t)}
+              onClick={() => {
+                setSelectedType(t);
+                setCurrentPage(1);
+              }}
               className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-colors ${
                 selectedType === t
                   ? "bg-blue-600 text-white"
@@ -66,7 +106,10 @@ export default function AuditLogsPage() {
             type="text"
             placeholder="Tìm kiếm tác nhân, hành động, IP..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
             className="w-full px-4 py-2 bg-slate-950 border border-white/10 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
           />
         </div>
@@ -82,19 +125,19 @@ export default function AuditLogsPage() {
                 <th className="pb-3">Tác nhân</th>
                 <th className="pb-3">Loại</th>
                 <th className="pb-3">Hành động</th>
-                <th className="pb-3">Địa chỉ IP</th>
+                <th className="pb-3">Địa chỉ IP / Chi tiết</th>
                 <th className="pb-3 text-right">Trạng thái</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 text-slate-300">
-              {filteredLogs.length === 0 ? (
+              {paginatedLogs.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-8 text-center text-slate-500 italic">
                     Không tìm thấy bản ghi nhật ký nào phù hợp.
                   </td>
                 </tr>
               ) : (
-                filteredLogs.map((log) => (
+                paginatedLogs.map((log) => (
                   <tr key={log.id} className="hover:bg-white/5 transition-colors">
                     <td className="py-3.5 font-mono text-[10px] text-slate-500 whitespace-nowrap">
                       {log.timestamp}
@@ -123,6 +166,17 @@ export default function AuditLogsPage() {
               )}
             </tbody>
           </table>
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 border-t border-white/5 text-slate-400 text-xs mt-4">
+              <div>Trang {currentPage}/{totalPages} — {filteredLogs.length} bản ghi</div>
+              <div className="flex gap-2">
+                <button type="button" disabled={currentPage === 1} onClick={() => setCurrentPage(1)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Đầu</button>
+                <button type="button" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Trước</button>
+                <button type="button" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Sau</button>
+                <button type="button" disabled={currentPage === totalPages} onClick={() => setCurrentPage(totalPages)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Cuối</button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

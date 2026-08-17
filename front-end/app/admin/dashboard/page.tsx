@@ -1,20 +1,112 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { apiFetch } from "@/utils/api";
 
 export default function AdminDashboard() {
-  const stats = [
-    { label: "Doanh thu tháng này", value: "85.250.000đ", change: "+12.5%", isPositive: true, icon: "💰" },
-    { label: "Tổng số đơn hàng", value: "1,280", change: "+8.3%", isPositive: true, icon: "🛒" },
-    { label: "Cộng tác viên hoạt động", value: "142 CTV", change: "+15.2%", isPositive: true, icon: "👥" },
-    { label: "Uptime hệ thống", value: "99.99%", change: "Ổn định", isPositive: true, icon: "🛡️" }
-  ];
+  const [statsData, setStatsData] = useState<any>({
+    totalRevenue: 85250000,
+    monthlyRevenue: 24500000,
+    totalOrders: 1280,
+    pendingOrders: 14,
+    activeAffiliates: 142,
+    monthlyOrders: [],
+    popularPlans: []
+  });
 
-  const recentOrders = [
+  const [recentOrders, setRecentOrders] = useState<any[]>([
     { id: "ORD-94812", client: "Nguyễn Văn Hùng", service: "VPS Pro", amount: "150.000đ", status: "Hoàn tất", date: "Hôm nay, 14:32" },
     { id: "ORD-20491", client: "Lê Văn Tám", service: "Hosting Business", amount: "85.000đ", status: "Chờ duyệt", date: "Hôm nay, 11:15" },
     { id: "ORD-30194", client: "Phạm Minh Đức", service: "VPS Starter", amount: "90.000đ", status: "Hoàn tất", date: "Hôm qua, 18:40" },
     { id: "ORD-58102", client: "Trần Thị Lan", service: "VPS Enterprise", amount: "320.000đ", status: "Đã hủy", date: "15/08/2026" }
+  ]);
+
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    try {
+      // 1. Fetch Stats
+      const statRes = await apiFetch("/api/statistics/dashboard");
+      if (statRes.ok) {
+        const data = await statRes.json();
+        setStatsData(data);
+      }
+
+      // 2. Fetch Recent Orders
+      const orderRes = await apiFetch("/api/order-requests?pageSize=5");
+      if (orderRes.ok) {
+        const orderData = await orderRes.json();
+        const items = orderData.items || orderData;
+        if (Array.isArray(items) && items.length > 0) {
+          setRecentOrders(items.map((o: any) => ({
+            id: o.orderCode || `ORD-${o.id}`,
+            client: o.customerName,
+            service: o.planName,
+            amount: new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(o.price || 0),
+            status: o.statusName || (o.status === 2 ? "Hoàn tất" : o.status === 3 ? "Đã hủy" : "Chờ duyệt"),
+            date: new Date(o.createdAt).toLocaleString("vi-VN")
+          })));
+        }
+      }
+    } catch (err) {
+      console.warn("Using default stats dataset:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND"
+    }).format(val);
+  };
+
+  const stats = [
+    { 
+      label: "Doanh thu tháng này", 
+      value: formatCurrency(statsData.monthlyRevenue || 24500000), 
+      change: "+12.5%", 
+      isPositive: true, 
+      icon: "💰" 
+    },
+    { 
+      label: "Tổng số đơn hàng", 
+      value: (statsData.totalOrders || 1280).toLocaleString(), 
+      change: `+${statsData.pendingOrders || 5} mới`, 
+      isPositive: true, 
+      icon: "🛒" 
+    },
+    { 
+      label: "Cộng tác viên hoạt động", 
+      value: `${statsData.activeAffiliates || 142} CTV`, 
+      change: "+15.2%", 
+      isPositive: true, 
+      icon: "👥" 
+    },
+    { 
+      label: "Uptime hệ thống", 
+      value: "99.99%", 
+      change: "Ổn định", 
+      isPositive: true, 
+      icon: "🛡️" 
+    }
   ];
+
+  const popularPlans = (statsData.popularPlans && statsData.popularPlans.length > 0)
+    ? statsData.popularPlans
+    : [
+        { planName: "Cloud VPS Pro", orderCount: 482, percentage: 55 },
+        { planName: "Cloud Hosting NVMe", orderCount: 284, percentage: 32 },
+        { planName: "Tên Miền (Domain)", orderCount: 85, percentage: 9 },
+        { planName: "Firewall & SSL", orderCount: 35, percentage: 4 }
+      ];
+
+  const colors = ["bg-blue-600", "bg-emerald-600", "bg-indigo-600", "bg-purple-600", "bg-slate-500"];
 
   return (
     <div className="space-y-8">
@@ -52,8 +144,8 @@ export default function AdminDashboard() {
         <div className="lg:col-span-2 bg-slate-900 border border-white/5 rounded-2xl p-6">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h3 className="text-sm font-bold text-white">Doanh Thu 6 Tháng Qua</h3>
-              <p className="text-[10px] text-slate-400">Đơn vị tính: Triệu VND</p>
+              <h3 className="text-sm font-bold text-white">Doanh Thu & Biến Động Đơn Hàng</h3>
+              <p className="text-[10px] text-slate-400">Thống kê theo 6 tháng gần nhất</p>
             </div>
             <span className="text-[10px] px-2.5 py-1 rounded bg-slate-800 text-slate-300 font-medium">Cập nhật tự động</span>
           </div>
@@ -106,23 +198,18 @@ export default function AdminDashboard() {
         <div className="bg-slate-900 border border-white/5 rounded-2xl p-6">
           <div className="mb-6">
             <h3 className="text-sm font-bold text-white">Dịch Vụ Phổ Biến</h3>
-            <p className="text-[10px] text-slate-400">Tỷ lệ đơn hàng đăng ký theo danh mục</p>
+            <p className="text-[10px] text-slate-400">Tỷ lệ đơn hàng đăng ký theo gói</p>
           </div>
 
           <div className="space-y-5">
-            {[
-              { name: "Cloud VPS Pro", count: 482, percent: 55, color: "bg-blue-600" },
-              { name: "Cloud Hosting NVMe", count: 284, percent: 32, color: "bg-emerald-600" },
-              { name: "Tên Miền (Domain)", count: 85, percent: 9, color: "bg-indigo-600" },
-              { name: "Firewall & SSL", count: 35, percent: 4, color: "bg-slate-500" }
-            ].map((srv, idx) => (
+            {popularPlans.map((srv: any, idx: number) => (
               <div key={idx} className="space-y-1.5">
                 <div className="flex justify-between text-xs font-medium">
-                  <span className="text-slate-300">{srv.name}</span>
-                  <span className="text-slate-500">{srv.count} đơn ({srv.percent}%)</span>
+                  <span className="text-slate-300">{srv.planName}</span>
+                  <span className="text-slate-500">{srv.orderCount} đơn ({srv.percentage}%)</span>
                 </div>
                 <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-white/5">
-                  <div className={`h-full ${srv.color}`} style={{ width: `${srv.percent}%` }}></div>
+                  <div className={`h-full ${colors[idx % colors.length]}`} style={{ width: `${Math.max(srv.percentage, 5)}%` }}></div>
                 </div>
               </div>
             ))}
@@ -157,7 +244,7 @@ export default function AdminDashboard() {
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                       ord.status === "Hoàn tất"
                         ? "bg-green-950 text-green-400"
-                        : ord.status === "Chờ duyệt"
+                        : ord.status === "Chờ duyệt" || ord.status === "Đang xử lý"
                         ? "bg-yellow-950 text-yellow-400"
                         : "bg-red-950 text-red-400"
                     }`}>
