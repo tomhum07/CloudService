@@ -6,6 +6,7 @@ using System.Text;
 using CloudService.Infrastructure.Data;
 using CloudService.Application.Interfaces;
 using CloudService.Infrastructure.Services;
+using Resend;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +28,14 @@ builder.Services.AddScoped<IOrderRequestService, OrderRequestService>();
 builder.Services.AddScoped<IAffiliateService, AffiliateService>();
 builder.Services.AddScoped<IStatisticsService, StatisticsService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+
+// Cấu hình Resend Email Service
+builder.Services.AddHttpClient<ResendClient>();
+builder.Services.Configure<ResendClientOptions>(
+    builder.Configuration.GetSection("ResendClientOptions")
+);
+builder.Services.AddTransient<IResend, ResendClient>();
+builder.Services.AddScoped<IEmailService, ResendEmailService>();
 
 // Cấu hình JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "SuperSecretDefaultKeyWithAtLeast32BytesLength!";
