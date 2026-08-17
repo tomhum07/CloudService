@@ -96,6 +96,44 @@ namespace CloudService.WebApi.Controllers
             return Ok(new { message = "Đổi mật khẩu thành công." });
         }
 
+        [HttpGet("profile")]
+        [Authorize]
+        public async Task<IActionResult> GetProfile()
+        {
+            var username = User.Identity?.Name ?? User.FindFirst(ClaimTypes.Name)?.Value;
+            if (string.IsNullOrEmpty(username))
+            {
+                return Unauthorized(new { message = "Không xác định được danh tính người dùng." });
+            }
+
+            var profile = await _authService.GetProfileAsync(username);
+            if (profile == null)
+            {
+                return NotFound(new { message = "Không tìm thấy thông tin tài khoản." });
+            }
+
+            return Ok(profile);
+        }
+
+        [HttpPut("profile")]
+        [Authorize]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
+        {
+            var username = User.Identity?.Name ?? User.FindFirst(ClaimTypes.Name)?.Value;
+            if (string.IsNullOrEmpty(username))
+            {
+                return Unauthorized(new { message = "Không xác định được danh tính người dùng." });
+            }
+
+            var result = await _authService.UpdateProfileAsync(username, request);
+            if (!result)
+            {
+                return BadRequest(new { message = "Không thể cập nhật thông tin." });
+            }
+
+            return Ok(new { message = "Cập nhật thông tin thành công." });
+        }
+
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {

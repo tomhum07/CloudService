@@ -211,5 +211,37 @@ namespace CloudService.Infrastructure.Services
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public async Task<UserDto?> GetProfileAsync(string username)
+        {
+            var user = await _context.AppUsers
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.Username == username);
+
+            if (user == null) return null;
+
+            return new UserDto
+            {
+                Id = user.Id,
+                Username = user.Username,
+                FullName = user.FullName,
+                Email = user.Email,
+                Role = user.Role?.Name ?? string.Empty,
+                IsActive = user.IsActive,
+                CreatedAt = user.CreatedAt
+            };
+        }
+
+        public async Task<bool> UpdateProfileAsync(string username, UpdateProfileRequest request)
+        {
+            var user = await _context.AppUsers.FirstOrDefaultAsync(u => u.Username == username);
+            if (user == null) return false;
+
+            user.FullName = request.FullName;
+            user.Email = request.Email;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

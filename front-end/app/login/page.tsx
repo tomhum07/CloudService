@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { apiFetch, setAccessToken } from "@/utils/api";
 
-export default function AdminLogin() {
+export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -40,11 +40,10 @@ export default function AdminLogin() {
           }
         }
 
-        // KIỂM TRA ĐIỀU HƯỚNG
+        // ĐIỀU HƯỚNG THEO VAI TRÒ
         if (userRole === "Admin" || userRole === "Editor") {
           router.push("/admin/dashboard");
         } else {
-          // NẾU LÀ KHÁCH HÀNG THÌ CHUYỂN HƯỚNG VỀ TRANG CHỦ
           router.push("/");
         }
       } else {
@@ -59,18 +58,20 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-[#030712] flex items-center justify-center px-4 relative overflow-hidden">
+    <div className="min-h-screen bg-[#030712] flex items-center justify-center px-4 relative overflow-hidden py-24">
       {/* Glow background */}
       <div className="absolute w-96 h-96 bg-blue-500/10 rounded-full blur-[120px] top-1/4 left-1/4"></div>
       <div className="absolute w-96 h-96 bg-purple-500/10 rounded-full blur-[120px] bottom-1/4 right-1/4"></div>
 
       <div className="w-full max-w-md glassmorphism rounded-2xl p-8 border border-white/5 relative z-10 shadow-2xl">
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center font-bold text-white text-xl shadow-lg shadow-blue-500/20 mx-auto mb-4">
-            C
-          </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">CloudService Portal</h1>
-          <p className="text-xs text-gray-400 mt-2">Đăng nhập vào hệ thống CloudService</p>
+          <Link href="/" className="inline-block">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center font-bold text-white text-xl shadow-lg shadow-blue-500/20 mx-auto mb-4 hover:scale-105 transition-transform">
+              C
+            </div>
+          </Link>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Đăng Nhập CloudService</h1>
+          <p className="text-xs text-gray-400 mt-2">Đăng nhập tài khoản Khách hàng hoặc Quản trị viên</p>
         </div>
 
         {error && (
@@ -87,13 +88,15 @@ export default function AdminLogin() {
               required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Nhập tên tài khoản..."
+              placeholder="Nhập tên đăng nhập..."
               className="w-full h-11 px-4 rounded-xl bg-gray-900/50 border border-white/5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:bg-gray-900 transition-all"
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold text-gray-300">Mật Khẩu</label>
+            <div className="flex justify-between items-center">
+              <label className="text-xs font-semibold text-gray-300">Mật Khẩu</label>
+            </div>
             <input
               type="password"
               required
@@ -120,7 +123,7 @@ export default function AdminLogin() {
         <div className="mt-6 pt-6 border-t border-white/5 text-center text-xs text-slate-400">
           Chưa có tài khoản?{" "}
           <Link href="/register" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">
-            Đăng ký thành viên
+            Đăng ký ngay
           </Link>
         </div>
       </div>

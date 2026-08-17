@@ -54,6 +54,9 @@ namespace CloudService.UnitTests.WebApi.Controllers
                 if (AdminResetPasswordHandler != null) return AdminResetPasswordHandler(id, newPassword);
                 return Task.FromResult(true);
             }
+
+            public Task<UserDto?> GetProfileAsync(string username) => Task.FromResult<UserDto?>(null);
+            public Task<bool> UpdateProfileAsync(string username, UpdateProfileRequest request) => Task.FromResult(true);
         }
 
         [Fact]

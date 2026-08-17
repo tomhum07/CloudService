@@ -16,5 +16,7 @@ namespace CloudService.Application.Interfaces
         Task<bool> DeleteUserAsync(int id);
         Task<bool> ChangePasswordAsync(string username, ChangePasswordRequest request);
         Task<bool> AdminResetPasswordAsync(int id, string newPassword);
+        Task<UserDto?> GetProfileAsync(string username);
+        Task<bool> UpdateProfileAsync(string username, UpdateProfileRequest request);
     }
 }
