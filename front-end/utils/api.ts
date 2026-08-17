@@ -95,8 +95,8 @@ export async function refreshAccessToken(): Promise<boolean> {
           return true;
         }
       }
-    } catch (error) {
-      console.error("Lỗi tự động gia hạn token:", error);
+    } catch {
+      // Backend đang khởi động lại hoặc không thể kết nối
     }
     return false;
   })();
