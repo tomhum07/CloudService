@@ -24,7 +24,11 @@ namespace CloudService.Infrastructure.Services
         {
             try
             {
-                var fromEmail = _configuration["ResendClientOptions:FromEmail"] ?? "CloudService <onboarding@resend.dev>";
+                var fromEmail = _configuration["ResendClientOptions:FromEmail"];
+                if (string.IsNullOrWhiteSpace(fromEmail) || fromEmail.Contains("YOUR_DOMAIN"))
+                {
+                    fromEmail = "CloudService <onboarding@resend.dev>";
+                }
 
                 var message = new EmailMessage
                 {
@@ -35,12 +39,21 @@ namespace CloudService.Infrastructure.Services
                 };
 
                 var response = await _resend.EmailSendAsync(message);
-                _logger.LogInformation("Resend email sent successfully to {ToEmail}, Result: {Result}", toEmail, response);
-                return true;
+                
+                if (response != null && response.Success)
+                {
+                    _logger.LogInformation("Gửi email qua Resend thành công tới {ToEmail}", toEmail);
+                    return true;
+                }
+                else
+                {
+                    _logger.LogWarning("Resend gửi không thành công tới {ToEmail}", toEmail);
+                    return false;
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi gửi email qua Resend tới {ToEmail}: {Message}", toEmail, ex.Message);
+                _logger.LogError(ex, "Ngoại lệ khi gọi Resend API tới {ToEmail}: {Message}", toEmail, ex.Message);
                 return false;
             }
         }
