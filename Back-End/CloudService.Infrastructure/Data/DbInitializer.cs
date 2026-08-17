@@ -25,8 +25,15 @@ namespace CloudService.Infrastructure.Data
             {
                 var adminRole = new Role { Name = "Admin", Description = "Quản trị viên tối cao" };
                 var editorRole = new Role { Name = "Editor", Description = "Biên tập viên nội dung" };
+                var customerRole = new Role { Name = "Customer", Description = "Khách hàng sử dụng dịch vụ" };
 
-                await context.Roles.AddRangeAsync(adminRole, editorRole);
+                await context.Roles.AddRangeAsync(adminRole, editorRole, customerRole);
+                await context.SaveChangesAsync();
+            }
+            else if (!await context.Roles.AnyAsync(r => r.Name == "Customer"))
+            {
+                var customerRole = new Role { Name = "Customer", Description = "Khách hàng sử dụng dịch vụ" };
+                await context.Roles.AddAsync(customerRole);
                 await context.SaveChangesAsync();
             }
 

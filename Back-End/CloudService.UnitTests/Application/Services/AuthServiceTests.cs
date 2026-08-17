@@ -10,10 +10,19 @@ using CloudService.Domain.Entities;
 using CloudService.Infrastructure.Data;
 using CloudService.Infrastructure.Services;
 
+using CloudService.Application.Interfaces;
+
 namespace CloudService.UnitTests.Application.Services
 {
     public class AuthServiceTests
     {
+        private class FakeEmailService : IEmailService
+        {
+            public Task<bool> SendEmailAsync(string toEmail, string subject, string htmlBody) => Task.FromResult(true);
+            public Task<bool> SendOtpResetPasswordAsync(string toEmail, string fullName, string otpCode) => Task.FromResult(true);
+            public Task<bool> SendOrderNotificationAsync(string toEmail, string customerName, string orderCode, string planName, decimal price) => Task.FromResult(true);
+        }
+
         private ApplicationDbContext GetInMemoryDbContext()
         {
             var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -37,13 +46,18 @@ namespace CloudService.UnitTests.Application.Services
                 .Build();
         }
 
+        private AuthService CreateAuthService(ApplicationDbContext context, JwtTokenGenerator tokenGen)
+        {
+            return new AuthService(context, tokenGen, new FakeEmailService());
+        }
+
         [Fact]
         public async Task RegisterUserAsync_ShouldCreateUserSuccessfully()
         {
             var context = GetInMemoryDbContext();
             var config = GetMockConfiguration();
             var tokenGen = new JwtTokenGenerator(config);
-            var authService = new AuthService(context, tokenGen);
+            var authService = CreateAuthService(context, tokenGen);
 
             var req = new RegisterRequest
             {
@@ -68,7 +82,7 @@ namespace CloudService.UnitTests.Application.Services
             var context = GetInMemoryDbContext();
             var config = GetMockConfiguration();
             var tokenGen = new JwtTokenGenerator(config);
-            var authService = new AuthService(context, tokenGen);
+            var authService = CreateAuthService(context, tokenGen);
 
             var req = new RegisterRequest
             {
@@ -100,7 +114,7 @@ namespace CloudService.UnitTests.Application.Services
             var context = GetInMemoryDbContext();
             var config = GetMockConfiguration();
             var tokenGen = new JwtTokenGenerator(config);
-            var authService = new AuthService(context, tokenGen);
+            var authService = CreateAuthService(context, tokenGen);
 
             var role = new Role { Id = 1, Name = "Admin", IsActive = true };
             await context.Roles.AddAsync(role);
@@ -126,7 +140,7 @@ namespace CloudService.UnitTests.Application.Services
             var context = GetInMemoryDbContext();
             var config = GetMockConfiguration();
             var tokenGen = new JwtTokenGenerator(config);
-            var authService = new AuthService(context, tokenGen);
+            var authService = CreateAuthService(context, tokenGen);
 
             var passHash = BCrypt.Net.BCrypt.HashPassword("Admin" + "Val" + "Key" + "1!");
             var user = new AppUser { Username = "admin", PasswordHash = passHash, FullName = "Admin", Email = "admin@test.com", RoleId = 1, IsActive = true };
@@ -145,7 +159,7 @@ namespace CloudService.UnitTests.Application.Services
             var context = GetInMemoryDbContext();
             var config = GetMockConfiguration();
             var tokenGen = new JwtTokenGenerator(config);
-            var authService = new AuthService(context, tokenGen);
+            var authService = CreateAuthService(context, tokenGen);
 
             var role = new Role { Id = 1, Name = "Editor", IsActive = true };
             await context.Roles.AddAsync(role);
@@ -179,7 +193,7 @@ namespace CloudService.UnitTests.Application.Services
             var context = GetInMemoryDbContext();
             var config = GetMockConfiguration();
             var tokenGen = new JwtTokenGenerator(config);
-            var authService = new AuthService(context, tokenGen);
+            var authService = CreateAuthService(context, tokenGen);
 
             var user = new AppUser
             {
@@ -203,7 +217,7 @@ namespace CloudService.UnitTests.Application.Services
             var context = GetInMemoryDbContext();
             var config = GetMockConfiguration();
             var tokenGen = new JwtTokenGenerator(config);
-            var authService = new AuthService(context, tokenGen);
+            var authService = CreateAuthService(context, tokenGen);
 
             var user = new AppUser
             {
@@ -231,7 +245,7 @@ namespace CloudService.UnitTests.Application.Services
             var context = GetInMemoryDbContext();
             var config = GetMockConfiguration();
             var tokenGen = new JwtTokenGenerator(config);
-            var authService = new AuthService(context, tokenGen);
+            var authService = CreateAuthService(context, tokenGen);
 
             var adminRole = new Role { Id = 1, Name = "Admin", IsActive = true };
             var editorRole = new Role { Id = 2, Name = "Editor", IsActive = true };
@@ -290,7 +304,7 @@ namespace CloudService.UnitTests.Application.Services
             var context = GetInMemoryDbContext();
             var config = GetMockConfiguration();
             var tokenGen = new JwtTokenGenerator(config);
-            var authService = new AuthService(context, tokenGen);
+            var authService = CreateAuthService(context, tokenGen);
 
             var adminRole = new Role { Id = 1, Name = "Admin", IsActive = true };
             var editorRole = new Role { Id = 2, Name = "Editor", IsActive = true };
@@ -335,7 +349,7 @@ namespace CloudService.UnitTests.Application.Services
             var context = GetInMemoryDbContext();
             var config = GetMockConfiguration();
             var tokenGen = new JwtTokenGenerator(config);
-            var authService = new AuthService(context, tokenGen);
+            var authService = CreateAuthService(context, tokenGen);
 
             var role = new Role { Id = 1, Name = "Admin", IsActive = true };
             await context.Roles.AddAsync(role);
@@ -378,7 +392,7 @@ namespace CloudService.UnitTests.Application.Services
             var context = GetInMemoryDbContext();
             var config = GetMockConfiguration();
             var tokenGen = new JwtTokenGenerator(config);
-            var authService = new AuthService(context, tokenGen);
+            var authService = CreateAuthService(context, tokenGen);
 
             var role = new Role { Id = 1, Name = "Admin", IsActive = true };
             await context.Roles.AddAsync(role);
@@ -402,7 +416,7 @@ namespace CloudService.UnitTests.Application.Services
             var context = GetInMemoryDbContext();
             var config = GetMockConfiguration();
             var tokenGen = new JwtTokenGenerator(config);
-            var authService = new AuthService(context, tokenGen);
+            var authService = CreateAuthService(context, tokenGen);
 
             var user = new AppUser
             {
@@ -429,7 +443,7 @@ namespace CloudService.UnitTests.Application.Services
             var context = GetInMemoryDbContext();
             var config = GetMockConfiguration();
             var tokenGen = new JwtTokenGenerator(config);
-            var authService = new AuthService(context, tokenGen);
+            var authService = CreateAuthService(context, tokenGen);
 
             var result = await authService.DeleteUserAsync(999);
             Assert.False(result);
@@ -441,7 +455,7 @@ namespace CloudService.UnitTests.Application.Services
             var context = GetInMemoryDbContext();
             var config = GetMockConfiguration();
             var tokenGen = new JwtTokenGenerator(config);
-            var authService = new AuthService(context, tokenGen);
+            var authService = CreateAuthService(context, tokenGen);
 
             var oldPass = "OldPassword123!";
             var newPass = "NewPassword456!";
@@ -477,7 +491,7 @@ namespace CloudService.UnitTests.Application.Services
             var context = GetInMemoryDbContext();
             var config = GetMockConfiguration();
             var tokenGen = new JwtTokenGenerator(config);
-            var authService = new AuthService(context, tokenGen);
+            var authService = CreateAuthService(context, tokenGen);
 
             var initialPass = "CorrectPassword123!";
             var initialHash = BCrypt.Net.BCrypt.HashPassword(initialPass);
@@ -512,7 +526,7 @@ namespace CloudService.UnitTests.Application.Services
             var context = GetInMemoryDbContext();
             var config = GetMockConfiguration();
             var tokenGen = new JwtTokenGenerator(config);
-            var authService = new AuthService(context, tokenGen);
+            var authService = CreateAuthService(context, tokenGen);
 
             var req = new ChangePasswordRequest
             {
@@ -530,7 +544,7 @@ namespace CloudService.UnitTests.Application.Services
             var context = GetInMemoryDbContext();
             var config = GetMockConfiguration();
             var tokenGen = new JwtTokenGenerator(config);
-            var authService = new AuthService(context, tokenGen);
+            var authService = CreateAuthService(context, tokenGen);
 
             var oldPass = "UserOldPass123!";
             var newAdminPass = "AdminResetPass456!";
@@ -560,7 +574,7 @@ namespace CloudService.UnitTests.Application.Services
             var context = GetInMemoryDbContext();
             var config = GetMockConfiguration();
             var tokenGen = new JwtTokenGenerator(config);
-            var authService = new AuthService(context, tokenGen);
+            var authService = CreateAuthService(context, tokenGen);
 
             var result = await authService.AdminResetPasswordAsync(999, "NewPassword123!");
             Assert.False(result);

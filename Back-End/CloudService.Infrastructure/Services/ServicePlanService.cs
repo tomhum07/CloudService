@@ -22,12 +22,23 @@ namespace CloudService.Infrastructure.Services
             _configuration = configuration;
         }
 
-        public async Task<PagedResult<ServicePlanDto>> GetPagedAsync(int page, int pageSize, int? categoryId, string? search, string? sort)
+        public async Task<PagedResult<ServicePlanDto>> GetPagedAsync(
+            int page = 1,
+            int pageSize = 10,
+            int? categoryId = null,
+            string? search = null,
+            string? sort = null,
+            bool includeInactive = false)
         {
-            var query = _context.ServicePlans
+            var query = _context.ServicePlans.AsQueryable();
+            if (includeInactive)
+            {
+                query = query.IgnoreQueryFilters();
+            }
+
+            query = query
                 .Include(p => p.Category)
-                .Include(p => p.Prices)
-                .AsQueryable();
+                .Include(p => p.Prices);
 
             if (categoryId.HasValue)
             {
@@ -107,6 +118,7 @@ namespace CloudService.Infrastructure.Services
         public async Task<ServicePlanDto?> GetByIdAsync(int id)
         {
             var plan = await _context.ServicePlans
+                .IgnoreQueryFilters()
                 .Include(p => p.Category)
                 .FirstOrDefaultAsync(x => x.Id == id);
 
@@ -176,6 +188,7 @@ namespace CloudService.Infrastructure.Services
         public async Task<ServicePlanDto?> UpdateAsync(int id, UpdateServicePlanRequest request)
         {
             var plan = await _context.ServicePlans
+                .IgnoreQueryFilters()
                 .Include(p => p.Category)
                 .FirstOrDefaultAsync(x => x.Id == id);
                 
@@ -187,6 +200,7 @@ namespace CloudService.Infrastructure.Services
             plan.Ram = request.Ram;
             plan.Storage = request.Storage;
             plan.Bandwidth = request.Bandwidth;
+            plan.IsActive = request.IsActive;
             plan.LastModifiedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
@@ -211,6 +225,7 @@ namespace CloudService.Infrastructure.Services
         public async Task<bool> DeleteAsync(int id)
         {
             var plan = await _context.ServicePlans
+                .IgnoreQueryFilters()
                 .Include(p => p.Prices)
                 .FirstOrDefaultAsync(x => x.Id == id);
                 

@@ -6,7 +6,7 @@ namespace CloudService.Application.Interfaces
 {
     public interface IServiceCategoryService
     {
-        Task<IEnumerable<ServiceCategoryDto>> GetAllAsync();
+        Task<IEnumerable<ServiceCategoryDto>> GetAllAsync(bool includeInactive = false);
         Task<ServiceCategoryDto?> GetByIdAsync(int id);
         Task<ServiceCategoryDto> CreateAsync(CreateServiceCategoryRequest request);
         Task<ServiceCategoryDto?> UpdateAsync(int id, UpdateServiceCategoryRequest request);

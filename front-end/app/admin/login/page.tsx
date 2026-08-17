@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { apiFetch, setAccessToken } from "@/utils/api";
 
 export default function AdminLogin() {
@@ -23,8 +24,29 @@ export default function AdminLogin() {
 
       if (res.ok) {
         const data = await res.json();
-        setAccessToken(data.accessToken);
-        router.push("/admin/dashboard");
+        const token = data.accessToken;
+        setAccessToken(token);
+
+        let userRole = data.role || "Customer";
+        if (token) {
+          try {
+            const payloadPart = token.split(".")[1];
+            if (payloadPart) {
+              const payload = JSON.parse(window.atob(payloadPart));
+              userRole = payload["role"] || payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || userRole;
+            }
+          } catch (e) {
+            console.error("Lỗi giải mã token:", e);
+          }
+        }
+
+        // KIỂM TRA ĐIỀU HƯỚNG
+        if (userRole === "Admin" || userRole === "Editor") {
+          router.push("/admin/dashboard");
+        } else {
+          // NẾU LÀ KHÁCH HÀNG THÌ CHUYỂN HƯỚNG VỀ TRANG CHỦ
+          router.push("/");
+        }
       } else {
         const errData = await res.json();
         setError(errData.message || "Tài khoản hoặc mật khẩu không chính xác.");
@@ -47,8 +69,8 @@ export default function AdminLogin() {
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center font-bold text-white text-xl shadow-lg shadow-blue-500/20 mx-auto mb-4">
             C
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">CloudService Admin</h1>
-          <p className="text-xs text-gray-400 mt-2">Đăng nhập vào hệ thống quản trị dịch vụ</p>
+          <h1 className="text-2xl font-bold text-white tracking-tight">CloudService Portal</h1>
+          <p className="text-xs text-gray-400 mt-2">Đăng nhập vào hệ thống CloudService</p>
         </div>
 
         {error && (
@@ -65,7 +87,7 @@ export default function AdminLogin() {
               required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Nhập tài khoản admin..."
+              placeholder="Nhập tên tài khoản..."
               className="w-full h-11 px-4 rounded-xl bg-gray-900/50 border border-white/5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:bg-gray-900 transition-all"
             />
           </div>
@@ -90,10 +112,17 @@ export default function AdminLogin() {
             {loading ? (
               <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
             ) : (
-              "Đăng Nhập Hệ Thống"
+              "Đăng Nhập"
             )}
           </button>
         </form>
+
+        <div className="mt-6 pt-6 border-t border-white/5 text-center text-xs text-slate-400">
+          Chưa có tài khoản?{" "}
+          <Link href="/register" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">
+            Đăng ký thành viên
+          </Link>
+        </div>
       </div>
     </div>
   );

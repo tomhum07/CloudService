@@ -6,7 +6,7 @@ namespace CloudService.Application.Interfaces
 {
     public interface IServicePlanService
     {
-        Task<PagedResult<ServicePlanDto>> GetPagedAsync(int page, int pageSize, int? categoryId, string? search, string? sort);
+        Task<PagedResult<ServicePlanDto>> GetPagedAsync(int page, int pageSize, int? categoryId, string? search, string? sort, bool includeInactive = false);
         Task<ServicePlanDto?> GetByIdAsync(int id);
         Task<ServicePlanDto> CreateAsync(CreateServicePlanRequest request);
         Task<ServicePlanDto?> UpdateAsync(int id, UpdateServicePlanRequest request);

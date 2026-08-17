@@ -18,9 +18,15 @@ namespace CloudService.Infrastructure.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<PlanPriceDto>> GetPricesByPlanIdAsync(int planId)
+        public async Task<IEnumerable<PlanPriceDto>> GetPricesByPlanIdAsync(int planId, bool includeInactive = false)
         {
-            var prices = await _context.PlanPrices
+            var query = _context.PlanPrices.AsQueryable();
+            if (includeInactive)
+            {
+                query = query.IgnoreQueryFilters();
+            }
+
+            var prices = await query
                 .Include(p => p.Promotion)
                 .Where(p => p.PlanId == planId)
                 .Select(p => new PlanPriceDto
@@ -58,6 +64,7 @@ namespace CloudService.Infrastructure.Services
         public async Task<PlanPriceDto?> UpdatePriceAsync(int planId, int priceId, UpdatePlanPriceRequest request)
         {
             var planPrice = await _context.PlanPrices
+                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(p => p.Id == priceId && p.PlanId == planId);
 
             if (planPrice == null)
@@ -66,6 +73,7 @@ namespace CloudService.Infrastructure.Services
             planPrice.BillingCycle = request.BillingCycle;
             planPrice.Price = request.Price;
             planPrice.PromotionId = request.PromotionId;
+            planPrice.IsActive = request.IsActive;
 
             await _context.SaveChangesAsync();
 
@@ -75,6 +83,7 @@ namespace CloudService.Infrastructure.Services
         public async Task<bool> DeletePriceAsync(int planId, int priceId)
         {
             var planPrice = await _context.PlanPrices
+                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(p => p.Id == priceId && p.PlanId == planId);
 
             if (planPrice == null)
@@ -130,6 +139,7 @@ namespace CloudService.Infrastructure.Services
         private async Task<PlanPriceDto> GetPriceDtoByIdAsync(int priceId)
         {
             var price = await _context.PlanPrices
+                .IgnoreQueryFilters()
                 .Include(p => p.Promotion)
                 .Where(p => p.Id == priceId)
                 .Select(p => new PlanPriceDto

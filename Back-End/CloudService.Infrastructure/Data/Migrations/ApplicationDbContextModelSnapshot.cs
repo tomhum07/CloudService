@@ -116,6 +116,12 @@ namespace CloudService.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("RefreshTokenExpiryTime")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("ResetPasswordOtp")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ResetPasswordOtpExpiry")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("RoleId")
                         .HasColumnType("integer");
 

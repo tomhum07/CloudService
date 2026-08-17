@@ -19,9 +19,15 @@ namespace CloudService.Infrastructure.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<ServiceCategoryDto>> GetAllAsync()
+        public async Task<IEnumerable<ServiceCategoryDto>> GetAllAsync(bool includeInactive = false)
         {
-            return await _context.ServiceCategories
+            var query = _context.ServiceCategories.AsQueryable();
+            if (includeInactive)
+            {
+                query = query.IgnoreQueryFilters();
+            }
+
+            return await query
                 .Select(c => new ServiceCategoryDto
                 {
                     Id = c.Id,
@@ -36,7 +42,7 @@ namespace CloudService.Infrastructure.Services
 
         public async Task<ServiceCategoryDto?> GetByIdAsync(int id)
         {
-            var category = await _context.ServiceCategories.FindAsync(id);
+            var category = await _context.ServiceCategories.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == id);
             if (category == null) return null;
 
             return new ServiceCategoryDto
@@ -75,12 +81,13 @@ namespace CloudService.Infrastructure.Services
 
         public async Task<ServiceCategoryDto?> UpdateAsync(int id, UpdateServiceCategoryRequest request)
         {
-            var category = await _context.ServiceCategories.FindAsync(id);
+            var category = await _context.ServiceCategories.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == id);
             if (category == null) return null;
 
             category.Name = request.Name;
             category.Slug = request.Slug;
             category.Description = request.Description;
+            category.IsActive = request.IsActive;
 
             await _context.SaveChangesAsync();
 
@@ -98,6 +105,7 @@ namespace CloudService.Infrastructure.Services
         public async Task<bool> DeleteAsync(int id)
         {
             var category = await _context.ServiceCategories
+                .IgnoreQueryFilters()
                 .Include(c => c.Plans)
                     .ThenInclude(p => p.Prices)
                 .FirstOrDefaultAsync(c => c.Id == id);
