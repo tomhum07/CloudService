@@ -26,6 +26,7 @@ function OrderFormContent() {
 
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [plans, setPlans] = useState<any[]>(PRESET_PLANS);
 
   // Form Fields
   const [selectedPlanId, setSelectedPlanId] = useState<number>(2); // Default to VPS Pro
@@ -41,23 +42,50 @@ function OrderFormContent() {
   // Completed Order State
   const [createdOrder, setCreatedOrder] = useState<any | null>(null);
 
+  // Load plans from API
+  useEffect(() => {
+    async function fetchPlans() {
+      try {
+        const res = await apiFetch("/api/service-plans?pageSize=50");
+        if (res.ok) {
+          const data = await res.json();
+          const items = data.items || data;
+          if (Array.isArray(items) && items.length > 0) {
+            const mapped = items.map((p: any) => ({
+              id: p.id,
+              name: p.name,
+              type: p.categoryName?.toLowerCase().includes("host") ? "Hosting" : "VPS",
+              price: (p.prices && p.prices.length > 0) ? p.prices[0].price : 150000
+            }));
+            setPlans(mapped);
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to fetch plans for order form:", err);
+      }
+    }
+    fetchPlans();
+  }, []);
+
   // Auto pre-select plan if passed from URL
   useEffect(() => {
     if (planIdParam) {
       const parsed = parseInt(planIdParam, 10);
-      if (!isNaN(parsed) && PRESET_PLANS.some((p) => p.id === parsed)) {
+      if (!isNaN(parsed)) {
         setSelectedPlanId(parsed);
       }
     } else if (planTypeParam) {
       if (planTypeParam.toLowerCase() === "hosting") {
-        setSelectedPlanId(4); // default hosting
+        const found = plans.find(p => p.type === "Hosting");
+        if (found) setSelectedPlanId(found.id);
       } else if (planTypeParam.toLowerCase() === "vps") {
-        setSelectedPlanId(2); // default VPS
+        const found = plans.find(p => p.type === "VPS");
+        if (found) setSelectedPlanId(found.id);
       }
     }
-  }, [planIdParam, planTypeParam]);
+  }, [planIdParam, planTypeParam, plans]);
 
-  const selectedPlan = PRESET_PLANS.find((p) => p.id === selectedPlanId) || PRESET_PLANS[0];
+  const selectedPlan = plans.find((p) => p.id === selectedPlanId) || plans[0] || PRESET_PLANS[0];
 
   const handleApplyPromo = () => {
     if (promoCode.trim().toUpperCase() === "CLOUDSERVICE2026") {
@@ -205,7 +233,7 @@ function OrderFormContent() {
                   Gói dịch vụ
                 </label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {PRESET_PLANS.map((plan) => (
+                  {plans.map((plan) => (
                     <button
                       key={plan.id}
                       type="button"
