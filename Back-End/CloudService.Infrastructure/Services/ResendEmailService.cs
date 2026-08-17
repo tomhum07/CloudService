@@ -24,8 +24,12 @@ namespace CloudService.Infrastructure.Services
             try
             {
                 var section = _configuration.GetSection("ResendClientOptions");
-                var apiToken = section["ApiToken"] ?? section["Token"] ?? section.Value;
-                var fromEmail = section["FromEmail"];
+                var apiToken = section["Token"] ?? section["ApiToken"] ?? _configuration["ResendClientOptions:Token"] ?? _configuration["ResendClientOptions:ApiToken"] ?? section.Value;
+                if (!string.IsNullOrWhiteSpace(apiToken))
+                {
+                    apiToken = apiToken.Trim();
+                }
+                var fromEmail = section["FromEmail"] ?? _configuration["ResendClientOptions:FromEmail"];
 
                 if (string.IsNullOrWhiteSpace(fromEmail) || fromEmail.Contains("YOUR_DOMAIN"))
                 {
