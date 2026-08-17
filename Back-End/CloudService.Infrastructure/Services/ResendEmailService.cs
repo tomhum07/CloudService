@@ -9,13 +9,12 @@ namespace CloudService.Infrastructure.Services
 {
     public class ResendEmailService : IEmailService
     {
-        private readonly IResend _resend;
         private readonly IConfiguration _configuration;
         private readonly ILogger<ResendEmailService> _logger;
+        private static readonly System.Net.Http.HttpClient _httpClient = new System.Net.Http.HttpClient();
 
-        public ResendEmailService(IResend resend, IConfiguration configuration, ILogger<ResendEmailService> logger)
+        public ResendEmailService(IConfiguration configuration, ILogger<ResendEmailService> logger)
         {
-            _resend = resend;
             _configuration = configuration;
             _logger = logger;
         }
@@ -24,36 +23,56 @@ namespace CloudService.Infrastructure.Services
         {
             try
             {
-                var fromEmail = _configuration["ResendClientOptions:FromEmail"];
+                var section = _configuration.GetSection("ResendClientOptions");
+                var apiToken = section["ApiToken"] ?? section["Token"] ?? section.Value;
+                var fromEmail = section["FromEmail"];
+
                 if (string.IsNullOrWhiteSpace(fromEmail) || fromEmail.Contains("YOUR_DOMAIN"))
                 {
-                    fromEmail = "CloudService <onboarding@resend.dev>";
+                    fromEmail = "CLOUDSERVICES <noreply@tomhum07.me>";
                 }
 
-                var message = new EmailMessage
+                if (string.IsNullOrWhiteSpace(apiToken))
                 {
-                    From = fromEmail,
-                    To = toEmail,
-                    Subject = subject,
-                    HtmlBody = htmlBody
+                    _logger.LogError("Resend API Token chưa được cấu hình.");
+                    return false;
+                }
+
+                var payload = new
+                {
+                    from = fromEmail,
+                    to = new[] { toEmail },
+                    subject = subject,
+                    html = htmlBody
                 };
 
-                var response = await _resend.EmailSendAsync(message);
-                
-                if (response != null && response.Success)
+                using var request = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Post, "https://api.resend.com/emails")
                 {
-                    _logger.LogInformation("Gửi email qua Resend thành công tới {ToEmail}", toEmail);
+                    Content = new System.Net.Http.StringContent(
+                        System.Text.Json.JsonSerializer.Serialize(payload),
+                        System.Text.Encoding.UTF8,
+                        "application/json"
+                    )
+                };
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiToken);
+
+                var response = await _httpClient.SendAsync(request);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    _logger.LogInformation("Gửi email qua Resend thành công tới {ToEmail}. Response: {Response}", toEmail, responseContent);
                     return true;
                 }
                 else
                 {
-                    _logger.LogWarning("Resend gửi không thành công tới {ToEmail}", toEmail);
+                    _logger.LogWarning("Resend gửi thất bại tới {ToEmail}. StatusCode: {Code}, Response: {Response}", toEmail, response.StatusCode, responseContent);
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Ngoại lệ khi gọi Resend API tới {ToEmail}: {Message}", toEmail, ex.Message);
+                _logger.LogError(ex, "Ngoại lệ khi gửi email qua Resend tới {ToEmail}: {Message}", toEmail, ex.Message);
                 return false;
             }
         }

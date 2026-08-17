@@ -30,17 +30,6 @@ builder.Services.AddScoped<IStatisticsService, StatisticsService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 
 // Cấu hình Resend Email Service
-builder.Services.AddHttpClient<ResendClient>();
-builder.Services.Configure<ResendClientOptions>(options =>
-{
-    var section = builder.Configuration.GetSection("ResendClientOptions");
-    var token = section["ApiToken"] ?? section["Token"] ?? section.Value;
-    if (!string.IsNullOrEmpty(token))
-    {
-        options.ApiToken = token;
-    }
-});
-builder.Services.AddTransient<IResend, ResendClient>();
 builder.Services.AddScoped<IEmailService, ResendEmailService>();
 
 // Cấu hình JWT Authentication
