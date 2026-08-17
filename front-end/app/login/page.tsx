@@ -96,6 +96,12 @@ export default function LoginPage() {
           <div className="flex flex-col gap-2">
             <div className="flex justify-between items-center">
               <label className="text-xs font-semibold text-gray-300">Mật Khẩu</label>
+              <Link
+                href="/forgot-password"
+                className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+              >
+                Quên mật khẩu?
+              </Link>
             </div>
             <input
               type="password"

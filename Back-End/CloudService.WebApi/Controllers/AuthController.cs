@@ -145,6 +145,40 @@ namespace CloudService.WebApi.Controllers
             return Ok(new { message = "Đăng ký tài khoản thành công." });
         }
 
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.EmailOrUsername))
+            {
+                return BadRequest(new { message = "Vui lòng nhập Email hoặc Tên đăng nhập." });
+            }
+
+            var sent = await _authService.SendForgotPasswordOtpAsync(request);
+            if (!sent)
+            {
+                return BadRequest(new { message = "Không tìm thấy tài khoản hoặc email không hợp lệ." });
+            }
+
+            return Ok(new { message = "Mã xác thực OTP đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư." });
+        }
+
+        [HttpPost("reset-password-otp")]
+        public async Task<IActionResult> ResetPasswordWithOtp([FromBody] VerifyResetOtpRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.EmailOrUsername) || string.IsNullOrWhiteSpace(request.OtpCode) || string.IsNullOrWhiteSpace(request.NewPassword))
+            {
+                return BadRequest(new { message = "Vui lòng nhập đầy đủ thông tin xác thực." });
+            }
+
+            var (success, message) = await _authService.ResetPasswordWithOtpAsync(request);
+            if (!success)
+            {
+                return BadRequest(new { message });
+            }
+
+            return Ok(new { message });
+        }
+
         private void SetRefreshTokenCookie(string token)
         {
             var cookieOptions = new CookieOptions

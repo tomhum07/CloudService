@@ -14,11 +14,13 @@ namespace CloudService.Infrastructure.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IJwtTokenGenerator _tokenGenerator;
+        private readonly IEmailService _emailService;
 
-        public AuthService(ApplicationDbContext context, IJwtTokenGenerator tokenGenerator)
+        public AuthService(ApplicationDbContext context, IJwtTokenGenerator tokenGenerator, IEmailService emailService)
         {
             _context = context;
             _tokenGenerator = tokenGenerator;
+            _emailService = emailService;
         }
 
         public async Task<AuthResponse?> LoginAsync(LoginRequest request, Action<string> setRefreshTokenCookie)
@@ -242,6 +244,59 @@ namespace CloudService.Infrastructure.Services
 
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<bool> SendForgotPasswordOtpAsync(ForgotPasswordRequest request)
+        {
+            var key = request.EmailOrUsername.Trim().ToLower();
+            var user = await _context.AppUsers.FirstOrDefaultAsync(u => u.Username.ToLower() == key || u.Email.ToLower() == key);
+            if (user == null || string.IsNullOrWhiteSpace(user.Email))
+            {
+                return false;
+            }
+
+            // Sinh mã OTP 6 chữ số
+            var otp = new Random().Next(100000, 999999).ToString();
+            user.ResetPasswordOtp = otp;
+            user.ResetPasswordOtpExpiry = DateTime.UtcNow.AddMinutes(5); // 5 phút hiệu lực
+
+            await _context.SaveChangesAsync();
+
+            // Gửi qua Resend
+            return await _emailService.SendOtpResetPasswordAsync(user.Email, user.FullName ?? user.Username, otp);
+        }
+
+        public async Task<(bool Success, string Message)> ResetPasswordWithOtpAsync(VerifyResetOtpRequest request)
+        {
+            var key = request.EmailOrUsername.Trim().ToLower();
+            var user = await _context.AppUsers.FirstOrDefaultAsync(u => u.Username.ToLower() == key || u.Email.ToLower() == key);
+            if (user == null)
+            {
+                return (false, "Tài khoản không tồn tại trên hệ thống.");
+            }
+
+            if (string.IsNullOrEmpty(user.ResetPasswordOtp) || user.ResetPasswordOtp != request.OtpCode.Trim())
+            {
+                return (false, "Mã xác nhận OTP không chính xác.");
+            }
+
+            if (!user.ResetPasswordOtpExpiry.HasValue || user.ResetPasswordOtpExpiry.Value < DateTime.UtcNow)
+            {
+                return (false, "Mã xác nhận OTP đã hết hạn (chỉ có hiệu lực trong 5 phút).");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.NewPassword) || request.NewPassword.Length < 6)
+            {
+                return (false, "Mật khẩu mới phải có tối thiểu 6 ký tự.");
+            }
+
+            // Reset password
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            user.ResetPasswordOtp = null;
+            user.ResetPasswordOtpExpiry = null;
+
+            await _context.SaveChangesAsync();
+            return (true, "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập ngay.");
         }
     }
 }

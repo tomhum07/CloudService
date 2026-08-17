@@ -18,5 +18,7 @@ namespace CloudService.Application.Interfaces
         Task<bool> AdminResetPasswordAsync(int id, string newPassword);
         Task<UserDto?> GetProfileAsync(string username);
         Task<bool> UpdateProfileAsync(string username, UpdateProfileRequest request);
+        Task<bool> SendForgotPasswordOtpAsync(ForgotPasswordRequest request);
+        Task<(bool Success, string Message)> ResetPasswordWithOtpAsync(VerifyResetOtpRequest request);
     }
 }
