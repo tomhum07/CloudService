@@ -262,8 +262,17 @@ namespace CloudService.Infrastructure.Services
 
             await _context.SaveChangesAsync();
 
-            // Gửi qua Resend
-            return await _emailService.SendOtpResetPasswordAsync(user.Email, user.FullName ?? user.Username, otp);
+            // Gửi email qua Resend (chạy ngầm và ghi log, không làm fail request)
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await _emailService.SendOtpResetPasswordAsync(user.Email, user.FullName ?? user.Username, otp);
+                }
+                catch { }
+            });
+
+            return true;
         }
 
         public async Task<(bool Success, string Message)> ResetPasswordWithOtpAsync(VerifyResetOtpRequest request)
