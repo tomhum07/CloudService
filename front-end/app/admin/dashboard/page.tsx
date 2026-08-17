@@ -4,22 +4,18 @@ import { apiFetch } from "@/utils/api";
 
 export default function AdminDashboard() {
   const [statsData, setStatsData] = useState<any>({
-    totalRevenue: 85250000,
-    monthlyRevenue: 24500000,
-    totalOrders: 1280,
-    pendingOrders: 14,
-    activeAffiliates: 142,
+    totalRevenue: 0,
+    monthlyRevenue: 0,
+    totalOrders: 0,
+    pendingOrders: 0,
+    activeAffiliates: 0,
+    totalUsers: 0,
+    totalPlans: 0,
     monthlyOrders: [],
     popularPlans: []
   });
 
-  const [recentOrders, setRecentOrders] = useState<any[]>([
-    { id: "ORD-94812", client: "Nguyễn Văn Hùng", service: "VPS Pro", amount: "150.000đ", status: "Hoàn tất", date: "Hôm nay, 14:32" },
-    { id: "ORD-20491", client: "Lê Văn Tám", service: "Hosting Business", amount: "85.000đ", status: "Chờ duyệt", date: "Hôm nay, 11:15" },
-    { id: "ORD-30194", client: "Phạm Minh Đức", service: "VPS Starter", amount: "90.000đ", status: "Hoàn tất", date: "Hôm qua, 18:40" },
-    { id: "ORD-58102", client: "Trần Thị Lan", service: "VPS Enterprise", amount: "320.000đ", status: "Đã hủy", date: "15/08/2026" }
-  ]);
-
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,7 +25,7 @@ export default function AdminDashboard() {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      // 1. Fetch Stats
+      // 1. Fetch Real Stats
       const statRes = await apiFetch("/api/statistics/dashboard");
       if (statRes.ok) {
         const data = await statRes.json();
@@ -53,7 +49,7 @@ export default function AdminDashboard() {
         }
       }
     } catch (err) {
-      console.warn("Using default stats dataset:", err);
+      console.warn("Lỗi tải số liệu thống kê:", err);
     } finally {
       setLoading(false);
     }
@@ -63,47 +59,70 @@ export default function AdminDashboard() {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND"
-    }).format(val);
+    }).format(val || 0);
   };
 
   const stats = [
     { 
       label: "Doanh thu tháng này", 
-      value: formatCurrency(statsData.monthlyRevenue || 24500000), 
-      change: "+12.5%", 
+      value: formatCurrency(statsData.monthlyRevenue || 0), 
+      change: statsData.totalRevenue > 0 ? `Tổng: ${formatCurrency(statsData.totalRevenue)}` : "Chưa có doanh thu", 
       isPositive: true, 
       icon: "💰" 
     },
     { 
       label: "Tổng số đơn hàng", 
-      value: (statsData.totalOrders || 1280).toLocaleString(), 
-      change: `+${statsData.pendingOrders || 5} mới`, 
-      isPositive: true, 
+      value: (statsData.totalOrders || 0).toLocaleString(), 
+      change: statsData.pendingOrders > 0 ? `${statsData.pendingOrders} đơn chờ duyệt` : "Tất cả đã xử lý", 
+      isPositive: statsData.pendingOrders === 0, 
       icon: "🛒" 
     },
     { 
-      label: "Cộng tác viên hoạt động", 
-      value: `${statsData.activeAffiliates || 142} CTV`, 
-      change: "+15.2%", 
+      label: "Đối tác CTV hoạt động", 
+      value: `${statsData.activeAffiliates || 0} CTV`, 
+      change: `Tổng ${statsData.totalUsers || 0} tài khoản`, 
       isPositive: true, 
       icon: "👥" 
     },
     { 
-      label: "Uptime hệ thống", 
-      value: "99.99%", 
-      change: "Ổn định", 
+      label: "Gói cước hoạt động", 
+      value: `${statsData.totalPlans || 0} gói dịch vụ`, 
+      change: "Uptime 99.99%", 
       isPositive: true, 
       icon: "🛡️" 
     }
   ];
 
+  const monthlyOrders = (statsData.monthlyOrders && statsData.monthlyOrders.length > 0)
+    ? statsData.monthlyOrders
+    : [
+        { month: "T3", orderCount: 0, revenue: 0 },
+        { month: "T4", orderCount: 0, revenue: 0 },
+        { month: "T5", orderCount: 0, revenue: 0 },
+        { month: "T6", orderCount: 0, revenue: 0 },
+        { month: "T7", orderCount: 0, revenue: 0 },
+        { month: "T8", orderCount: 0, revenue: 0 }
+      ];
+
+  const maxVal = Math.max(...monthlyOrders.map((m: any) => m.revenue || (m.orderCount * 100000) || 0), 500000);
+
+  const chartPoints = monthlyOrders.map((m: any, idx: number) => {
+    const x = 40 + idx * ((460 - 40) / Math.max(monthlyOrders.length - 1, 1));
+    const val = m.revenue || 0;
+    const y = 160 - (maxVal > 0 ? (val / maxVal) * 120 : 0);
+    return { x, y, ...m, val };
+  });
+
+  const chartD = chartPoints.length > 0
+    ? `M ${chartPoints.map((p: any) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" L ")}`
+    : "M 40,160 L 460,160";
+
   const popularPlans = (statsData.popularPlans && statsData.popularPlans.length > 0)
     ? statsData.popularPlans
     : [
-        { planName: "Cloud VPS Pro", orderCount: 482, percentage: 55 },
-        { planName: "Cloud Hosting NVMe", orderCount: 284, percentage: 32 },
-        { planName: "Tên Miền (Domain)", orderCount: 85, percentage: 9 },
-        { planName: "Firewall & SSL", orderCount: 35, percentage: 4 }
+        { planName: "Cloud VPS Pro", orderCount: 0, percentage: 0 },
+        { planName: "Cloud Hosting NVMe", orderCount: 0, percentage: 0 },
+        { planName: "Tên Miền (Domain)", orderCount: 0, percentage: 0 }
       ];
 
   const colors = ["bg-blue-600", "bg-emerald-600", "bg-indigo-600", "bg-purple-600", "bg-slate-500"];
@@ -111,9 +130,19 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-8">
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-white">Hệ Thống Quản Trị CloudAdmin</h1>
-        <p className="text-xs text-slate-400 mt-1">Tổng quan hoạt động kinh doanh hạ tầng đám mây</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Hệ Thống Quản Trị CloudAdmin</h1>
+          <p className="text-xs text-slate-400 mt-1">Dữ liệu thời gian thực được tổng hợp từ máy chủ đám mây</p>
+        </div>
+        <button
+          onClick={fetchDashboardData}
+          disabled={loading}
+          className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 border border-white/5 text-xs text-white rounded-lg transition-colors flex items-center gap-2"
+        >
+          <span>🔄</span>
+          <span>{loading ? "Đang tải..." : "Làm mới dữ liệu"}</span>
+        </button>
       </div>
 
       {/* Stats Grid */}
@@ -124,10 +153,9 @@ export default function AdminDashboard() {
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{stat.label}</span>
               <div className="text-xl font-extrabold text-white">{stat.value}</div>
               <div className="flex items-center gap-1.5 text-[10px]">
-                <span className={stat.isPositive ? "text-green-400 font-bold" : "text-red-400 font-bold"}>
+                <span className={stat.isPositive ? "text-green-400 font-bold" : "text-yellow-400 font-bold"}>
                   {stat.change}
                 </span>
-                <span className="text-slate-500">so với tháng trước</span>
               </div>
             </div>
             <div className="w-12 h-12 rounded-xl bg-slate-800 border border-white/5 flex items-center justify-center text-xl">
@@ -144,10 +172,10 @@ export default function AdminDashboard() {
         <div className="lg:col-span-2 bg-slate-900 border border-white/5 rounded-2xl p-6">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h3 className="text-sm font-bold text-white">Doanh Thu & Biến Động Đơn Hàng</h3>
-              <p className="text-[10px] text-slate-400">Thống kê theo 6 tháng gần nhất</p>
+              <h3 className="text-sm font-bold text-white">Biến Động Doanh Thu 6 Tháng Qua</h3>
+              <p className="text-[10px] text-slate-400">Đơn vị: VND (Dựa trên hóa đơn đã hoàn tất)</p>
             </div>
-            <span className="text-[10px] px-2.5 py-1 rounded bg-slate-800 text-slate-300 font-medium">Cập nhật tự động</span>
+            <span className="text-[10px] px-2.5 py-1 rounded bg-slate-800 text-slate-300 font-medium">Dữ liệu thời gian thực</span>
           </div>
 
           {/* SVG Line Chart */}
@@ -155,13 +183,13 @@ export default function AdminDashboard() {
             <svg className="w-full h-full text-slate-800" viewBox="0 0 500 200" preserveAspectRatio="none">
               {/* Grid Lines */}
               <line x1="0" y1="40" x2="500" y2="40" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
-              <line x1="0" y1="90" x2="500" y2="90" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
-              <line x1="0" y1="140" x2="500" y2="140" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
-              <line x1="0" y1="190" x2="500" y2="190" stroke="rgba(255,255,255,0.1)" strokeWidth="1.5" />
+              <line x1="0" y1="80" x2="500" y2="80" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+              <line x1="0" y1="120" x2="500" y2="120" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+              <line x1="0" y1="160" x2="500" y2="160" stroke="rgba(255,255,255,0.1)" strokeWidth="1.5" />
 
               {/* Chart Path Line */}
               <path
-                d="M 30,150 L 110,130 L 190,110 L 270,70 L 350,90 L 470,40"
+                d={chartD}
                 fill="none"
                 stroke="#3b82f6"
                 strokeWidth="3.5"
@@ -169,27 +197,31 @@ export default function AdminDashboard() {
                 strokeLinejoin="round"
               />
 
-              {/* Data points */}
-              <circle cx="30" cy="150" r="4.5" fill="#3b82f6" stroke="#0f172a" strokeWidth="2" />
-              <circle cx="110" cy="130" r="4.5" fill="#3b82f6" stroke="#0f172a" strokeWidth="2" />
-              <circle cx="190" cy="110" r="4.5" fill="#3b82f6" stroke="#0f172a" strokeWidth="2" />
-              <circle cx="270" cy="70" r="4.5" fill="#3b82f6" stroke="#0f172a" strokeWidth="2" />
-              <circle cx="350" cy="90" r="4.5" fill="#3b82f6" stroke="#0f172a" strokeWidth="2" />
-              <circle cx="470" cy="40" r="4.5" fill="#3b82f6" stroke="#0f172a" strokeWidth="2" />
-
-              {/* Labels */}
-              <text x="30" y="180" fill="#94a3b8" fontSize="9" textAnchor="middle">Tháng 3</text>
-              <text x="110" y="180" fill="#94a3b8" fontSize="9" textAnchor="middle">Tháng 4</text>
-              <text x="190" y="180" fill="#94a3b8" fontSize="9" textAnchor="middle">Tháng 5</text>
-              <text x="270" y="180" fill="#94a3b8" fontSize="9" textAnchor="middle">Tháng 6</text>
-              <text x="350" y="180" fill="#94a3b8" fontSize="9" textAnchor="middle">Tháng 7</text>
-              <text x="470" y="180" fill="#94a3b8" fontSize="9" textAnchor="middle">Tháng 8</text>
+              {/* Dynamic Data Points */}
+              {chartPoints.map((pt: any, i: number) => (
+                <g key={i}>
+                  <circle
+                    cx={pt.x}
+                    cy={pt.y}
+                    r="5"
+                    fill="#3b82f6"
+                    stroke="#0f172a"
+                    strokeWidth="2"
+                    className="hover:r-7 transition-all cursor-pointer"
+                  >
+                    <title>{`${pt.month}: ${formatCurrency(pt.val)} (${pt.orderCount} đơn)`}</title>
+                  </circle>
+                  <text x={pt.x} y="185" fill="#94a3b8" fontSize="9" textAnchor="middle">
+                    {pt.month}
+                  </text>
+                </g>
+              ))}
 
               {/* Y Axis Value Labels */}
-              <text x="5" y="35" fill="#64748b" fontSize="8">100 Tr</text>
-              <text x="5" y="85" fill="#64748b" fontSize="8">75 Tr</text>
-              <text x="5" y="135" fill="#64748b" fontSize="8">50 Tr</text>
-              <text x="5" y="185" fill="#64748b" fontSize="8">25 Tr</text>
+              <text x="5" y="40" fill="#64748b" fontSize="8">{formatCurrency(maxVal)}</text>
+              <text x="5" y="80" fill="#64748b" fontSize="8">{formatCurrency(maxVal * 0.66)}</text>
+              <text x="5" y="120" fill="#64748b" fontSize="8">{formatCurrency(maxVal * 0.33)}</text>
+              <text x="5" y="160" fill="#64748b" fontSize="8">0 đ</text>
             </svg>
           </div>
         </div>
@@ -197,19 +229,19 @@ export default function AdminDashboard() {
         {/* Chart 2: Popular Services breakdown (Horizontal Progress bars) */}
         <div className="bg-slate-900 border border-white/5 rounded-2xl p-6">
           <div className="mb-6">
-            <h3 className="text-sm font-bold text-white">Dịch Vụ Phổ Biến</h3>
-            <p className="text-[10px] text-slate-400">Tỷ lệ đơn hàng đăng ký theo gói</p>
+            <h3 className="text-sm font-bold text-white">Dịch Vụ Được Quan Tâm</h3>
+            <p className="text-[10px] text-slate-400">Tỷ lệ đơn đặt hàng theo từng gói cước</p>
           </div>
 
           <div className="space-y-5">
             {popularPlans.map((srv: any, idx: number) => (
               <div key={idx} className="space-y-1.5">
                 <div className="flex justify-between text-xs font-medium">
-                  <span className="text-slate-300">{srv.planName}</span>
+                  <span className="text-slate-300 truncate max-w-[150px]">{srv.planName}</span>
                   <span className="text-slate-500">{srv.orderCount} đơn ({srv.percentage}%)</span>
                 </div>
                 <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-white/5">
-                  <div className={`h-full ${colors[idx % colors.length]}`} style={{ width: `${Math.max(srv.percentage, 5)}%` }}></div>
+                  <div className={`h-full ${colors[idx % colors.length]}`} style={{ width: `${Math.max(srv.percentage, 4)}%` }}></div>
                 </div>
               </div>
             ))}
@@ -220,7 +252,7 @@ export default function AdminDashboard() {
 
       {/* Recent Orders Table */}
       <div className="bg-slate-900 border border-white/5 rounded-2xl p-6">
-        <h3 className="text-sm font-bold text-white mb-6">Đơn Hàng Gần Đây</h3>
+        <h3 className="text-sm font-bold text-white mb-6">Đơn Hàng Mới Nhất</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
@@ -234,26 +266,34 @@ export default function AdminDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 text-slate-300">
-              {recentOrders.map((ord, idx) => (
-                <tr key={idx} className="hover:bg-white/5 transition-colors">
-                  <td className="py-3.5 font-mono font-bold text-slate-200">{ord.id}</td>
-                  <td className="py-3.5">{ord.client}</td>
-                  <td className="py-3.5">{ord.service}</td>
-                  <td className="py-3.5 font-mono font-bold text-slate-100">{ord.amount}</td>
-                  <td className="py-3.5">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                      ord.status === "Hoàn tất"
-                        ? "bg-green-950 text-green-400"
-                        : ord.status === "Chờ duyệt" || ord.status === "Đang xử lý"
-                        ? "bg-yellow-950 text-yellow-400"
-                        : "bg-red-950 text-red-400"
-                    }`}>
-                      {ord.status}
-                    </span>
+              {recentOrders.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-6 text-center text-slate-500 italic">
+                    Chưa có đơn hàng nào trong hệ thống.
                   </td>
-                  <td className="py-3.5 text-slate-500">{ord.date}</td>
                 </tr>
-              ))}
+              ) : (
+                recentOrders.map((ord, idx) => (
+                  <tr key={idx} className="hover:bg-white/5 transition-colors">
+                    <td className="py-3.5 font-mono font-bold text-slate-200">{ord.id}</td>
+                    <td className="py-3.5">{ord.client}</td>
+                    <td className="py-3.5">{ord.service}</td>
+                    <td className="py-3.5 font-mono font-bold text-slate-100">{ord.amount}</td>
+                    <td className="py-3.5">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        ord.status === "Hoàn tất"
+                          ? "bg-green-950 text-green-400"
+                          : ord.status === "Chờ duyệt" || ord.status === "Đang xử lý"
+                          ? "bg-yellow-950 text-yellow-400"
+                          : "bg-red-950 text-red-400"
+                      }`}>
+                        {ord.status}
+                      </span>
+                    </td>
+                    <td className="py-3.5 text-slate-500">{ord.date}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

@@ -23,6 +23,25 @@ export default function AdminLogin() {
 
       if (res.ok) {
         const data = await res.json();
+        const token = data.accessToken;
+        
+        // Kiểm tra quyền hạn
+        if (token) {
+          try {
+            const payloadPart = token.split(".")[1];
+            if (payloadPart) {
+              const payload = JSON.parse(window.atob(payloadPart));
+              const userRole = payload["role"] || payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || "Customer";
+              if (userRole !== "Admin" && userRole !== "Editor") {
+                setError("Tài khoản của bạn là Khách hàng (Customer), không có quyền truy cập vào Cổng quản trị.");
+                return;
+              }
+            }
+          } catch (e) {
+            console.error("Lỗi giải mã token:", e);
+          }
+        }
+
         setAccessToken(data.accessToken);
         router.push("/admin/dashboard");
       } else {
