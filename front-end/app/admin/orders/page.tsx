@@ -2,25 +2,11 @@
 import React, { useState, useEffect } from "react";
 import { apiFetch } from "@/utils/api";
 
-const INITIAL_ORDERS = [
-  { id: 1, code: "ORD-94812", client: "Nguyễn Văn Hùng", plan: "VPS Pro", amount: 150000, status: "Hoàn tất", date: "2026-08-16 14:32" },
-  { id: 2, code: "ORD-20491", client: "Lê Văn Tám", plan: "Hosting Business", amount: 85000, status: "Chờ duyệt", date: "2026-08-16 11:15" },
-  { id: 3, code: "ORD-30194", client: "Phạm Minh Đức", plan: "VPS Starter", amount: 90000, status: "Hoàn tất", date: "2026-08-15 18:40" },
-  { id: 4, code: "ORD-58102", client: "Trần Thị Lan", plan: "VPS Enterprise", amount: 320000, status: "Đã hủy", date: "2026-08-15 09:20" },
-  { id: 5, code: "ORD-11942", client: "Đoàn Minh Anh", plan: "Hosting Basic", amount: 35000, status: "Chờ duyệt", date: "2026-08-14 16:45" }
-];
-
-const INITIAL_PARTNERS = [
-  { id: 1, name: "Nguyễn Công Phượng", email: "phuongnc@gmail.com", channel: "youtube.com/c/techreview", bank: "MB Bank - 190038291038", status: "Chờ duyệt", date: "2026-08-16" },
-  { id: 2, name: "Vũ Văn Thanh", email: "thanhvv@techblog.vn", channel: "techblog.vn", bank: "Vietcombank - 00110048291", status: "Đã duyệt", date: "2026-08-15" },
-  { id: 3, name: "Quế Ngọc Hải", email: "haiqn@outlook.com", channel: "facebook.com/haiqn.dev", bank: "Techcombank - 190338291830", status: "Đã từ chối", date: "2026-08-12" }
-];
-
 export default function AdminOrdersPage() {
   const [activeTab, setActiveTab] = useState<"orders" | "partners">("orders");
-  const [orders, setOrders] = useState(INITIAL_ORDERS);
-  const [partners, setPartners] = useState(INITIAL_PARTNERS);
-  const [loading, setLoading] = useState(false);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [partners, setPartners] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [ordersPage, setOrdersPage] = useState(1);
   const [partnersPage, setPartnersPage] = useState(1);
   const ordersPerPage = 8;
@@ -39,12 +25,13 @@ export default function AdminOrdersPage() {
       const orderRes = await apiFetch("/api/order-requests/all");
       if (orderRes.ok) {
         const orderData = await orderRes.json();
-        if (Array.isArray(orderData) && orderData.length > 0) {
-          setOrders(orderData.map((o: any) => ({
+        const rawItems = orderData.items || orderData;
+        if (Array.isArray(rawItems)) {
+          setOrders(rawItems.map((o: any) => ({
             id: o.id,
             code: o.orderCode || `ORD-${o.id}`,
-            client: o.customerName,
-            plan: o.planName,
+            client: o.customerName || "Khách vãng lai",
+            plan: o.planName || "Gói dịch vụ",
             amount: o.price || 0,
             status: o.statusName || (o.status === 2 ? "Hoàn tất" : o.status === 3 ? "Đã hủy" : "Chờ duyệt"),
             date: new Date(o.createdAt).toLocaleString("vi-VN")
@@ -56,10 +43,11 @@ export default function AdminOrdersPage() {
       const partnerRes = await apiFetch("/api/affiliates/all");
       if (partnerRes.ok) {
         const partnerData = await partnerRes.json();
-        if (Array.isArray(partnerData) && partnerData.length > 0) {
-          setPartners(partnerData.map((p: any) => ({
+        const rawItems = partnerData.items || partnerData;
+        if (Array.isArray(rawItems)) {
+          setPartners(rawItems.map((p: any) => ({
             id: p.id,
-            name: p.fullName,
+            name: p.fullName || "Chưa cập nhật",
             email: p.email,
             channel: p.websiteUrl || "Không có",
             bank: p.motivation || "Chưa cập nhật",
@@ -69,7 +57,7 @@ export default function AdminOrdersPage() {
         }
       }
     } catch (err) {
-      console.warn("Lỗi lấy dữ liệu:", err);
+      console.warn("Lỗi lấy dữ liệu từ Backend:", err);
     } finally {
       setLoading(false);
     }
@@ -82,13 +70,10 @@ export default function AdminOrdersPage() {
         method: "PATCH",
         body: JSON.stringify({ status: statusCode, notes: `Admin cập nhật: ${newStatus}` })
       });
+      fetchOrdersAndPartners();
     } catch (err) {
       console.warn("Lỗi API status:", err);
     }
-
-    setOrders(prev =>
-      prev.map(ord => (ord.id === id ? { ...ord, status: newStatus } : ord))
-    );
   };
 
   const handlePartnerStatus = async (id: number, newStatus: "Đã duyệt" | "Đã từ chối") => {
@@ -98,13 +83,10 @@ export default function AdminOrdersPage() {
         method: "PATCH",
         body: JSON.stringify({ status: statusCode })
       });
+      fetchOrdersAndPartners();
     } catch (err) {
       console.warn("Lỗi API affiliate status:", err);
     }
-
-    setPartners(prev =>
-      prev.map(part => (part.id === id ? { ...part, status: newStatus } : part))
-    );
   };
 
   const handleExportExcel = async () => {
@@ -165,7 +147,7 @@ export default function AdminOrdersPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900">Quản Lý Đơn Hàng & Đối Tác CTV</h1>
-          <p className="text-xs text-slate-500 mt-1">Duyệt kích hoạt dịch vụ và đối soát hoa hồng tiếp thị liên kết</p>
+          <p className="text-xs text-slate-500 mt-1">Dữ liệu đơn hàng thực tế đồng bộ trực tiếp từ cơ sở dữ liệu</p>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -226,49 +208,59 @@ export default function AdminOrdersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {displayedOrders.map((ord) => (
-                  <tr key={ord.id} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="py-3.5 px-4 font-mono font-bold text-blue-600">{ord.code}</td>
-                    <td className="py-3.5 px-4 font-semibold text-slate-900">{ord.client}</td>
-                    <td className="py-3.5 px-4 text-slate-700">{ord.plan}</td>
-                    <td className="py-3.5 px-4 font-bold text-slate-900">
-                      {typeof ord.amount === "number" ? `${ord.amount.toLocaleString("vi-VN")}đ` : ord.amount}
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-500">{ord.date}</td>
-                    <td className="py-3.5 px-4">
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                        ord.status === "Hoàn tất"
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          : ord.status === "Đã hủy"
-                          ? "bg-rose-50 text-rose-700 border border-rose-200"
-                          : "bg-amber-50 text-amber-700 border border-amber-200"
-                      }`}>
-                        {ord.status}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-right space-x-2">
-                      {ord.status === "Chờ duyệt" && (
-                        <>
-                          <button
-                            onClick={() => handleOrderStatus(ord.id, "Hoàn tất")}
-                            className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-[11px] transition-colors shadow-xs"
-                          >
-                            Kích Hoạt
-                          </button>
-                          <button
-                            onClick={() => handleOrderStatus(ord.id, "Đã hủy")}
-                            className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-[11px] transition-colors shadow-xs"
-                          >
-                            Hủy
-                          </button>
-                        </>
-                      )}
-                      {ord.status !== "Chờ duyệt" && (
-                        <span className="text-slate-400 font-medium text-[11px]">Đã xử lý</span>
-                      )}
-                    </td>
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-slate-400">Đang tải danh sách đơn hàng...</td>
                   </tr>
-                ))}
+                ) : displayedOrders.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-slate-400">Chưa có đơn hàng nào trong cơ sở dữ liệu.</td>
+                  </tr>
+                ) : (
+                  displayedOrders.map((ord) => (
+                    <tr key={ord.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-3.5 px-4 font-mono font-bold text-blue-600">{ord.code}</td>
+                      <td className="py-3.5 px-4 font-semibold text-slate-900">{ord.client}</td>
+                      <td className="py-3.5 px-4 text-slate-700">{ord.plan}</td>
+                      <td className="py-3.5 px-4 font-bold text-slate-900">
+                        {typeof ord.amount === "number" ? `${ord.amount.toLocaleString("vi-VN")}đ` : ord.amount}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-500">{ord.date}</td>
+                      <td className="py-3.5 px-4">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                          ord.status === "Hoàn tất"
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            : ord.status === "Đã hủy"
+                            ? "bg-rose-50 text-rose-700 border border-rose-200"
+                            : "bg-amber-50 text-amber-700 border border-amber-200"
+                        }`}>
+                          {ord.status}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-right space-x-2">
+                        {ord.status === "Chờ duyệt" && (
+                          <>
+                            <button
+                              onClick={() => handleOrderStatus(ord.id, "Hoàn tất")}
+                              className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-[11px] transition-colors shadow-xs"
+                            >
+                              Kích Hoạt
+                            </button>
+                            <button
+                              onClick={() => handleOrderStatus(ord.id, "Đã hủy")}
+                              className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-[11px] transition-colors shadow-xs"
+                            >
+                              Hủy
+                            </button>
+                          </>
+                        )}
+                        {ord.status !== "Chờ duyệt" && (
+                          <span className="text-slate-400 font-medium text-[11px]">Đã xử lý</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -317,47 +309,57 @@ export default function AdminOrdersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {displayedPartners.map((part) => (
-                  <tr key={part.id} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="py-3.5 px-4 font-bold text-slate-900">{part.name}</td>
-                    <td className="py-3.5 px-4 text-slate-600">{part.email}</td>
-                    <td className="py-3.5 px-4 text-blue-600">{part.channel}</td>
-                    <td className="py-3.5 px-4 text-slate-700 font-mono text-[11px]">{part.bank}</td>
-                    <td className="py-3.5 px-4 text-slate-500">{part.date}</td>
-                    <td className="py-3.5 px-4">
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                        part.status === "Đã duyệt"
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          : part.status === "Đã từ chối"
-                          ? "bg-rose-50 text-rose-700 border border-rose-200"
-                          : "bg-amber-50 text-amber-700 border border-amber-200"
-                      }`}>
-                        {part.status}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-right space-x-2">
-                      {part.status === "Chờ duyệt" && (
-                        <>
-                          <button
-                            onClick={() => handlePartnerStatus(part.id, "Đã duyệt")}
-                            className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-[11px] transition-colors shadow-xs"
-                          >
-                            Duyệt
-                          </button>
-                          <button
-                            onClick={() => handlePartnerStatus(part.id, "Đã từ chối")}
-                            className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-[11px] transition-colors shadow-xs"
-                          >
-                            Từ Chối
-                          </button>
-                        </>
-                      )}
-                      {part.status !== "Chờ duyệt" && (
-                        <span className="text-slate-400 font-medium text-[11px]">Đã xử lý</span>
-                      )}
-                    </td>
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-slate-400">Đang tải danh sách CTV...</td>
                   </tr>
-                ))}
+                ) : displayedPartners.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-slate-400">Chưa có đơn đăng ký CTV nào.</td>
+                  </tr>
+                ) : (
+                  displayedPartners.map((part) => (
+                    <tr key={part.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-3.5 px-4 font-bold text-slate-900">{part.name}</td>
+                      <td className="py-3.5 px-4 text-slate-600">{part.email}</td>
+                      <td className="py-3.5 px-4 text-blue-600">{part.channel}</td>
+                      <td className="py-3.5 px-4 text-slate-700 font-mono text-[11px]">{part.bank}</td>
+                      <td className="py-3.5 px-4 text-slate-500">{part.date}</td>
+                      <td className="py-3.5 px-4">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                          part.status === "Đã duyệt"
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            : part.status === "Đã từ chối"
+                            ? "bg-rose-50 text-rose-700 border border-rose-200"
+                            : "bg-amber-50 text-amber-700 border border-amber-200"
+                        }`}>
+                          {part.status}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-right space-x-2">
+                        {part.status === "Chờ duyệt" && (
+                          <>
+                            <button
+                              onClick={() => handlePartnerStatus(part.id, "Đã duyệt")}
+                              className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-[11px] transition-colors shadow-xs"
+                            >
+                              Duyệt
+                            </button>
+                            <button
+                              onClick={() => handlePartnerStatus(part.id, "Đã từ chối")}
+                              className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-[11px] transition-colors shadow-xs"
+                            >
+                              Từ Chối
+                            </button>
+                          </>
+                        )}
+                        {part.status !== "Chờ duyệt" && (
+                          <span className="text-slate-400 font-medium text-[11px]">Đã xử lý</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

@@ -1,133 +1,15 @@
 "use client";
-import React, { useState, useEffect } from "react";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { apiFetch } from "@/utils/api";
 
-const MOCK_CATEGORIES = [
-  { id: 1, name: "Cloud VPS", slug: "vps" },
-  { id: 2, name: "Cloud Hosting", slug: "hosting" },
-  { id: 3, name: "Tên Miền", slug: "domain" },
-  { id: 4, name: "Email Doanh Nghiệp", slug: "email" },
-  { id: 5, name: "Bảo Mật & Firewall", slug: "security" }
-];
-
-const MOCK_PLANS = [
-  {
-    id: 1,
-    categoryId: 1,
-    name: "Cloud VPS NVMe Pro",
-    cpu: "2 vCPUs AMD EPYC",
-    ram: "4 GB RAM ECC",
-    storage: "60 GB NVMe Gen4",
-    bandwidth: "1 Gbps Unmetered",
-    monthlyPrice: 150000,
-    yearlyPrice: 1440000,
-    popular: true
-  },
-  {
-    id: 2,
-    categoryId: 1,
-    name: "Cloud VPS NVMe Enterprise",
-    cpu: "4 vCPUs AMD EPYC",
-    ram: "8 GB RAM ECC",
-    storage: "120 GB NVMe Gen4",
-    bandwidth: "1 Gbps Dedicated",
-    monthlyPrice: 320000,
-    yearlyPrice: 3072000,
-    popular: false
-  },
-  {
-    id: 3,
-    categoryId: 1,
-    name: "Cloud VPS SSD Tiết Kiệm",
-    cpu: "1 vCPU Intel Xeon",
-    ram: "2 GB RAM",
-    storage: "40 GB SSD Enterprise",
-    bandwidth: "500 Mbps Port",
-    monthlyPrice: 90000,
-    yearlyPrice: 864000,
-    popular: false
-  },
-  {
-    id: 4,
-    categoryId: 2,
-    name: "MaxSpeed Hosting NVMe",
-    cpu: "LiteSpeed Enterprise",
-    ram: "2 GB RAM",
-    storage: "25 GB NVMe",
-    bandwidth: "Không giới hạn",
-    monthlyPrice: 45000,
-    yearlyPrice: 432000,
-    popular: true
-  },
-  {
-    id: 5,
-    categoryId: 2,
-    name: "Business Hosting Pro",
-    cpu: "AMD EPYC 7003",
-    ram: "4 GB RAM",
-    storage: "50 GB NVMe",
-    bandwidth: "Không giới hạn",
-    monthlyPrice: 120000,
-    yearlyPrice: 1152000,
-    popular: false
-  },
-  {
-    id: 6,
-    categoryId: 3,
-    name: "Tên Miền .COM",
-    cpu: "ICANN Quốc Tế",
-    ram: "DNS Anycast",
-    storage: "Whois Privacy Miễn phí",
-    bandwidth: "Kích hoạt tức thì",
-    monthlyPrice: 249000,
-    yearlyPrice: 249000,
-    popular: true
-  },
-  {
-    id: 7,
-    categoryId: 3,
-    name: "Tên Miền Quốc Gia .VN",
-    cpu: "VNNIC Việt Nam",
-    ram: "Bảo hộ thương hiệu",
-    storage: "DNS VNPT / Viettel",
-    bandwidth: "Ưu tiên SEO VN",
-    monthlyPrice: 450000,
-    yearlyPrice: 450000,
-    popular: false
-  },
-  {
-    id: 8,
-    categoryId: 4,
-    name: "Email Doanh Nghiệp Pro",
-    cpu: "5 Hòm thư riêng",
-    ram: "10 GB Dung lượng",
-    storage: "Antispam & Antivirus",
-    bandwidth: "Gửi nhận không giới hạn",
-    monthlyPrice: 99000,
-    yearlyPrice: 950000,
-    popular: true
-  },
-  {
-    id: 9,
-    categoryId: 5,
-    name: "Tường Lửa Anti-DDoS 100Gbps",
-    cpu: "Layer 3/4/7 AI Filter",
-    ram: "Độ trễ < 2ms",
-    storage: "WAF Bảo vệ Web App",
-    bandwidth: "Dedicated Clean IP",
-    monthlyPrice: 350000,
-    yearlyPrice: 3360000,
-    popular: true
-  }
-];
-
 export default function PricingPage() {
-  const [categories, setCategories] = useState(MOCK_CATEGORIES);
-  const [plans, setPlans] = useState(MOCK_PLANS);
-  const [selectedCat, setSelectedCat] = useState<number | "all">("all");
+  const [categories, setCategories] = useState<any[]>([]);
+  const [plans, setPlans] = useState<any[]>([]);
+  const [selectedCat, setSelectedCat] = useState<string | number | "all">("all");
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchData();
@@ -136,68 +18,105 @@ export default function PricingPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const catRes = await apiFetch("/api/service-categories");
+      const [catRes, planRes] = await Promise.all([
+        apiFetch("/api/service-categories"),
+        apiFetch("/api/service-plans")
+      ]);
+
       if (catRes.ok) {
         const catData = await catRes.json();
-        if (Array.isArray(catData) && catData.length > 0) {
+        if (Array.isArray(catData)) {
           setCategories(catData);
         }
       }
 
-      const planRes = await apiFetch("/api/service-plans");
       if (planRes.ok) {
         const planData = await planRes.json();
-        if (Array.isArray(planData) && planData.length > 0) {
-          setPlans(planData);
+        const rawItems = planData.items || planData;
+        if (Array.isArray(rawItems)) {
+          // Lấy giá thực tế của từng plan
+          const enriched = await Promise.all(
+            rawItems.map(async (p: any) => {
+              try {
+                const priceRes = await apiFetch(`/api/service-plans/${p.id}/prices`);
+                if (priceRes.ok) {
+                  const priceList = await priceRes.json();
+                  const monthly = priceList.find((pr: any) => pr.billingCycle === "Monthly")?.price || 0;
+                  const yearly = priceList.find((pr: any) => pr.billingCycle === "Yearly")?.price || monthly * 12 * 0.8;
+                  return { ...p, monthlyPrice: monthly, yearlyPrice: yearly };
+                }
+              } catch {}
+              return { ...p, monthlyPrice: 0, yearlyPrice: 0 };
+            })
+          );
+          setPlans(enriched);
         }
       }
-    } catch {
-      console.warn("Sử dụng bảng giá cấu hình mặc định.");
+    } catch (err) {
+      console.error("Lỗi khi tải bảng giá từ database:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredPlans = plans.filter((p) => {
-    if (selectedCat === "all") return true;
-    return p.categoryId === selectedCat;
-  });
+  const filteredPlans = selectedCat === "all"
+    ? plans
+    : plans.filter(p => p.categoryId === selectedCat || p.category?.id === selectedCat);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 py-16 px-6">
-      <div className="max-w-7xl mx-auto">
-        
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-xs text-slate-500 mb-8 font-medium">
-          <Link href="/" className="hover:text-blue-600">Trang chủ</Link>
-          <span>/</span>
-          <span className="text-blue-600 font-bold">Bảng báo giá</span>
-        </div>
-
-        {/* Title */}
-        <div className="text-center mb-12">
-          <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block mb-3">
-            Bảng Giá Dịch Vụ Niêm Yết
-          </span>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-4">
-            Bảng Báo Giá Minh Bạch & Tiết Kiệm
+    <div className="min-h-screen bg-slate-50 text-slate-800 pb-20 selection:bg-blue-600 selection:text-white">
+      {/* Header */}
+      <section className="bg-white border-b border-slate-200 py-16 px-4">
+        <div className="max-w-7xl mx-auto text-center space-y-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold shadow-xs">
+            <span>⚡</span>
+            <span>Bảng Giá Niêm Yết Đám Mây Toàn Diện</span>
+          </div>
+          <h1 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight">
+            Bảng Giá Dịch Vụ Điện Toán Đám Mây
           </h1>
-          <p className="text-sm text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            Không phát sinh chi phí ẩn. Cam kết hoàn tiền 100% trong vòng 30 ngày nếu không hài lòng với chất lượng dịch vụ.
+          <p className="text-sm md:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed">
+            Hạ tầng máy chủ Tier 3 hiện đại, ổ cứng Enterprise NVMe siêu tốc, cam kết Uptime 99.99% và hỗ trợ kỹ thuật 24/7/365.
           </p>
-        </div>
 
-        {/* Controls: Category Filter & Billing Cycle Toggle */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-12 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-          
-          {/* Categories */}
-          <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          {/* Billing Cycle Toggle */}
+          <div className="pt-6 flex items-center justify-center gap-4">
+            <span className={`text-xs font-bold ${billingCycle === "monthly" ? "text-slate-900" : "text-slate-500"}`}>
+              Thanh Toán Hàng Tháng
+            </span>
+            <button
+              onClick={() => setBillingCycle(b => b === "monthly" ? "yearly" : "monthly")}
+              className={`w-14 h-7 rounded-full transition-colors relative p-1 focus:outline-none ${
+                billingCycle === "yearly" ? "bg-blue-600" : "bg-slate-300"
+              }`}
+            >
+              <div
+                className={`w-5 h-5 rounded-full bg-white transition-transform ${
+                  billingCycle === "yearly" ? "translate-x-7" : "translate-x-0"
+                }`}
+              />
+            </button>
+            <span className={`text-xs font-bold flex items-center gap-1.5 ${billingCycle === "yearly" ? "text-blue-600 font-extrabold" : "text-slate-500"}`}>
+              <span>Thanh Toán Theo Năm</span>
+              <span className="bg-emerald-100 text-emerald-700 border border-emerald-300 text-[10px] px-2 py-0.5 rounded-full font-black">
+                TIẾT KIỆM 20%
+              </span>
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* Main Content Area */}
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        {/* Category Tabs */}
+        {categories.length > 0 && (
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-12">
             <button
               onClick={() => setSelectedCat("all")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${
+              className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all ${
                 selectedCat === "all"
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
+                  : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
               }`}
             >
               Tất Cả Dịch Vụ
@@ -206,139 +125,117 @@ export default function PricingPage() {
               <button
                 key={cat.id}
                 onClick={() => setSelectedCat(cat.id)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${
+                className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all ${
                   selectedCat === cat.id
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
+                    : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
                 }`}
               >
                 {cat.name}
               </button>
             ))}
           </div>
-
-          {/* Billing Cycle Toggle */}
-          <div className="flex items-center gap-3 bg-slate-100 p-1.5 rounded-xl border border-slate-200 shrink-0">
-            <button
-              onClick={() => setBillingCycle("monthly")}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                billingCycle === "monthly"
-                  ? "bg-white text-slate-900 shadow-xs"
-                  : "text-slate-500 hover:text-slate-900"
-              }`}
-            >
-              Thanh Toán Hàng Tháng
-            </button>
-            <button
-              onClick={() => setBillingCycle("yearly")}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
-                billingCycle === "yearly"
-                  ? "bg-white text-blue-600 shadow-xs"
-                  : "text-slate-500 hover:text-slate-900"
-              }`}
-            >
-              <span>Theo Năm</span>
-              <span className="text-[10px] bg-rose-500 text-white px-1.5 py-0.2 rounded-full font-bold">
-                -20%
-              </span>
-            </button>
-          </div>
-
-        </div>
+        )}
 
         {/* Pricing Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-          {filteredPlans.map((plan) => {
-            const displayPrice =
-              billingCycle === "yearly"
-                ? `${Math.round((plan.yearlyPrice || plan.monthlyPrice * 12 * 0.8) / 12).toLocaleString("vi-VN")}đ`
-                : `${plan.monthlyPrice.toLocaleString("vi-VN")}đ`;
+        {loading ? (
+          <div className="text-center py-20 text-slate-400 text-sm">
+            <span className="w-8 h-8 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin inline-block mb-3"></span>
+            <div>Đang tải dữ liệu bảng giá từ cơ sở dữ liệu...</div>
+          </div>
+        ) : filteredPlans.length === 0 ? (
+          <div className="text-center py-20 text-slate-400 text-sm bg-white rounded-3xl border border-slate-200 p-8 max-w-lg mx-auto">
+            <div className="text-4xl mb-3">📦</div>
+            <h3 className="text-base font-bold text-slate-900 mb-1">Chưa có gói cước nào</h3>
+            <p className="text-xs text-slate-500">
+              Vui lòng truy cập trang quản trị để thêm danh mục và gói dịch vụ mới vào hệ thống.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredPlans.map((plan) => {
+              const currentPrice = billingCycle === "yearly"
+                ? plan.yearlyPrice
+                : plan.monthlyPrice;
 
-            return (
-              <div
-                key={plan.id}
-                className={`p-7 rounded-2xl border bg-white flex flex-col justify-between relative transition-all ${
-                  plan.popular
-                    ? "border-blue-500 shadow-xl shadow-blue-500/10 ring-2 ring-blue-500/20"
-                    : "border-slate-200 hover:border-blue-300 hover:shadow-lg"
-                }`}
-              >
-                {plan.popular && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[10px] font-bold bg-blue-600 text-white shadow-sm">
-                    Gói Phổ Biến Nhất
-                  </span>
-                )}
+              return (
+                <div
+                  key={plan.id}
+                  className="bg-white border border-slate-200 rounded-3xl p-8 flex flex-col justify-between hover:border-blue-300 hover:shadow-xl transition-all relative group"
+                >
+                  <div>
+                    {/* Header */}
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <span className="text-[10px] font-bold tracking-wider text-blue-600 uppercase bg-blue-50 border border-blue-100 px-2.5 py-1 rounded-md">
+                          {plan.category?.name || "Cloud Service"}
+                        </span>
+                        <h3 className="text-xl font-bold text-slate-900 mt-2">{plan.name}</h3>
+                      </div>
+                      {plan.qrCodeUrl && (
+                        <img src={plan.qrCodeUrl} alt="QR Code" className="w-12 h-12 border border-slate-200 rounded-lg p-0.5 bg-white shadow-xs" />
+                      )}
+                    </div>
 
-                <div>
-                  <h3 className="text-base font-black text-slate-900 mb-2">{plan.name}</h3>
-                  <div className="flex items-baseline gap-1 mb-6">
-                    <span className="text-3xl font-black text-blue-600">{displayPrice}</span>
-                    <span className="text-xs text-slate-500 font-normal">/ tháng</span>
+                    <p className="text-xs text-slate-500 mb-6 leading-relaxed">
+                      {plan.description || "Máy chủ ảo đám mây hiệu năng cao, sao lưu dữ liệu an toàn."}
+                    </p>
+
+                    {/* Price */}
+                    <div className="mb-6 pb-6 border-b border-slate-100">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-3xl font-black text-slate-900">
+                          {currentPrice > 0
+                            ? new Intl.NumberFormat("vi-VN").format(currentPrice)
+                            : "Liên hệ"}
+                        </span>
+                        <span className="text-xs font-bold text-slate-600">
+                          {currentPrice > 0 ? (billingCycle === "yearly" ? "đ / năm" : "đ / tháng") : ""}
+                        </span>
+                      </div>
+                      {billingCycle === "yearly" && plan.monthlyPrice > 0 && (
+                        <div className="text-[11px] text-emerald-600 font-bold mt-1">
+                          Tương đương {new Intl.NumberFormat("vi-VN").format(Math.round(plan.yearlyPrice / 12))}đ/tháng
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Hardware Specs */}
+                    <div className="space-y-3 mb-8">
+                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                        Cấu hình phần cứng:
+                      </span>
+                      <div className="flex items-center gap-3 text-xs text-slate-700">
+                        <span className="text-blue-600 font-bold">⚡ CPU:</span>
+                        <span>{plan.cpu || "1 vCPU"}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-slate-700">
+                        <span className="text-blue-600 font-bold">🧠 RAM:</span>
+                        <span>{plan.ram || "2 GB RAM"}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-slate-700">
+                        <span className="text-blue-600 font-bold">💾 Ổ cứng:</span>
+                        <span>{plan.storage || "30 GB NVMe"}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-slate-700">
+                        <span className="text-blue-600 font-bold">🌐 Băng thông:</span>
+                        <span>{plan.bandwidth || "1 Gbps Không giới hạn"}</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="h-[1px] bg-slate-100 mb-6"></div>
-
-                  <ul className="space-y-3 text-xs text-slate-700 mb-8">
-                    {plan.cpu && (
-                      <li className="flex items-center gap-2.5">
-                        <span className="text-blue-600 font-bold">⚡ CPU:</span>
-                        <span>{plan.cpu}</span>
-                      </li>
-                    )}
-                    {plan.ram && (
-                      <li className="flex items-center gap-2.5">
-                        <span className="text-blue-600 font-bold">💾 RAM:</span>
-                        <span>{plan.ram}</span>
-                      </li>
-                    )}
-                    {plan.storage && (
-                      <li className="flex items-center gap-2.5">
-                        <span className="text-blue-600 font-bold">💽 Lưu trữ:</span>
-                        <span>{plan.storage}</span>
-                      </li>
-                    )}
-                    {plan.bandwidth && (
-                      <li className="flex items-center gap-2.5">
-                        <span className="text-blue-600 font-bold">🚀 Băng thông:</span>
-                        <span>{plan.bandwidth}</span>
-                      </li>
-                    )}
-                    <li className="flex items-center gap-2.5">
-                      <span className="text-emerald-600 font-bold">🛡️ Bảo mật:</span>
-                      <span>Anti-DDoS Firewall & SSL miễn phí</span>
-                    </li>
-                  </ul>
+                  {/* CTA Button */}
+                  <Link
+                    href={`/order?planId=${plan.id}&cycle=${billingCycle}`}
+                    className="w-full py-3.5 rounded-xl font-bold text-xs text-center transition-all bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 block"
+                  >
+                    Đăng Ký Gói Này →
+                  </Link>
                 </div>
-
-                <Link
-                  href={`/order?planId=${plan.id}&cycle=${billingCycle === "yearly" ? "12m" : "1m"}`}
-                  className={`w-full py-3.5 rounded-xl font-bold text-xs flex items-center justify-center transition-all ${
-                    plan.popular
-                      ? "bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20"
-                      : "bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-700 border border-blue-200"
-                  }`}
-                >
-                  Đăng Ký Khởi Tạo Ngay →
-                </Link>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Guarantee Strip */}
-        <div className="p-8 rounded-2xl bg-white border border-slate-200 text-center shadow-sm">
-          <h3 className="text-lg font-bold text-slate-900 mb-2">Bạn Cần Báo Giá Cấu Hình Riêng Biệt?</h3>
-          <p className="text-xs text-slate-600 max-w-xl mx-auto mb-6">
-            Đội ngũ chuyên viên của CloudService sẵn sàng hỗ trợ khảo sát và tối ưu bảng giá theo quy mô dự án của bạn.
-          </p>
-          <Link
-            href="/order"
-            className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs inline-block transition-colors shadow-sm"
-          >
-            Liên Hệ Kỹ Sư Tư Vấn
-          </Link>
-        </div>
-
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

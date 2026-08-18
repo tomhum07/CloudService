@@ -4,61 +4,17 @@ import Link from "next/link";
 import { apiFetch } from "@/utils/api";
 import { useSearchParams, useRouter } from "next/navigation";
 
-// Fallback Mock News Data
-const MOCK_ALL_NEWS = [
-  {
-    id: 1,
-    title: "Chương trình khuyến mãi hè rực rỡ - Tặng 30% giá trị nạp",
-    summary: "Đón chào mùa hè sôi động, CloudService mang đến chương trình ưu đãi cực lớn cho toàn bộ khách hàng đăng ký mới dịch vụ.",
-    content: "Chi tiết ưu đãi: Tặng thêm 30% số tiền nạp tài khoản khi thực hiện giao dịch trong khung giờ vàng từ ngày 15/8 đến 31/8. Chương trình áp dụng tự động cho các gói Cloud VPS Pro và Hosting NVMe từ 6 tháng trở lên.",
-    createdAt: "2026-08-10T08:00:00Z",
-    categoryName: "Khuyến Mãi"
-  },
-  {
-    id: 2,
-    title: "Nâng cấp hạ tầng Datacenters tại Hà Nội và TP.HCM",
-    summary: "Nhằm mang lại trải nghiệm tốt nhất, chúng tôi vừa hoàn thành đợt bảo trì nâng cấp băng thông mạng lên 40Gbps.",
-    content: "Các kỹ sư mạng tại CloudService đã thực hiện nâng cấp thành công hệ thống chuyển mạch và bổ sung dung lượng băng thông xương sống quốc tế tại hai trung tâm Viettel IDC Sóng Thần và VNPT Nam Thăng Long, nâng tổng dung lượng lên gấp đôi.",
-    createdAt: "2026-08-05T09:30:00Z",
-    categoryName: "Sự Kiện"
-  },
-  {
-    id: 3,
-    title: "Hướng dẫn cài đặt SSL miễn phí trên Cloud Hosting",
-    summary: "Bài viết này hướng dẫn chi tiết các bước kích hoạt chứng chỉ Let's Encrypt SSL tự động chỉ với 1 click chuột.",
-    content: "Để bảo mật thông tin truyền tải giữa người dùng và máy chủ, chứng chỉ SSL là bắt buộc. Trong cPanel của CloudService, bạn chỉ cần tìm biểu tượng Let's Encrypt SSL, nhấn Issue và hệ thống sẽ tự động hoàn tất cấu hình trong 30 giây.",
-    createdAt: "2026-08-01T14:00:00Z",
-    categoryName: "Hướng Dẫn"
-  },
-  {
-    id: 4,
-    title: "Chính sách hoa hồng Affiliate cực khủng dành cho Cộng Tác Viên",
-    summary: "Nhận hoa hồng trọn đời lên đến 20% trên mỗi đơn hàng gia hạn thành công của khách hàng giới thiệu.",
-    content: "Đồng hành phát triển cùng CloudService, bạn sẽ được cấp một liên kết giới thiệu (Affiliate Link) riêng biệt. Khi có khách hàng đăng ký qua link, bạn nhận ngay 20% phí giao dịch ban đầu và tiếp tục hưởng 10% cho mỗi lần gia hạn trọn đời.",
-    createdAt: "2026-07-28T10:00:00Z",
-    categoryName: "Khuyến Mãi"
-  },
-  {
-    id: 5,
-    title: "Phòng chống các cuộc tấn công DDoS Layer 7 hiệu quả",
-    summary: "Tìm hiểu cơ chế bảo mật firewall thông minh của CloudService chống lại spam http request diện rộng.",
-    content: "Tấn công Layer 7 nhắm thẳng vào tài nguyên máy chủ ứng dụng web. Bằng cách áp dụng bộ lọc Rate-Limiting và kiểm tra thử thách Javascript, hệ thống Firewall của chúng tôi chặn đứng các botnet độc hại mà không ảnh hưởng tới khách truy cập.",
-    createdAt: "2026-07-20T16:00:00Z",
-    categoryName: "Hướng Dẫn"
-  }
-];
-
 function NewsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialSearch = searchParams.get("search") || "";
   const initialCategory = searchParams.get("category") || "Tất cả";
 
-  const [news, setNews] = useState<any[]>(MOCK_ALL_NEWS);
+  const [news, setNews] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [loading, setLoading] = useState(true);
-  const [categoriesList, setCategoriesList] = useState<string[]>(["Tất cả", "Khuyến Mãi", "Sự Kiện", "Hướng Dẫn"]);
+  const [categoriesList, setCategoriesList] = useState<string[]>(["Tất cả", "Khuyến Mãi", "Sự Kiện", "Hướng Dẫn", "Tin Tức"]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -79,30 +35,16 @@ function NewsContent() {
         if (res.ok) {
           const data = await res.json();
           const items = data.items || data;
-          if (Array.isArray(items) && items.length > 0) {
+          if (Array.isArray(items)) {
             setNews(items);
             if (data.totalPages) setTotalPages(data.totalPages);
-            setLoading(false);
-            return;
           }
         }
       } catch (err) {
-        console.warn("Dùng dữ liệu tin tức mẫu.");
+        console.warn("Lỗi tải tin tức từ Database:", err);
+      } finally {
+        setLoading(false);
       }
-
-      // Fallback filter
-      let filtered = MOCK_ALL_NEWS;
-      if (selectedCategory !== "Tất cả") {
-        filtered = filtered.filter(n => n.categoryName === selectedCategory);
-      }
-      if (searchTerm.trim()) {
-        const query = searchTerm.toLowerCase();
-        filtered = filtered.filter(n => n.title.toLowerCase().includes(query) || n.summary.toLowerCase().includes(query));
-      }
-
-      setNews(filtered);
-      setTotalPages(1);
-      setLoading(false);
     }
 
     loadNews();
@@ -113,116 +55,159 @@ function NewsContent() {
     setCurrentPage(1);
   };
 
+  const handleCategorySelect = (cat: string) => {
+    setSelectedCategory(cat);
+    setCurrentPage(1);
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 py-16 px-6">
-      <div className="max-w-6xl mx-auto">
-        
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-xs text-slate-500 mb-8 font-medium">
-          <Link href="/" className="hover:text-blue-600">Trang chủ</Link>
-          <span>/</span>
-          <span className="text-blue-600 font-bold">Tin tức & Sự kiện</span>
+    <div className="space-y-12">
+      {/* Search & Category Filter Bar */}
+      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+        {/* Categories Pills */}
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          {categoriesList.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => handleCategorySelect(cat)}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                selectedCategory === cat
+                  ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
+                  : "bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
 
-        {/* Header */}
-        <div className="text-center mb-12">
-          <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block mb-3">Thông Tin & Cẩm Nang</span>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-4">
-            Tin Tức & Sự Kiện Công Nghệ
-          </h1>
-          <p className="text-sm text-slate-600 max-w-xl mx-auto">
-            Khám phá các cẩm nang, tài liệu hướng dẫn kỹ thuật, tin khuyến mãi và cập nhật tính năng mới nhất từ CloudService.
+        {/* Search Input */}
+        <form onSubmit={handleSearchSubmit} className="relative w-full md:w-80">
+          <input
+            type="text"
+            placeholder="Tìm kiếm bài viết, tài liệu..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full h-11 pl-10 pr-4 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all placeholder-slate-400"
+          />
+          <svg className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </form>
+      </div>
+
+      {/* News Grid */}
+      {loading ? (
+        <div className="py-20 text-center text-slate-400 text-sm">
+          <span className="w-8 h-8 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin inline-block mb-3"></span>
+          <div>Đang tải bài viết từ cơ sở dữ liệu...</div>
+        </div>
+      ) : news.length === 0 ? (
+        <div className="text-center py-20 bg-white rounded-3xl border border-slate-200 p-8 max-w-lg mx-auto">
+          <div className="text-4xl mb-3">📰</div>
+          <h3 className="text-base font-bold text-slate-900 mb-1">Chưa có bài viết nào</h3>
+          <p className="text-xs text-slate-500">
+            Hiện chưa có bài viết nào phù hợp với bộ lọc tìm kiếm này.
           </p>
         </div>
-
-        {/* Search & Category filter */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12 items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-          
-          {/* Categories */}
-          <div className="lg:col-span-2 flex flex-wrap gap-2 items-center">
-            {categoriesList.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => {
-                  setSelectedCategory(cat);
-                  setCurrentPage(1);
-                }}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${
-                  selectedCategory === cat
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "bg-slate-100 hover:bg-slate-200 text-slate-700"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-
-          {/* Search Box */}
-          <form onSubmit={handleSearchSubmit} className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Tìm kiếm bài viết..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
-            />
-            <button
-              type="submit"
-              className="px-5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm"
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {news.map((item) => (
+            <article
+              key={item.id}
+              className="bg-white border border-slate-200 rounded-3xl p-6 flex flex-col justify-between hover:border-blue-300 hover:shadow-xl transition-all group"
             >
-              Tìm
-            </button>
-          </form>
-        </div>
-
-        {/* Articles List */}
-        {loading ? (
-          <div className="text-center py-20 text-slate-500 text-sm">Đang tải tin tức...</div>
-        ) : news.length === 0 ? (
-          <div className="text-center py-20 text-slate-500 text-sm bg-white border border-slate-200 rounded-2xl">
-            Không tìm thấy bài viết nào phù hợp.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {news.map((item) => (
-              <div key={item.id} className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col justify-between hover:border-blue-300 hover:shadow-lg transition-all shadow-sm group">
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                      {item.categoryName || item.category || "Tin Tức"}
-                    </span>
-                    <span className="text-[11px] text-slate-400">
-                      {new Date(item.createdAt || Date.now()).toLocaleDateString("vi-VN")}
-                    </span>
-                  </div>
-                  <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors mb-2 line-clamp-2">
-                    {item.title}
-                  </h3>
-                  <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed mb-6">
-                    {item.summary || item.content}
-                  </p>
+              <div>
+                {/* Meta Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-100">
+                    {item.categoryName || item.category || "Tin Tức"}
+                  </span>
+                  <span className="text-[11px] text-slate-400 font-medium">
+                    {new Date(item.createdAt || Date.now()).toLocaleDateString("vi-VN")}
+                  </span>
                 </div>
+
+                {/* Title */}
+                <h2 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors mb-3 leading-snug line-clamp-2">
+                  <Link href={`/news/${item.id}`}>
+                    {item.title}
+                  </Link>
+                </h2>
+
+                {/* Summary */}
+                <p className="text-xs text-slate-500 line-clamp-3 leading-relaxed mb-6">
+                  {item.summary || item.content || "Xem nội dung bài viết chi tiết tại đây."}
+                </p>
+              </div>
+
+              {/* Read More Link */}
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-400">Tác giả: Ban Biên Tập</span>
                 <Link
                   href={`/news/${item.id}`}
-                  className="w-full py-2.5 rounded-xl bg-slate-50 hover:bg-blue-600 hover:text-white border border-slate-200 text-center text-xs font-bold text-blue-600 transition-all block"
+                  className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
                 >
-                  Đọc Chi Tiết →
+                  <span>Chi tiết</span>
+                  <span>→</span>
                 </Link>
               </div>
-            ))}
-          </div>
-        )}
+            </article>
+          ))}
+        </div>
+      )}
 
-      </div>
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 pt-6">
+          <button
+            onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 disabled:opacity-40 text-xs font-bold text-slate-700 rounded-xl"
+          >
+            ← Trang trước
+          </button>
+          <span className="text-xs font-bold text-slate-600 px-4">
+            Trang {currentPage} / {totalPages}
+          </span>
+          <button
+            onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 disabled:opacity-40 text-xs font-bold text-slate-700 rounded-xl"
+          >
+            Trang sau →
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
 export default function NewsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center text-xs text-slate-500">Đang tải...</div>}>
-      <NewsContent />
-    </Suspense>
+    <div className="min-h-screen bg-slate-50 text-slate-800 pb-20 selection:bg-blue-600 selection:text-white">
+      {/* Hero Header */}
+      <section className="bg-white border-b border-slate-200 py-16 px-4">
+        <div className="max-w-7xl mx-auto text-center space-y-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold shadow-xs">
+            <span>📰</span>
+            <span>Cổng Thông Tin & Kiến Thức Công Nghệ</span>
+          </div>
+          <h1 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight">
+            Tin Tức & Thông Báo Hệ Thống
+          </h1>
+          <p className="text-sm md:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed">
+            Cập nhật những thông báo kỹ thuật, lịch nâng cấp hạ tầng mạng và chương trình ưu đãi mới nhất từ CloudService.
+          </p>
+        </div>
+      </section>
+
+      {/* Main List */}
+      <main className="max-w-7xl mx-auto px-4 py-12">
+        <Suspense fallback={<div className="text-center py-20 text-slate-400">Đang tải tin tức...</div>}>
+          <NewsContent />
+        </Suspense>
+      </main>
+    </div>
   );
 }

@@ -4,29 +4,8 @@ import { apiFetch } from "@/utils/api";
 
 const PRESET_CATEGORIES = ["Khuyến Mãi", "Sự Kiện", "Hướng Dẫn", "Tin Tức"];
 
-const INITIAL_MOCK_NEWS = [
-  {
-    id: 1,
-    title: "Chương trình khuyến mãi hè rực rỡ - Tặng 30% giá trị nạp",
-    summary: "Đón chào mùa hè sôi động, CloudService mang đến chương trình ưu đãi cực lớn cho toàn bộ khách hàng đăng ký mới dịch vụ.",
-    content: "Chi tiết ưu đãi: Tặng thêm 30% số tiền nạp tài khoản khi thực hiện giao dịch trong khung giờ vàng từ ngày 15/8 đến 31/8. Chương trình áp dụng tự động cho các gói Cloud VPS Pro và Hosting NVMe từ 6 tháng trở lên.",
-    categoryName: "Khuyến Mãi",
-    createdAt: "2026-08-10T08:00:00Z",
-    isActive: true
-  },
-  {
-    id: 2,
-    title: "Nâng cấp hạ tầng Datacenters tại Hà Nội và TP.HCM",
-    summary: "Nhằm mang lại trải nghiệm tốt nhất, chúng tôi vừa hoàn thành đợt bảo trì nâng cấp băng thông mạng lên 40Gbps.",
-    content: "Các kỹ sư mạng tại CloudService đã thực hiện nâng cấp thành công hệ thống chuyển mạch và bổ sung dung lượng băng thông xương sống quốc tế tại hai trung tâm Viettel IDC Sóng Thần và VNPT Nam Thăng Long, nâng tổng dung lượng lên gấp đôi.",
-    categoryName: "Sự Kiện",
-    createdAt: "2026-08-05T09:30:00Z",
-    isActive: true
-  }
-];
-
 export default function AdminNewsPage() {
-  const [articles, setArticles] = useState<any[]>(INITIAL_MOCK_NEWS);
+  const [articles, setArticles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
@@ -52,17 +31,15 @@ export default function AdminNewsPage() {
       if (res.ok) {
         const data = await res.json();
         const items = data.items || data;
-        if (Array.isArray(items) && items.length > 0) {
+        if (Array.isArray(items)) {
           setArticles(items);
-          setLoading(false);
-          return;
         }
       }
     } catch (err) {
-      console.warn("Lỗi API tin tức, chuyển chế độ mock:", err);
+      console.warn("Lỗi API tin tức:", err);
+    } finally {
+      setLoading(false);
     }
-    setArticles(INITIAL_MOCK_NEWS);
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -150,7 +127,7 @@ export default function AdminNewsPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900">Quản Lý Tin Tức & Blog Kiến Thức</h1>
-          <p className="text-xs text-slate-500 mt-1">Đăng tải thông báo bảo trì, hướng dẫn kỹ thuật và chương trình ưu đãi khuyến mãi</p>
+          <p className="text-xs text-slate-500 mt-1">Dữ liệu bài viết thực tế được lưu trữ trực tiếp trong Database</p>
         </div>
         <button
           onClick={handleOpenCreate}
@@ -178,11 +155,11 @@ export default function AdminNewsPage() {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-slate-400">Đang tải danh sách bài viết...</td>
+                  <td colSpan={6} className="py-8 text-center text-slate-400">Đang tải danh sách bài viết...</td>
                 </tr>
               ) : articles.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-slate-400">Chưa có bài viết nào.</td>
+                  <td colSpan={6} className="py-8 text-center text-slate-400">Chưa có bài viết nào trong cơ sở dữ liệu.</td>
                 </tr>
               ) : (
                 articles.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((art) => (
@@ -282,7 +259,7 @@ export default function AdminNewsPage() {
                   <input
                     type="text"
                     required
-                    placeholder="VD: Chương trình khuyến mãi giảm giá 30%..."
+                    placeholder="VD: Thông báo nâng cấp hệ thống hạ tầng máy chủ..."
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"

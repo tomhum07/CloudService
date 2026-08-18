@@ -11,64 +11,6 @@ const DOMAIN_PRICES = [
   { tld: ".io", price: "790.000đ", renew: "850.000đ", popular: false }
 ];
 
-const MOCK_SERVICES = [
-  {
-    id: 1,
-    name: "Cloud VPS NVMe Pro",
-    categoryName: "Cloud VPS",
-    slug: "vps-nvme",
-    description: "Máy chủ ảo đám mây chuẩn Enterprise, bộ vi xử lý Intel Xeon Gold / AMD EPYC, ổ cứng NVMe Gen4 RAID 10 siêu tốc.",
-    cpu: "2 vCPUs Dedicated",
-    ram: "4 GB RAM ECC DDR4",
-    storage: "60 GB Enterprise NVMe",
-    bandwidth: "1 Gbps Không giới hạn",
-    antiDDoS: "Tường lửa Anti-DDoS 100Gbps",
-    price: "150.000đ",
-    unit: "tháng"
-  },
-  {
-    id: 2,
-    name: "MaxSpeed Hosting NVMe LiteSpeed",
-    categoryName: "Web Hosting",
-    slug: "maxspeed-hosting",
-    description: "Hosting tốc độ cao tối ưu 100% WordPress & WooCommerce, tích hợp bộ nhớ đệm LSCache và bảo mật Imunify360 AI.",
-    cpu: "2 Core CPU LiteSpeed",
-    ram: "2 GB RAM",
-    storage: "20 GB NVMe Storage",
-    bandwidth: "Không giới hạn",
-    antiDDoS: "Miễn phí SSL & WAF",
-    price: "45.000đ",
-    unit: "tháng"
-  },
-  {
-    id: 3,
-    name: "Email Doanh Nghiệp Pro",
-    categoryName: "Email Doanh Nghiệp",
-    slug: "email-doanh-nghiep",
-    description: "Hệ thống email theo tên miền riêng (@yourdomain.com), tỷ lệ vào Inbox 99.9%, tích hợp bộ lọc Antispam & Antivirus.",
-    cpu: "Hạ tầng Mail Cluster",
-    ram: "Không giới hạn tài khoản",
-    storage: "50 GB Dung lượng Mail",
-    bandwidth: "Gửi/Nhận siêu tốc",
-    antiDDoS: "Bảo mật DKIM, SPF, DMARC",
-    price: "99.000đ",
-    unit: "tháng"
-  },
-  {
-    id: 4,
-    name: "Tường Lửa Anti-DDoS Firewall",
-    categoryName: "Bảo Mật",
-    slug: "firewall-anti-ddos",
-    description: "Giải pháp lọc sạch tấn công từ chối dịch vụ Layer 3/4/7 thời gian thực, bảo vệ hệ thống web app và API an toàn tuyệt đối.",
-    cpu: "Dung lượng lọc 100Gbps+",
-    ram: "Phân tích AI Layer 7",
-    storage: "Báo cáo Real-time",
-    bandwidth: "Độ trễ < 2ms",
-    antiDDoS: "Bảo vệ IP chuyên dụng",
-    price: "350.000đ",
-    unit: "tháng"
-  }
-];
 
 const FEATURES_HIGHLIGHT = [
   {
@@ -142,14 +84,14 @@ export default function Home() {
             );
             setPlans(enriched);
           } else {
-            setPlans(MOCK_SERVICES);
+            setPlans([]);
           }
         } else {
-          setPlans(MOCK_SERVICES);
+          setPlans([]);
         }
       } catch (err) {
         console.error("Lỗi lấy dữ liệu plans:", err);
-        setPlans(MOCK_SERVICES);
+        setPlans([]);
       }
 
       try {
