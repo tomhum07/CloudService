@@ -84,13 +84,15 @@ export default function PricesPage() {
   const fetchPlans = async () => {
     setIsLoadingPlans(true);
     try {
-      const res = await apiFetch("/api/service-plans?includeInactive=true");
+      const res = await apiFetch("/api/service-plans?includeInactive=true&pageSize=200");
       if (res.ok) {
         const data = await res.json();
-        const planList = data.items || [];
-        setPlans(planList);
-        if (planList.length > 0) {
-          setSelectedPlanId(planList[0].id.toString());
+        const planList = data.items || data;
+        if (Array.isArray(planList)) {
+          setPlans(planList);
+          if (planList.length > 0) {
+            setSelectedPlanId(planList[0].id.toString());
+          }
         }
       } else {
         throw new Error("Không thể tải danh sách gói cước");

@@ -19,14 +19,15 @@ export default function PricingPage() {
     try {
       setLoading(true);
       const [catRes, planRes] = await Promise.all([
-        apiFetch("/api/service-categories"),
-        apiFetch("/api/service-plans")
+        apiFetch("/api/service-categories?pageSize=100"),
+        apiFetch("/api/service-plans?pageSize=200")
       ]);
 
       if (catRes.ok) {
         const catData = await catRes.json();
-        if (Array.isArray(catData)) {
-          setCategories(catData);
+        const items = catData.items || catData;
+        if (Array.isArray(items)) {
+          setCategories(items);
         }
       }
 
@@ -42,7 +43,7 @@ export default function PricingPage() {
                 if (priceRes.ok) {
                   const priceList = await priceRes.json();
                   const monthly = priceList.find((pr: any) => pr.billingCycle === "Monthly")?.price || 0;
-                  const yearly = priceList.find((pr: any) => pr.billingCycle === "Yearly")?.price || monthly * 12 * 0.8;
+                  const yearly = priceList.find((pr: any) => pr.billingCycle === "Yearly")?.price || (monthly > 0 ? monthly * 12 * 0.8 : 0);
                   return { ...p, monthlyPrice: monthly, yearlyPrice: yearly };
                 }
               } catch {}
@@ -61,7 +62,7 @@ export default function PricingPage() {
 
   const filteredPlans = selectedCat === "all"
     ? plans
-    : plans.filter(p => p.categoryId === selectedCat || p.category?.id === selectedCat);
+    : plans.filter(p => Number(p.categoryId) === Number(selectedCat) || Number(p.category?.id) === Number(selectedCat));
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 pb-20 selection:bg-blue-600 selection:text-white">

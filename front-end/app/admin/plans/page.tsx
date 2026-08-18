@@ -4,15 +4,15 @@ import { useState, useEffect } from "react";
 import { apiFetch } from "@/utils/api";
 
 interface Category {
-  id: string;
+  id: string | number;
   name: string;
 }
 
 interface ServicePlan {
-  id: string;
+  id: string | number;
   name: string;
   description: string;
-  categoryId: string;
+  categoryId: number;
   category?: Category;
   cpu: string;
   ram: string;
@@ -41,7 +41,7 @@ export default function PlansPage() {
   // Form State
   const [formData, setFormData] = useState({
     name: "",
-    categoryId: "",
+    categoryId: "" as string | number,
     description: "",
     cpu: "",
     ram: "",
@@ -68,10 +68,13 @@ export default function PlansPage() {
 
   const fetchCategories = async () => {
     try {
-      const res = await apiFetch("/api/service-categories?includeInactive=true");
+      const res = await apiFetch("/api/service-categories?includeInactive=true&pageSize=100");
       if (res.ok) {
         const data = await res.json();
-        setCategories(data);
+        const items = data.items || data;
+        if (Array.isArray(items)) {
+          setCategories(items);
+        }
       }
     } catch (err) {
       console.error("Lỗi lấy danh mục", err);
@@ -83,9 +86,10 @@ export default function PlansPage() {
     setError(null);
     try {
       const queryParams = new URLSearchParams();
+      queryParams.append("pageSize", "100");
       if (searchTerm) queryParams.append("search", searchTerm);
       if (filterCategory) queryParams.append("categoryId", filterCategory);
-      if (sortBy) queryParams.append("sortBy", sortBy);
+      if (sortBy) queryParams.append("sort", sortBy);
       queryParams.append("includeInactive", "true");
       
       const res = await apiFetch(`/api/service-plans?${queryParams.toString()}`);
@@ -156,9 +160,20 @@ export default function PlansPage() {
         ? `/api/service-plans/${currentPlan.id}` 
         : "/api/service-plans";
 
+      const payload = {
+        name: formData.name,
+        categoryId: Number(formData.categoryId),
+        description: formData.description || "",
+        cpu: formData.cpu || "",
+        ram: formData.ram || "",
+        storage: formData.storage || "",
+        bandwidth: formData.bandwidth || "",
+        isActive: formData.isActive
+      };
+
       const res = await apiFetch(endpoint, {
         method,
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
 
       if (!res.ok) throw new Error("Lưu gói cước thất bại.");
@@ -207,7 +222,7 @@ export default function PlansPage() {
     }
   };
 
-  const handleRegenerateQR = async (id: string) => {
+  const handleRegenerateQR = async (id: string | number) => {
     try {
       const res = await apiFetch(`/api/service-plans/${id}/qr-code/regenerate`, {
         method: "POST"
@@ -219,9 +234,9 @@ export default function PlansPage() {
     }
   };
 
-  const getCategoryName = (categoryId: string, categoryObj?: Category) => {
+  const getCategoryName = (categoryId: number, categoryObj?: Category) => {
     if (categoryObj?.name) return categoryObj.name;
-    const cat = categories.find(c => c.id === categoryId);
+    const cat = categories.find(c => Number(c.id) === Number(categoryId));
     return cat ? cat.name : "Chưa phân loại";
   };
 
@@ -443,7 +458,7 @@ export default function PlansPage() {
                   <select
                     required
                     value={formData.categoryId}
-                    onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, categoryId: Number(e.target.value) })}
                     className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
                   >
                     {categories.map((c) => (
