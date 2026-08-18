@@ -211,11 +211,12 @@ export default function Header() {
 
   const navLinks = [
     { name: "Trang Chủ", href: "/" },
-    { name: "Giới Thiệu", href: "/about" },
-    { name: "Dịch Vụ", href: "/services" },
+    { name: "Cloud VPS", href: "/pricing?cat=vps" },
+    { name: "Hosting NVMe", href: "/pricing?cat=hosting" },
+    { name: "Tên Miền & SSL", href: "/services#domain-ssl" },
+    { name: "Tường Lửa Anti-DDoS", href: "/services#anti-ddos" },
     { name: "Bảng Giá", href: "/pricing" },
     { name: "Tin Tức", href: "/news" },
-    { name: "Đối Tác", href: "/affiliate" },
   ];
 
   return (
