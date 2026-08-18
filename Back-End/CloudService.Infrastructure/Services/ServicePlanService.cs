@@ -102,7 +102,18 @@ namespace CloudService.Infrastructure.Services
                     Bandwidth = x.Bandwidth,
                     QrCodeUrl = x.QrCodeUrl,
                     IsActive = x.IsActive,
-                    CreatedAt = x.CreatedAt
+                    CreatedAt = x.CreatedAt,
+                    Prices = x.Prices.Where(p => p.IsActive).Select(p => new PlanPriceDto
+                    {
+                        Id = p.Id,
+                        PlanId = p.PlanId,
+                        BillingCycle = p.BillingCycle,
+                        Price = p.Price,
+                        PromotionId = p.PromotionId,
+                        PromotionName = p.Promotion != null ? p.Promotion.Name : null,
+                        DiscountPercentage = p.Promotion != null ? (decimal?)p.Promotion.DiscountPercentage : null,
+                        IsActive = p.IsActive
+                    }).ToList()
                 })
                 .ToListAsync();
 
@@ -120,6 +131,7 @@ namespace CloudService.Infrastructure.Services
             var plan = await _context.ServicePlans
                 .IgnoreQueryFilters()
                 .Include(p => p.Category)
+                .Include(p => p.Prices)
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             if (plan == null) return null;
@@ -137,7 +149,18 @@ namespace CloudService.Infrastructure.Services
                 Bandwidth = plan.Bandwidth,
                 QrCodeUrl = plan.QrCodeUrl,
                 IsActive = plan.IsActive,
-                CreatedAt = plan.CreatedAt
+                CreatedAt = plan.CreatedAt,
+                Prices = plan.Prices.Where(p => p.IsActive).Select(p => new PlanPriceDto
+                {
+                    Id = p.Id,
+                    PlanId = p.PlanId,
+                    BillingCycle = p.BillingCycle,
+                    Price = p.Price,
+                    PromotionId = p.PromotionId,
+                    PromotionName = p.Promotion != null ? p.Promotion.Name : null,
+                    DiscountPercentage = p.Promotion != null ? (decimal?)p.Promotion.DiscountPercentage : null,
+                    IsActive = p.IsActive
+                }).ToList()
             };
         }
 

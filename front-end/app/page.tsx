@@ -62,26 +62,17 @@ export default function Home() {
           const rawItems = plansData.items || plansData;
           if (Array.isArray(rawItems) && rawItems.length > 0) {
             const items = rawItems.filter((p: any) => p.isActive !== false);
-            const enriched = await Promise.all(
-              items.slice(0, 6).map(async (p: any) => {
-                try {
-                  const priceRes = await apiFetch(`/api/service-plans/${p.id}/prices`);
-                  if (priceRes.ok) {
-                    const prices = await priceRes.json();
-                    const activePrices = prices.filter((pr: any) => pr.isActive !== false);
-                    const activePrice = activePrices[0];
-                    return {
-                      ...p,
-                      price: activePrice
-                        ? new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(activePrice.price)
-                        : "Liên hệ",
-                      unit: activePrice ? (activePrice.billingCycle === "Yearly" ? "năm" : "tháng") : "tháng"
-                    };
-                  }
-                } catch {}
-                return { ...p, price: "Liên hệ", unit: "tháng" };
-              })
-            );
+            const enriched = items.slice(0, 6).map((p: any) => {
+              const prices = p.prices || [];
+              const activePrice = prices[0];
+              return {
+                ...p,
+                price: activePrice
+                  ? new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(activePrice.price)
+                  : "Liên hệ",
+                unit: activePrice ? (activePrice.billingCycle === "Yearly" ? "năm" : "tháng") : "tháng"
+              };
+            });
             setPlans(enriched);
           } else {
             setPlans([]);

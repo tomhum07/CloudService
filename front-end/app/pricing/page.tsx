@@ -35,21 +35,12 @@ export default function PricingPage() {
         const planData = await planRes.json();
         const rawItems = planData.items || planData;
         if (Array.isArray(rawItems)) {
-          // Lấy giá thực tế của từng plan
-          const enriched = await Promise.all(
-            rawItems.map(async (p: any) => {
-              try {
-                const priceRes = await apiFetch(`/api/service-plans/${p.id}/prices`);
-                if (priceRes.ok) {
-                  const priceList = await priceRes.json();
-                  const monthly = priceList.find((pr: any) => pr.billingCycle === "Monthly")?.price || 0;
-                  const yearly = priceList.find((pr: any) => pr.billingCycle === "Yearly")?.price || (monthly > 0 ? monthly * 12 * 0.8 : 0);
-                  return { ...p, monthlyPrice: monthly, yearlyPrice: yearly };
-                }
-              } catch {}
-              return { ...p, monthlyPrice: 0, yearlyPrice: 0 };
-            })
-          );
+          const enriched = rawItems.map((p: any) => {
+            const prices = p.prices || [];
+            const monthly = prices.find((pr: any) => pr.billingCycle === "Monthly")?.price || 0;
+            const yearly = prices.find((pr: any) => pr.billingCycle === "Yearly")?.price || (monthly > 0 ? monthly * 12 * 0.8 : 0);
+            return { ...p, monthlyPrice: monthly, yearlyPrice: yearly };
+          });
           setPlans(enriched);
         }
       }
