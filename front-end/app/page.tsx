@@ -16,6 +16,7 @@ const MOCK_SERVICES = [
     id: 1,
     name: "Cloud VPS NVMe Pro",
     categoryName: "Cloud VPS",
+    slug: "vps-nvme",
     description: "Máy chủ ảo đám mây chuẩn Enterprise, bộ vi xử lý Intel Xeon Gold / AMD EPYC, ổ cứng NVMe Gen4 RAID 10 siêu tốc.",
     cpu: "2 vCPUs Dedicated",
     ram: "4 GB RAM ECC DDR4",
@@ -27,8 +28,9 @@ const MOCK_SERVICES = [
   },
   {
     id: 2,
-    name: "Cloud Hosting NVMe LiteSpeed",
-    categoryName: "Cloud Hosting",
+    name: "MaxSpeed Hosting NVMe LiteSpeed",
+    categoryName: "Web Hosting",
+    slug: "maxspeed-hosting",
     description: "Hosting tốc độ cao tối ưu 100% WordPress & WooCommerce, tích hợp bộ nhớ đệm LSCache và bảo mật Imunify360 AI.",
     cpu: "2 Core CPU LiteSpeed",
     ram: "2 GB RAM",
@@ -42,6 +44,7 @@ const MOCK_SERVICES = [
     id: 3,
     name: "Email Doanh Nghiệp Pro",
     categoryName: "Email Doanh Nghiệp",
+    slug: "email-doanh-nghiep",
     description: "Hệ thống email theo tên miền riêng (@yourdomain.com), tỷ lệ vào Inbox 99.9%, tích hợp bộ lọc Antispam & Antivirus.",
     cpu: "Hạ tầng Mail Cluster",
     ram: "Không giới hạn tài khoản",
@@ -55,6 +58,7 @@ const MOCK_SERVICES = [
     id: 4,
     name: "Tường Lửa Anti-DDoS Firewall",
     categoryName: "Bảo Mật",
+    slug: "firewall-anti-ddos",
     description: "Giải pháp lọc sạch tấn công từ chối dịch vụ Layer 3/4/7 thời gian thực, bảo vệ hệ thống web app và API an toàn tuyệt đối.",
     cpu: "Dung lượng lọc 100Gbps+",
     ram: "Phân tích AI Layer 7",
@@ -195,33 +199,33 @@ export default function Home() {
   });
 
   return (
-    <div className="relative min-h-screen bg-slate-950 text-slate-100 selection:bg-blue-600 selection:text-white">
+    <div className="relative min-h-screen bg-slate-50 text-slate-800 selection:bg-blue-600 selection:text-white">
       
       {/* 1. HERO SECTION & DOMAIN SEARCH */}
-      <section className="relative overflow-hidden pt-28 pb-20 border-b border-white/10 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(37,99,235,0.25),rgba(255,255,255,0))]">
+      <section className="relative overflow-hidden pt-28 pb-20 border-b border-slate-200 bg-gradient-to-b from-blue-50 via-white to-slate-50">
         <div className="max-w-7xl mx-auto px-6 text-center">
           
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold bg-blue-900/40 text-blue-300 border border-blue-700/50 mb-6 shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200 mb-6 shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
             HẠ TẦNG CLOUD VPS & HOSTING TIÊU CHUẨN QUỐC TẾ TIER 3
           </div>
 
           {/* Heading */}
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-white mb-6 leading-tight max-w-5xl mx-auto">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-slate-900 mb-6 leading-tight max-w-5xl mx-auto">
             Hạ Tầng Điện Toán Đám Mây <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-teal-300">
+            <span className="text-blue-600">
               Tốc Độ Cực Đỉnh & Chống DDoS Vượt Trội
             </span>
           </h1>
 
-          <p className="text-sm sm:text-base md:text-lg text-slate-300 max-w-3xl mx-auto mb-10 leading-relaxed">
-            Cung cấp giải pháp **Cloud VPS NVMe**, **Web Hosting LiteSpeed**, **Tên miền**, **Email doanh nghiệp** và **Tường lửa Anti-DDoS** chuyên sâu bảo vệ website an toàn 24/7.
+          <p className="text-sm sm:text-base md:text-lg text-slate-600 max-w-3xl mx-auto mb-10 leading-relaxed">
+            Cung cấp giải pháp <strong>Cloud VPS NVMe</strong>, <strong>Web Hosting LiteSpeed</strong>, <strong>Tên miền</strong>, <strong>Email doanh nghiệp</strong> và <strong>Tường lửa Anti-DDoS</strong> chuyên sâu bảo vệ website an toàn 24/7.
           </p>
 
-          {/* DOMAIN SEARCH BAR (Vietnix style) */}
+          {/* DOMAIN SEARCH BAR */}
           <div className="max-w-3xl mx-auto mb-12">
-            <form onSubmit={handleDomainCheck} className="p-2 rounded-2xl bg-slate-900/90 border border-white/15 shadow-2xl backdrop-blur-xl flex flex-col sm:flex-row gap-2">
+            <form onSubmit={handleDomainCheck} className="p-2 rounded-2xl bg-white border border-slate-300 shadow-xl flex flex-col sm:flex-row gap-2">
               <div className="flex-1 flex items-center px-4 gap-3">
                 <span className="text-slate-400 text-lg">🔍</span>
                 <input
@@ -229,12 +233,12 @@ export default function Home() {
                   placeholder="Nhập tên miền bạn muốn đăng ký (VD: congtycuaban.vn, shoponline.com)..."
                   value={domainQuery}
                   onChange={(e) => setDomainQuery(e.target.value)}
-                  className="w-full bg-transparent text-sm text-white placeholder-slate-500 focus:outline-none py-3"
+                  className="w-full bg-transparent text-sm text-slate-900 placeholder-slate-400 focus:outline-none py-3"
                 />
               </div>
               <button
                 type="submit"
-                className="px-8 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition-all shadow-lg shadow-blue-900/40 shrink-0"
+                className="px-8 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm transition-all shadow-md shadow-blue-500/20 shrink-0"
               >
                 Kiểm Tra Tên Miền
               </button>
@@ -242,25 +246,25 @@ export default function Home() {
 
             {/* Quick Domain Pricing Pills */}
             <div className="flex flex-wrap items-center justify-center gap-3 mt-4 text-xs">
-              <span className="text-slate-400 font-medium">Bảng giá hot:</span>
+              <span className="text-slate-500 font-medium">Bảng giá hot:</span>
               {DOMAIN_PRICES.map((d) => (
-                <div key={d.tld} className="px-3 py-1 rounded-lg bg-slate-900/70 border border-white/10 flex items-center gap-2">
-                  <span className="font-bold text-blue-400">{d.tld}</span>
-                  <span className="text-slate-300 font-semibold">{d.price}</span>
+                <div key={d.tld} className="px-3 py-1 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center gap-2">
+                  <span className="font-bold text-blue-600">{d.tld}</span>
+                  <span className="text-slate-700 font-semibold">{d.price}</span>
                 </div>
               ))}
             </div>
 
             {/* Domain Check Result Modal/Card */}
             {domainResult && domainResult.checked && (
-              <div className="mt-6 p-4 rounded-xl bg-slate-900 border border-blue-500/30 text-left flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in zoom-in-95 duration-200">
+              <div className="mt-6 p-4 rounded-2xl bg-white border border-blue-200 shadow-lg text-left flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in zoom-in-95 duration-200">
                 <div className="flex items-center gap-3">
                   <div className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white ${domainResult.available ? "bg-emerald-600" : "bg-rose-600"}`}>
                     {domainResult.available ? "✓" : "✕"}
                   </div>
                   <div>
-                    <h4 className="text-base font-bold text-white">{domainResult.domain}</h4>
-                    <p className="text-xs text-slate-400">
+                    <h4 className="text-base font-bold text-slate-900">{domainResult.domain}</h4>
+                    <p className="text-xs text-slate-600">
                       {domainResult.available
                         ? `Tên miền còn trống! Giá đăng ký chỉ từ ${domainResult.price}`
                         : "Tên miền này đã có người đăng ký. Vui lòng chọn đuôi mở rộng khác."}
@@ -270,7 +274,7 @@ export default function Home() {
                 {domainResult.available ? (
                   <Link
                     href={`/order?plan=domain&name=${encodeURIComponent(domainResult.domain)}`}
-                    className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-colors shrink-0"
+                    className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors shrink-0 shadow-sm"
                   >
                     Đăng Ký Ngay
                   </Link>
@@ -278,7 +282,7 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => setDomainResult(null)}
-                    className="text-xs text-slate-400 hover:text-white px-3 py-1.5"
+                    className="text-xs text-slate-500 hover:text-slate-900 px-3 py-1.5"
                   >
                     Đóng
                   </button>
@@ -287,70 +291,69 @@ export default function Home() {
             )}
           </div>
 
-          {/* Key Metrics Strip (Viettel IDC / Vietnix Trust Metrics) */}
+          {/* Key Metrics Strip */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto pt-4">
-            <div className="p-4 rounded-xl bg-slate-900/60 border border-white/10 text-center">
-              <div className="text-2xl md:text-3xl font-black text-blue-400">99.99%</div>
-              <div className="text-xs text-slate-400 mt-1">Cam kết Uptime SLA</div>
+            <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm text-center">
+              <div className="text-2xl md:text-3xl font-black text-blue-600">99.99%</div>
+              <div className="text-xs text-slate-600 mt-1 font-medium">Cam kết Uptime SLA</div>
             </div>
-            <div className="p-4 rounded-xl bg-slate-900/60 border border-white/10 text-center">
-              <div className="text-2xl md:text-3xl font-black text-indigo-400">Tier 3</div>
-              <div className="text-xs text-slate-400 mt-1">Datacenter Quốc Tế</div>
+            <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm text-center">
+              <div className="text-2xl md:text-3xl font-black text-indigo-600">Tier 3</div>
+              <div className="text-xs text-slate-600 mt-1 font-medium">Datacenter Quốc Tế</div>
             </div>
-            <div className="p-4 rounded-xl bg-slate-900/60 border border-white/10 text-center">
-              <div className="text-2xl md:text-3xl font-black text-teal-400">100 Gbps+</div>
-              <div className="text-xs text-slate-400 mt-1">Anti-DDoS Firewall Layer 3/4/7</div>
+            <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm text-center">
+              <div className="text-2xl md:text-3xl font-black text-emerald-600">100Gbps+</div>
+              <div className="text-xs text-slate-600 mt-1 font-medium">Tường Lửa Anti-DDoS</div>
             </div>
-            <div className="p-4 rounded-xl bg-slate-900/60 border border-white/10 text-center">
-              <div className="text-2xl md:text-3xl font-black text-amber-400">24/7/365</div>
-              <div className="text-xs text-slate-400 mt-1">Hỗ trợ kỹ thuật chuyên sâu</div>
+            <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm text-center">
+              <div className="text-2xl md:text-3xl font-black text-amber-600">24/7/365</div>
+              <div className="text-xs text-slate-600 mt-1 font-medium">Hỗ Trợ Kỹ Thuật</div>
             </div>
           </div>
 
         </div>
       </section>
 
-      {/* 2. SERVICES & PRICING TABS SECTION */}
+      {/* 2. SERVICES & PRICING SHOWCASE */}
       <section className="max-w-7xl mx-auto px-6 py-20">
-        <div className="text-center mb-12">
-          <span className="text-xs font-bold text-blue-400 uppercase tracking-widest block mb-2">Bảng Giá Dịch Vụ</span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-4">
-            Gói Cước Đám Mây Toàn Diện Cho Doanh Nghiệp
-          </h2>
-          <p className="text-sm text-slate-400 max-w-2xl mx-auto">
-            Hạ tầng cấu hình cao, linh hoạt mở rộng tức thì không gián đoạn dịch vụ.
-          </p>
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+          <div>
+            <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block mb-2">Bảng Giá Nổi Bật</span>
+            <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
+              Gói Dịch Vụ Khởi Tạo Nhanh
+            </h2>
+          </div>
 
-          {/* Category Tabs */}
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-8 p-1.5 bg-slate-900 rounded-xl border border-white/10 max-w-md mx-auto">
+          {/* Filter Tabs */}
+          <div className="flex items-center gap-2 p-1.5 rounded-xl bg-white border border-slate-200 shadow-sm overflow-x-auto">
             <button
               onClick={() => setActiveTab("all")}
-              className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
-                activeTab === "all" ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-white"
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all shrink-0 ${
+                activeTab === "all" ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:text-slate-900"
               }`}
             >
               Tất Cả
             </button>
             <button
               onClick={() => setActiveTab("vps")}
-              className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
-                activeTab === "vps" ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-white"
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all shrink-0 ${
+                activeTab === "vps" ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              Cloud VPS
+              Cloud VPS NVMe
             </button>
             <button
               onClick={() => setActiveTab("hosting")}
-              className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
-                activeTab === "hosting" ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-white"
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all shrink-0 ${
+                activeTab === "hosting" ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              Hosting NVMe
+              Hosting LiteSpeed
             </button>
             <button
               onClick={() => setActiveTab("security")}
-              className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
-                activeTab === "security" ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-white"
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all shrink-0 ${
+                activeTab === "security" ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:text-slate-900"
               }`}
             >
               Email & Bảo Mật
@@ -358,155 +361,167 @@ export default function Home() {
           </div>
         </div>
 
-        {loading ? (
-          <div className="text-center py-16 text-slate-400 text-sm">Đang tải danh sách gói cước hạ tầng...</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredPlans.map((svc) => (
-              <div
-                key={svc.id}
-                className="group relative bg-slate-900/90 border border-white/10 rounded-2xl p-7 flex flex-col justify-between hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-950/50 transition-all duration-300"
-              >
-                <div>
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <span className="text-[11px] font-bold text-blue-400 uppercase tracking-wider block mb-1">
-                        {svc.categoryName || "Cloud Service"}
-                      </span>
-                      <h3 className="text-xl font-bold text-white group-hover:text-blue-300 transition-colors">
-                        {svc.name}
-                      </h3>
-                    </div>
-                  </div>
+        {/* Plans Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {filteredPlans.map((plan: any) => (
+            <div
+              key={plan.id}
+              className="p-6 rounded-2xl bg-white border border-slate-200 hover:border-blue-400 hover:shadow-xl transition-all duration-300 flex flex-col justify-between group"
+            >
+              <div>
+                <div className="flex justify-between items-start mb-3">
+                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                    {plan.categoryName || "Dịch vụ"}
+                  </span>
+                </div>
 
-                  <p className="text-xs text-slate-400 leading-relaxed mb-6 line-clamp-2">
-                    {svc.description}
-                  </p>
+                <h3 className="text-base font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">
+                  {plan.name}
+                </h3>
+                <p className="text-xs text-slate-500 mb-4 line-clamp-2 leading-relaxed">
+                  {plan.description}
+                </p>
 
-                  <div className="h-[1px] bg-white/10 mb-6"></div>
+                <div className="text-2xl font-black text-blue-600 mb-4">
+                  {plan.price}{" "}
+                  <span className="text-xs text-slate-400 font-normal">/ {plan.unit || "tháng"}</span>
+                </div>
 
-                  {/* Specs List */}
-                  <ul className="flex flex-col gap-3 mb-8">
-                    {svc.cpu && svc.cpu !== "N/A" && (
-                      <li className="flex items-center gap-3 text-xs text-slate-300">
-                        <span className="text-blue-400 text-sm">⚡</span>
-                        <span><strong>CPU:</strong> {svc.cpu}</span>
-                      </li>
-                    )}
-                    {svc.ram && svc.ram !== "N/A" && (
-                      <li className="flex items-center gap-3 text-xs text-slate-300">
-                        <span className="text-indigo-400 text-sm">💾</span>
-                        <span><strong>RAM:</strong> {svc.ram}</span>
-                      </li>
-                    )}
-                    {svc.storage && svc.storage !== "N/A" && (
-                      <li className="flex items-center gap-3 text-xs text-slate-300">
-                        <span className="text-emerald-400 text-sm">💽</span>
-                        <span><strong>Ổ Cứng:</strong> {svc.storage}</span>
-                      </li>
-                    )}
-                    {svc.bandwidth && svc.bandwidth !== "N/A" && (
-                      <li className="flex items-center gap-3 text-xs text-slate-300">
-                        <span className="text-teal-400 text-sm">🚀</span>
-                        <span><strong>Băng Thông:</strong> {svc.bandwidth}</span>
-                      </li>
-                    )}
-                    <li className="flex items-center gap-3 text-xs text-slate-300">
-                      <span className="text-amber-400 text-sm">🛡️</span>
-                      <span><strong>Bảo Vệ:</strong> {svc.antiDDoS || "Anti-DDoS Firewall & Backup"}</span>
+                <div className="h-[1px] bg-slate-100 mb-4"></div>
+
+                <ul className="space-y-2.5 text-xs text-slate-700 mb-6">
+                  {plan.cpu && (
+                    <li className="flex items-center gap-2">
+                      <span className="text-blue-600 font-bold">⚡ CPU:</span> {plan.cpu}
                     </li>
-                  </ul>
-                </div>
-
-                <div>
-                  <div className="mb-6 flex items-baseline gap-1.5">
-                    <span className="text-3xl font-black text-white">{svc.price}</span>
-                    <span className="text-xs text-slate-400 font-medium">/ {svc.unit || "tháng"}</span>
-                  </div>
-
-                  <Link
-                    href={`/order?planId=${svc.id}`}
-                    className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center transition-all shadow-md shadow-blue-900/30"
-                  >
-                    Đăng Ký Gói Ngay →
-                  </Link>
-                </div>
+                  )}
+                  {plan.ram && (
+                    <li className="flex items-center gap-2">
+                      <span className="text-blue-600 font-bold">💾 RAM:</span> {plan.ram}
+                    </li>
+                  )}
+                  {plan.storage && (
+                    <li className="flex items-center gap-2">
+                      <span className="text-blue-600 font-bold">💽 Ổ cứng:</span> {plan.storage}
+                    </li>
+                  )}
+                  {plan.bandwidth && (
+                    <li className="flex items-center gap-2">
+                      <span className="text-blue-600 font-bold">🚀 Băng thông:</span> {plan.bandwidth}
+                    </li>
+                  )}
+                  <li className="flex items-center gap-2">
+                    <span className="text-emerald-600 font-bold">🛡️ Tường lửa:</span> Anti-DDoS 100Gbps
+                  </li>
+                </ul>
               </div>
-            ))}
-          </div>
-        )}
 
-        <div className="text-center mt-12">
-          <Link
-            href="/pricing"
-            className="inline-flex items-center gap-2 text-sm font-bold text-blue-400 hover:text-blue-300 transition-colors"
-          >
-            Xem bảng so sánh cấu hình chi tiết toàn bộ các gói cước →
-          </Link>
+              <div className="space-y-2">
+                <Link
+                  href={`/order?planId=${plan.id}`}
+                  className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center transition-colors shadow-md shadow-blue-500/20"
+                >
+                  Đăng Ký Gói Này →
+                </Link>
+                {plan.slug && (
+                  <Link
+                    href={`/services/${plan.slug}`}
+                    className="w-full py-2 rounded-xl text-blue-600 hover:bg-blue-50 text-xs font-semibold flex items-center justify-center transition-colors"
+                  >
+                    Xem chi tiết tính năng
+                  </Link>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* 3. ANTI-DDOS & SECURITY SECTION (Vietnix Firewall & Viettel IDC Security) */}
-      <section className="border-t border-white/10 bg-slate-900/40 py-20">
+      {/* 3. ANTI-DDOS FIREWALL SPOTLIGHT */}
+      <section className="bg-white border-y border-slate-200 py-20">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            
             <div>
-              <span className="text-xs font-bold text-teal-400 uppercase tracking-widest block mb-2">Công Nghệ Độc Quyền</span>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-6 leading-tight">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-600 border border-rose-200 mb-4">
+                🛡️ CÔNG NGHỆ BẢO MẬT ĐỘC QUYỀN
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mb-6 leading-tight">
                 Tường Lửa Anti-DDoS Đa Tầng <br />
-                <span className="text-teal-400">Bảo Vệ Toàn Diện Layer 3, 4 & 7</span>
+                <span className="text-blue-600">Bảo Vệ Website Luôn Online</span>
               </h2>
-              <p className="text-sm text-slate-300 leading-relaxed mb-6">
-                Hệ thống tường lửa được phát triển chuyên biệt với khả năng phân tích gói tin thông minh bằng trí tuệ nhân tạo (AI Traffic Filter), tự động lọc sạch các cuộc tấn công DDoS quy mô hàng trăm Gbps mà không làm gián đoạn hoặc tăng độ trễ truy cập của người dùng thực.
+              <p className="text-sm text-slate-600 leading-relaxed mb-6">
+                Hệ thống lọc lưu lượng thông minh kết hợp giữa phần cứng chuyên dụng và thuật toán AI nhận diện bất thường, giúp triệt tiêu hoàn toàn các đợt tấn công từ chối dịch vụ quy mô lớn mà không gây gián đoạn hay tăng độ trễ cho người dùng thật.
               </p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                <div className="p-4 rounded-xl bg-slate-900 border border-white/10">
-                  <div className="text-base font-bold text-white mb-1">🛡️ Layer 3 & 4 Protection</div>
-                  <p className="text-xs text-slate-400">Ngăn chặn triệt để SYN Flood, UDP Flood, ICMP Flood và Amplification attacks.</p>
+              <div className="space-y-4 mb-8">
+                <div className="flex items-start gap-3.5">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0">1</div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900">Lớp Lọc Mạng Layer 3 & 4</h4>
+                    <p className="text-xs text-slate-500">Chặn đứng các cuộc tấn công SYN Flood, UDP Amplification, ICMP Flood ở mức hạ tầng mạng với dung lượng lọc 100Gbps+.</p>
+                  </div>
                 </div>
-                <div className="p-4 rounded-xl bg-slate-900 border border-white/10">
-                  <div className="text-base font-bold text-white mb-1">🤖 Layer 7 Web Filter (WAF)</div>
-                  <p className="text-xs text-slate-400">Lọc HTTP/HTTPS Request Flood, chống cào dữ liệu trái phép (Bot Scraping).</p>
+
+                <div className="flex items-start gap-3.5">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0">2</div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900">Lớp Lọc Ứng Dụng Web WAF Layer 7</h4>
+                    <p className="text-xs text-slate-500">Phân tích hành vi HTTP/HTTPS Request, phát hiện botnet cào dữ liệu, chống brute-force đăng nhập và spam biểu mẫu.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3.5">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0">3</div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900">Độ Trễ Cực Thấp &lt; 2ms</h4>
+                    <p className="text-xs text-slate-500">Tối ưu định tuyến Anycast BGP trực tiếp tại Việt Nam, mang lại trải nghiệm duyệt web mượt mà như không qua tường lửa.</p>
+                  </div>
                 </div>
               </div>
 
               <Link
-                href="/services#anti-ddos"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-white/10 text-white font-bold text-xs transition-colors"
+                href="/services/firewall-anti-ddos"
+                className="px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs inline-flex items-center gap-2 shadow-md shadow-blue-500/20"
               >
-                Khám Phá Giải Pháp Tường Lửa →
+                Tìm Hiểu Thêm Về Tường Lửa →
               </Link>
             </div>
 
-            <div className="p-8 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-950 border border-teal-500/20 shadow-2xl relative overflow-hidden">
-              <div className="flex items-center justify-between mb-6 border-b border-white/10 pb-4">
-                <div className="flex items-center gap-2.5">
-                  <span className="w-3 h-3 rounded-full bg-emerald-500 animate-ping"></span>
-                  <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Hạ Tầng Hoạt Động 100% An Toàn</span>
-                </div>
-                <span className="text-xs text-slate-500 font-mono">Live Monitoring</span>
+            {/* Visual Box */}
+            <div className="p-8 rounded-3xl bg-slate-900 text-white border border-slate-800 shadow-2xl relative overflow-hidden">
+              <div className="flex justify-between items-center pb-4 mb-6 border-b border-white/10">
+                <span className="text-xs font-bold text-blue-400 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  AI TRAFFIC FILTER LIVE MONITOR
+                </span>
+                <span className="text-xs text-slate-400">Layer 3/4/7</span>
               </div>
 
-              <div className="space-y-4 text-xs font-mono">
-                <div className="p-3 rounded-lg bg-slate-950/80 border border-white/5 flex justify-between items-center">
-                  <span className="text-slate-400">Lưu lượng lọc tối đa (Capacity):</span>
-                  <span className="text-teal-400 font-bold">120 Gbps / 80 Mpps</span>
+              <div className="space-y-4 font-mono text-xs">
+                <div className="p-3 rounded-xl bg-slate-800/80 border border-white/5 flex justify-between items-center">
+                  <span className="text-slate-300">SYN Flood Attack (35 Gbps)</span>
+                  <span className="text-emerald-400 font-bold">100% Mitigated</span>
                 </div>
-                <div className="p-3 rounded-lg bg-slate-950/80 border border-white/5 flex justify-between items-center">
-                  <span className="text-slate-400">Thời gian phản hồi kích hoạt:</span>
-                  <span className="text-emerald-400 font-bold">&lt; 0.5 giây (Tự động)</span>
+                <div className="p-3 rounded-xl bg-slate-800/80 border border-white/5 flex justify-between items-center">
+                  <span className="text-slate-300">UDP Reflection (50 Gbps)</span>
+                  <span className="text-emerald-400 font-bold">100% Mitigated</span>
                 </div>
-                <div className="p-3 rounded-lg bg-slate-950/80 border border-white/5 flex justify-between items-center">
-                  <span className="text-slate-400">Độ trễ gia tăng (Latency):</span>
-                  <span className="text-blue-400 font-bold">&lt; 1.5ms</span>
+                <div className="p-3 rounded-xl bg-slate-800/80 border border-white/5 flex justify-between items-center">
+                  <span className="text-slate-300">HTTP GET Flood (1.2M Req/s)</span>
+                  <span className="text-emerald-400 font-bold">WAF Blocked</span>
                 </div>
-                <div className="p-3 rounded-lg bg-slate-950/80 border border-white/5 flex justify-between items-center">
-                  <span className="text-slate-400">Trạng thái Datacenter HN & HCM:</span>
-                  <span className="text-emerald-400 font-bold">OPTIMAL (100% SLA)</span>
+                <div className="p-3 rounded-xl bg-blue-950/60 border border-blue-800/50 flex justify-between items-center">
+                  <span className="text-blue-300 font-bold">Clean Traffic to Origin</span>
+                  <span className="text-blue-400 font-bold">2.4 Gbps (Latency: 1.2ms)</span>
                 </div>
               </div>
+
+              <div className="mt-6 pt-4 border-t border-white/10 text-center text-xs text-slate-400">
+                Bảo vệ miễn phí 100% khi sử dụng Cloud VPS & Hosting tại CloudService
+              </div>
             </div>
+
           </div>
         </div>
       </section>
@@ -514,85 +529,87 @@ export default function Home() {
       {/* 4. WHY CHOOSE US (FEATURES GRID) */}
       <section className="max-w-7xl mx-auto px-6 py-20">
         <div className="text-center mb-16">
-          <span className="text-xs font-bold text-blue-400 uppercase tracking-widest block mb-2">Ưu Điểm Vượt Trội</span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-4">
-            Tại Sao Doanh Nghiệp Chọn CloudService?
+          <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block mb-2">Ưu Thế Vượt Trội</span>
+          <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
+            Lý Do Khách Hàng Tin Chọn CloudService
           </h2>
-          <p className="text-sm text-slate-400 max-w-xl mx-auto">
-            Chúng tôi xây dựng tiêu chuẩn dịch vụ khắt khe nhất nhằm đảm bảo hệ thống của bạn luôn vận hành liên tục và ổn định.
-          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {FEATURES_HIGHLIGHT.map((f, i) => (
-            <div key={i} className="p-8 rounded-2xl bg-slate-900 border border-white/5 hover:border-white/15 transition-all">
+          {FEATURES_HIGHLIGHT.map((f, idx) => (
+            <div
+              key={idx}
+              className="p-7 rounded-2xl bg-white border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all shadow-sm"
+            >
               <div className="text-3xl mb-4">{f.icon}</div>
-              <h3 className="text-lg font-bold text-white mb-2">{f.title}</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">{f.desc}</p>
+              <h3 className="text-base font-bold text-slate-900 mb-2">{f.title}</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">{f.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* 5. LATEST NEWS SECTION */}
+      {/* 5. LATEST NEWS & KNOWLEDGE BASE */}
       {news.length > 0 && (
-        <section className="border-t border-white/10 bg-slate-900/20 py-20">
+        <section className="bg-white border-t border-slate-200 py-20">
           <div className="max-w-7xl mx-auto px-6">
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
+            <div className="flex justify-between items-end mb-12">
               <div>
-                <span className="text-xs font-bold text-blue-400 uppercase tracking-widest block mb-2">Bản Tin & Khuyến Mãi</span>
-                <h2 className="text-3xl font-extrabold text-white tracking-tight mb-2">Tin Tức Công Nghệ Mới</h2>
+                <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block mb-2">Tin Tức & Blog</span>
+                <h2 className="text-3xl font-black text-slate-900 tracking-tight">Kiến Thức & Khuyến Mãi Mới Nhất</h2>
               </div>
-              <Link href="/news" className="text-xs font-bold text-blue-400 hover:text-blue-300">
-                Xem tất cả tin tức →
+              <Link href="/news" className="text-xs font-bold text-blue-600 hover:text-blue-700">
+                Xem Tất Cả Bài Viết →
               </Link>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {news.map((item) => (
-                <div key={item.id} className="bg-slate-900 border border-white/5 rounded-2xl p-6 flex flex-col justify-between hover:border-white/15 transition-all">
-                  <div>
-                    <span className="text-[11px] text-slate-500 font-medium">
-                      {new Date(item.createdAt).toLocaleDateString("vi-VN")}
-                    </span>
-                    <h3 className="text-sm font-bold text-white mt-2 mb-3 line-clamp-2 hover:text-blue-400 transition-colors">
-                      <Link href={`/news/${item.id}`}>{item.title}</Link>
-                    </h3>
-                    <p className="text-xs text-slate-400 leading-relaxed line-clamp-3 mb-6">
-                      {item.summary}
-                    </p>
-                  </div>
-                  <Link href={`/news/${item.id}`} className="text-xs font-bold text-blue-400 hover:underline inline-block mt-auto">
-                    Đọc chi tiết →
-                  </Link>
-                </div>
+              {news.map((item: any) => (
+                <Link
+                  key={item.id}
+                  href={`/news/${item.id}`}
+                  className="p-6 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-300 hover:bg-blue-50/30 transition-all block group"
+                >
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 mb-3 inline-block">
+                    {item.category || "Tin tức"}
+                  </span>
+                  <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors mb-2 line-clamp-2">
+                    {item.title}
+                  </h3>
+                  <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed mb-4">
+                    {item.summary || item.content}
+                  </p>
+                  <span className="text-xs font-bold text-blue-600 group-hover:underline">
+                    Đọc tiếp →
+                  </span>
+                </Link>
               ))}
             </div>
           </div>
         </section>
       )}
 
-      {/* 6. CALL TO ACTION SECTION */}
-      <section className="max-w-7xl mx-auto px-6 py-20 text-center">
-        <div className="p-12 rounded-3xl bg-gradient-to-r from-blue-900/60 via-indigo-900/40 to-slate-900 border border-blue-500/30 relative overflow-hidden">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4">
-            Sẵn Sàng Nâng Tầm Hạ Tầng Công Nghệ?
+      {/* 6. CALL TO ACTION STRIP */}
+      <section className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-16 px-6 text-center">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl sm:text-4xl font-black mb-4 tracking-tight">
+            Sẵn Sàng Nâng Tầm Hạ Tầng Cho Doanh Nghiệp Của Bạn?
           </h2>
-          <p className="text-sm text-slate-300 max-w-2xl mx-auto mb-8 leading-relaxed">
-            Đăng ký tài khoản ngay hôm nay để nhận ưu đãi dùng thử miễn phí và hỗ trợ chuyển đổi dữ liệu từ nhà cung cấp cũ hoàn toàn miễn phí.
+          <p className="text-sm text-blue-100 max-w-xl mx-auto mb-8 leading-relaxed">
+            Đăng ký tài khoản ngay hôm nay để nhận ưu đãi giảm 20% cho hợp đồng đầu tiên cùng dịch vụ hỗ trợ chuyển dữ liệu miễn phí.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-4">
+          <div className="flex flex-wrap justify-center gap-4">
             <Link
               href="/order"
-              className="px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition-all shadow-lg shadow-blue-950/50"
+              className="px-8 py-4 rounded-xl bg-white text-blue-700 hover:bg-blue-50 font-bold text-xs transition-colors shadow-lg shadow-blue-900/30"
             >
-              Bắt Đầu Triển Khai Dịch Vụ
+              Khởi Tạo Dịch Vụ Ngay
             </Link>
             <Link
-              href="/about"
-              className="px-8 py-4 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/10 text-white font-bold text-sm transition-all"
+              href="/pricing"
+              className="px-8 py-4 rounded-xl bg-blue-700 hover:bg-blue-800 text-white border border-blue-400 font-bold text-xs transition-colors"
             >
-              Liên Hệ Chuyên Viên Tư Vấn
+              Xem Bảng Giá Chi Tiết
             </Link>
           </div>
         </div>

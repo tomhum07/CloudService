@@ -64,8 +64,7 @@ export default function AffiliatePage() {
         const data = await res.json();
         setFormError(data.message || "Gửi đơn thất bại. Vui lòng thử lại.");
       }
-    } catch (err) {
-      console.warn("Affiliate API error:", err);
+    } catch {
       setRegistered(true);
     } finally {
       setSubmitting(false);
@@ -74,199 +73,214 @@ export default function AffiliatePage() {
 
   const commissionPolicies = [
     {
+      icon: "💰",
       title: "20% Hoa Hồng Đầu",
       desc: "Nhận ngay 20% giá trị hợp đồng thanh toán lần đầu tiên của tất cả khách hàng mới do bạn giới thiệu."
     },
     {
+      icon: "🔄",
       title: "10% Trọn Đời",
       desc: "Tiếp tục nhận 10% giá trị các lần gia hạn thanh toán tiếp theo trọn đời của khách hàng đó."
     },
     {
-      title: "Hạn Mức Payout Thấp",
+      icon: "⚡",
+      title: "Hạn Mức Rút Thấp",
       desc: "Yêu cầu rút tiền tối thiểu chỉ từ 200.000đ. Hệ thống đối soát tự động, minh bạch."
     },
     {
+      icon: "📅",
       title: "Thanh Toán Đúng Hạn",
       desc: "Chi trả hoa hồng tự động qua tài khoản ngân hàng từ ngày 5 đến ngày 10 hằng tháng."
     }
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 py-16 px-6">
+    <div className="min-h-screen bg-slate-50 text-slate-800 py-16 px-6">
       <div className="max-w-5xl mx-auto">
         
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 text-xs text-slate-500 mb-8 font-medium">
+          <Link href="/" className="hover:text-blue-600">Trang chủ</Link>
+          <span>/</span>
+          <span className="text-blue-600 font-bold">Chương trình Đối tác Affiliate</span>
+        </div>
+
         {/* Title */}
         <div className="text-center mb-16">
-          <span className="text-xs font-bold text-blue-500 uppercase tracking-widest block mb-3">Chương trình đối tác</span>
-          <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight mb-4">
+          <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block mb-3">Chương Trình Đối Tác</span>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-4">
             Đồng Hành & Chia Sẻ Doanh Thu
           </h1>
-          <p className="text-sm text-slate-400 max-w-xl mx-auto leading-relaxed">
+          <p className="text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">
             Trở thành Cộng Tác Viên (Affiliate Partner) của CloudService để nhận mức hoa hồng hấp dẫn lên đến 20% trọn đời.
           </p>
         </div>
 
         {/* Commission Policy Grid */}
         <section className="mb-16">
-          <h2 className="text-xl font-bold text-white mb-8 text-center">Chính Sách Hoa Hồng Của Chúng Tôi</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="text-center mb-8">
+            <h2 className="text-xl font-bold text-slate-900">Chính Sách Hoa Hồng Của Chúng Tôi</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {commissionPolicies.map((policy, idx) => (
-              <div key={idx} className="bg-slate-900 border border-white/5 rounded-xl p-6 hover:border-white/10 transition-colors">
-                <h3 className="text-sm font-bold text-blue-400 mb-3">{policy.title}</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">{policy.desc}</p>
+              <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:border-blue-300 transition-all">
+                <span className="text-2xl block mb-2">{policy.icon}</span>
+                <h3 className="text-sm font-bold text-slate-900 mb-2">{policy.title}</h3>
+                <p className="text-xs text-slate-600 leading-relaxed">{policy.desc}</p>
               </div>
             ))}
           </div>
         </section>
 
-        {/* Info Blocks */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start mb-16">
+        {/* Info & Form */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start mb-16">
           
           {/* Rules & Guidelines */}
-          <div className="bg-slate-900/40 border border-white/10 rounded-2xl p-8 space-y-6">
-            <h3 className="text-lg font-bold text-white mb-2">Quy Trình Hoạt Động</h3>
-            <div className="space-y-4 text-xs text-slate-300">
-              <div className="flex gap-4">
-                <div className="w-6 h-6 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center font-bold text-blue-400 shrink-0">1</div>
+          <div className="bg-white border border-slate-200 rounded-2xl p-8 space-y-6 shadow-sm">
+            <h3 className="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
+              <span>📋</span> Quy Trình Hoạt Động Của Đối Tác
+            </h3>
+            <div className="space-y-4 text-xs text-slate-700">
+              <div className="flex gap-3.5">
+                <div className="w-7 h-7 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center font-bold text-blue-600 shrink-0">1</div>
                 <div>
-                  <h4 className="font-bold text-white mb-1">Đăng ký tài khoản CTV</h4>
-                  <p className="text-slate-400">Điền biểu mẫu đăng ký bên cạnh. Ban quản trị sẽ phê duyệt tài khoản của bạn trong 24 giờ.</p>
+                  <h4 className="font-bold text-slate-900 mb-0.5">Đăng ký tài khoản CTV</h4>
+                  <p className="text-slate-500 leading-relaxed">Điền biểu mẫu đăng ký bên cạnh. Ban quản trị sẽ phê duyệt tài khoản của bạn trong 24 giờ.</p>
                 </div>
               </div>
-              <div className="flex gap-4">
-                <div className="w-6 h-6 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center font-bold text-blue-400 shrink-0">2</div>
+
+              <div className="flex gap-3.5">
+                <div className="w-7 h-7 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center font-bold text-blue-600 shrink-0">2</div>
                 <div>
-                  <h4 className="font-bold text-white mb-1">Nhận link giới thiệu</h4>
-                  <p className="text-slate-400">Bạn sẽ có một link giới thiệu dạng duy nhất (ví dụ: ?ref=username) để chia sẻ lên blog, mạng xã hội.</p>
+                  <h4 className="font-bold text-slate-900 mb-0.5">Nhận mã giới thiệu & Banner</h4>
+                  <p className="text-slate-500 leading-relaxed">Bạn sẽ nhận được đường link affiliate độc quyền (ví dụ: ?ref=ten_ban) và tài liệu banner tiếp thị.</p>
                 </div>
               </div>
-              <div className="flex gap-4">
-                <div className="w-6 h-6 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center font-bold text-blue-400 shrink-0">3</div>
+
+              <div className="flex gap-3.5">
+                <div className="w-7 h-7 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center font-bold text-blue-600 shrink-0">3</div>
                 <div>
-                  <h4 className="font-bold text-white mb-1">Khách hàng thanh toán</h4>
-                  <p className="text-slate-400">Hệ thống lưu cookie 30 ngày. Khi khách hàng nhấn vào link và đăng ký, hệ thống ghi nhận hoa hồng cho bạn.</p>
+                  <h4 className="font-bold text-slate-900 mb-0.5">Nhận hoa hồng tự động</h4>
+                  <p className="text-slate-500 leading-relaxed">Hoa hồng phát sinh khi khách hàng kích hoạt dịch vụ và được tự động chuyển khoản mỗi tháng.</p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* CTV Registration Form */}
-          <div className="bg-slate-900 border border-white/5 rounded-2xl p-8">
-            <h3 className="text-lg font-bold text-white mb-4">Đăng Ký Cộng Tác Viên</h3>
-            
+          {/* Registration Form */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
             {registered ? (
               <div className="text-center py-8">
-                <div className="w-10 h-10 bg-green-950 border border-green-800 rounded-full flex items-center justify-center text-green-400 mx-auto mb-4 font-bold">✓</div>
-                <h4 className="text-sm font-bold text-white mb-2">Đăng ký thành công!</h4>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Thông tin của bạn đã được chuyển tới bộ phận đối tác. Chúng tôi sẽ phê duyệt đơn đăng ký của bạn qua email trong thời gian sớm nhất.
+                <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto text-xl mb-4 font-bold">
+                  ✓
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">Đăng Ký Thành Công!</h3>
+                <p className="text-xs text-slate-600 max-w-sm mx-auto mb-6 leading-relaxed">
+                  Cảm ơn bạn đã quan tâm. Ban quản trị sẽ đối soát và gửi liên kết Affiliate qua email của bạn trong thời gian sớm nhất.
                 </p>
+                <button
+                  type="button"
+                  onClick={() => setRegistered(false)}
+                  className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs"
+                >
+                  Đăng Ký Thêm
+                </button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
+                <h3 className="text-lg font-bold text-slate-900 mb-1">Biểu Mẫu Đăng Ký Đối Tác</h3>
+                <p className="text-xs text-slate-500 mb-4">Vui lòng điền chính xác thông tin nhận tiền hoa hồng.</p>
+
                 {formError && (
-                  <div className="p-3 rounded-xl mb-3 bg-red-500/10 border border-red-500/20 text-xs font-semibold text-red-400 flex items-center gap-2">
-                    <span>⚠️</span>
-                    <span>{formError}</span>
+                  <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
+                    ⚠️ {formError}
                   </div>
                 )}
+
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Họ và Tên *</label>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Họ và Tên *</label>
                   <input
                     type="text"
                     required
-                    placeholder="Nguyễn Văn A"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="w-full px-4 py-2 bg-slate-950 border border-white/10 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
+                    placeholder="VD: Nguyễn Văn A"
+                    className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
                   />
                 </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Email *</label>
+                    <label className="text-xs font-bold text-slate-700 block mb-1">Địa Chỉ Email *</label>
                     <input
                       type="email"
                       required
-                      placeholder="email@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-4 py-2 bg-slate-950 border border-white/10 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
+                      placeholder="user@domain.com"
+                      className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Số điện thoại *</label>
+                    <label className="text-xs font-bold text-slate-700 block mb-1">Số Điện Thoại *</label>
                     <input
-                      type="tel"
+                      type="text"
                       required
-                      placeholder="0912345678"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="w-full px-4 py-2 bg-slate-950 border border-white/10 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
+                      placeholder="0912345678"
+                      className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Kênh chia sẻ (Website, Group, Fanpage) *</label>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Kênh Quảng Bá / Website (Nếu có)</label>
                   <input
                     type="text"
-                    required
-                    placeholder="Ví dụ: facebook.com/groups/devvietnam"
                     value={channel}
                     onChange={(e) => setChannel(e.target.value)}
-                    className="w-full px-4 py-2 bg-slate-950 border border-white/10 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
+                    placeholder="VD: Facebook cá nhân, Kênh Youtube, Blog cá nhân..."
+                    className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
                   />
                 </div>
 
-                <div className="border-t border-white/5 pt-4">
-                  <span className="block text-[10px] font-bold text-slate-400 mb-3 uppercase">Thông tin tài khoản nhận hoa hồng</span>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-500 mb-1">Tên ngân hàng *</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="Ví dụ: Vietcombank, Techcombank..."
-                        value={bankName}
-                        onChange={(e) => setBankName(e.target.value)}
-                        className="w-full px-4 py-2 bg-slate-950 border border-white/10 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-500 mb-1">Số tài khoản *</label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="Số tài khoản ngân hàng"
-                          value={bankAccount}
-                          onChange={(e) => setBankAccount(e.target.value)}
-                          className="w-full px-4 py-2 bg-slate-950 border border-white/10 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-500 mb-1">Chủ tài khoản (Không dấu) *</label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="NGUYEN VAN A"
-                          value={bankHolder}
-                          onChange={(e) => setBankHolder(e.target.value.toUpperCase())}
-                          className="w-full px-4 py-2 bg-slate-950 border border-white/10 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
-                        />
-                      </div>
-                    </div>
+                <div className="pt-2 border-t border-slate-100">
+                  <span className="text-xs font-bold text-slate-800 block mb-2">Thông Tin Nhận Hoa Hồng (STK Ngân Hàng)</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <input
+                      type="text"
+                      required
+                      value={bankName}
+                      onChange={(e) => setBankName(e.target.value)}
+                      placeholder="Tên Ngân Hàng (VD: Vietcombank)"
+                      className="w-full h-10 px-3 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+                    />
+                    <input
+                      type="text"
+                      required
+                      value={bankAccount}
+                      onChange={(e) => setBankAccount(e.target.value)}
+                      placeholder="Số Tài Khoản"
+                      className="w-full h-10 px-3 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+                    />
+                    <input
+                      type="text"
+                      required
+                      value={bankHolder}
+                      onChange={(e) => setBankHolder(e.target.value)}
+                      placeholder="Tên Chủ Thẻ"
+                      className="w-full h-10 px-3 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+                    />
                   </div>
                 </div>
 
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full h-10 mt-4 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center transition-colors disabled:opacity-50"
+                  className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-xs transition-colors shadow-md shadow-blue-500/20 mt-2"
                 >
-                  {submitting ? "Đang gửi đăng ký..." : "Gửi Đơn Đăng Ký CTV"}
+                  {submitting ? "Đang gửi đơn..." : "Gửi Đơn Đăng Ký Đối Tác"}
                 </button>
               </form>
             )}

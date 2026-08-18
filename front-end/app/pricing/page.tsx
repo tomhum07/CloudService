@@ -4,174 +4,212 @@ import Link from "next/link";
 import { apiFetch } from "@/utils/api";
 
 const MOCK_CATEGORIES = [
-  { id: 1, name: "Cloud VPS" },
-  { id: 2, name: "Cloud Hosting" }
+  { id: 1, name: "Cloud VPS", slug: "vps" },
+  { id: 2, name: "Cloud Hosting", slug: "hosting" },
+  { id: 3, name: "Tên Miền", slug: "domain" },
+  { id: 4, name: "Email Doanh Nghiệp", slug: "email" },
+  { id: 5, name: "Bảo Mật & Firewall", slug: "security" }
 ];
 
 const MOCK_PLANS = [
   {
     id: 1,
     categoryId: 1,
-    name: "VPS Starter",
-    cpu: "1 vCPU",
-    ram: "2 GB RAM",
-    storage: "40 GB NVMe SSD",
-    bandwidth: "500 Mbps Shared",
-    monthlyPrice: 90000,
-    yearlyPrice: 864000 // 90000 * 12 * 0.8 (20% off)
+    name: "Cloud VPS NVMe Pro",
+    cpu: "2 vCPUs AMD EPYC",
+    ram: "4 GB RAM ECC",
+    storage: "60 GB NVMe Gen4",
+    bandwidth: "1 Gbps Unmetered",
+    monthlyPrice: 150000,
+    yearlyPrice: 1440000,
+    popular: true
   },
   {
     id: 2,
     categoryId: 1,
-    name: "VPS Pro",
-    cpu: "2 vCPUs",
-    ram: "4 GB RAM",
-    storage: "80 GB NVMe SSD",
-    bandwidth: "1 Gbps Unmetered",
-    monthlyPrice: 150000,
-    yearlyPrice: 1440000
+    name: "Cloud VPS NVMe Enterprise",
+    cpu: "4 vCPUs AMD EPYC",
+    ram: "8 GB RAM ECC",
+    storage: "120 GB NVMe Gen4",
+    bandwidth: "1 Gbps Dedicated",
+    monthlyPrice: 320000,
+    yearlyPrice: 3072000,
+    popular: false
   },
   {
     id: 3,
     categoryId: 1,
-    name: "VPS Enterprise",
-    cpu: "4 vCPUs",
-    ram: "8 GB RAM",
-    storage: "150 GB NVMe SSD",
-    bandwidth: "1 Gbps Dedicated",
-    monthlyPrice: 320000,
-    yearlyPrice: 3072000
+    name: "Cloud VPS SSD Tiết Kiệm",
+    cpu: "1 vCPU Intel Xeon",
+    ram: "2 GB RAM",
+    storage: "40 GB SSD Enterprise",
+    bandwidth: "500 Mbps Port",
+    monthlyPrice: 90000,
+    yearlyPrice: 864000,
+    popular: false
   },
   {
     id: 4,
     categoryId: 2,
-    name: "Hosting Basic",
-    cpu: "Shared 1 Core",
-    ram: "1 GB RAM",
-    storage: "10 GB NVMe SSD",
-    bandwidth: "Unlimited",
-    monthlyPrice: 350000,
-    yearlyPrice: 336000
+    name: "MaxSpeed Hosting NVMe",
+    cpu: "LiteSpeed Enterprise",
+    ram: "2 GB RAM",
+    storage: "25 GB NVMe",
+    bandwidth: "Không giới hạn",
+    monthlyPrice: 45000,
+    yearlyPrice: 432000,
+    popular: true
   },
   {
     id: 5,
     categoryId: 2,
-    name: "Hosting Business",
-    cpu: "Shared 2 Cores",
-    ram: "2 GB RAM",
-    storage: "30 GB NVMe SSD",
-    bandwidth: "Unlimited",
-    monthlyPrice: 85000,
-    yearlyPrice: 816000
+    name: "Business Hosting Pro",
+    cpu: "AMD EPYC 7003",
+    ram: "4 GB RAM",
+    storage: "50 GB NVMe",
+    bandwidth: "Không giới hạn",
+    monthlyPrice: 120000,
+    yearlyPrice: 1152000,
+    popular: false
+  },
+  {
+    id: 6,
+    categoryId: 3,
+    name: "Tên Miền .COM",
+    cpu: "ICANN Quốc Tế",
+    ram: "DNS Anycast",
+    storage: "Whois Privacy Miễn phí",
+    bandwidth: "Kích hoạt tức thì",
+    monthlyPrice: 249000,
+    yearlyPrice: 249000,
+    popular: true
+  },
+  {
+    id: 7,
+    categoryId: 3,
+    name: "Tên Miền Quốc Gia .VN",
+    cpu: "VNNIC Việt Nam",
+    ram: "Bảo hộ thương hiệu",
+    storage: "DNS VNPT / Viettel",
+    bandwidth: "Ưu tiên SEO VN",
+    monthlyPrice: 450000,
+    yearlyPrice: 450000,
+    popular: false
+  },
+  {
+    id: 8,
+    categoryId: 4,
+    name: "Email Doanh Nghiệp Pro",
+    cpu: "5 Hòm thư riêng",
+    ram: "10 GB Dung lượng",
+    storage: "Antispam & Antivirus",
+    bandwidth: "Gửi nhận không giới hạn",
+    monthlyPrice: 99000,
+    yearlyPrice: 950000,
+    popular: true
+  },
+  {
+    id: 9,
+    categoryId: 5,
+    name: "Tường Lửa Anti-DDoS 100Gbps",
+    cpu: "Layer 3/4/7 AI Filter",
+    ram: "Độ trễ < 2ms",
+    storage: "WAF Bảo vệ Web App",
+    bandwidth: "Dedicated Clean IP",
+    monthlyPrice: 350000,
+    yearlyPrice: 3360000,
+    popular: true
   }
 ];
 
 export default function PricingPage() {
-  const [categories, setCategories] = useState<any[]>(MOCK_CATEGORIES);
-  const [plans, setPlans] = useState<any[]>(MOCK_PLANS);
-  const [selectedCategory, setSelectedCategory] = useState<number>(1);
+  const [categories, setCategories] = useState(MOCK_CATEGORIES);
+  const [plans, setPlans] = useState(MOCK_PLANS);
+  const [selectedCat, setSelectedCat] = useState<number | "all">("all");
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
-  const [selectedPlanForPayment, setSelectedPlanForPayment] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        const catRes = await apiFetch("/api/service-categories");
-        const plansRes = await apiFetch("/api/service-plans?pageSize=50");
-        
-        let loadedCats = MOCK_CATEGORIES;
-        if (catRes.ok) {
-          const catData = await catRes.json();
-          if (Array.isArray(catData) && catData.length > 0) {
-            const activeCats = catData.filter((c: any) => c.isActive !== false);
-            if (activeCats.length > 0) {
-              loadedCats = activeCats;
-              setCategories(activeCats);
-              setSelectedCategory(activeCats[0].id);
-            }
-          }
-        }
-
-        if (plansRes.ok) {
-          const plansData = await plansRes.json();
-          const rawItems = plansData.items || plansData;
-          if (Array.isArray(rawItems) && rawItems.length > 0) {
-            const items = rawItems.filter((p: any) => p.isActive !== false);
-            // Get prices for all plans
-            const enriched = await Promise.all(
-              items.map(async (p: any) => {
-                let monthlyPrice = 100000;
-                let yearlyPrice = 960000;
-                try {
-                  const prRes = await apiFetch(`/api/service-plans/${p.id}/prices`);
-                  if (prRes.ok) {
-                    const prices = await prRes.json();
-                    const mPriceObj = prices.find((pr: any) => pr.billingCycle === "Monthly" && pr.isActive !== false);
-                    const yPriceObj = prices.find((pr: any) => pr.billingCycle === "Yearly" && pr.isActive !== false);
-                    if (mPriceObj) monthlyPrice = Number(mPriceObj.price);
-                    if (yPriceObj) {
-                      yearlyPrice = Number(yPriceObj.price);
-                    } else {
-                      yearlyPrice = monthlyPrice * 12 * 0.8; // default 20% discount
-                    }
-                  }
-                } catch {}
-                return {
-                  ...p,
-                  monthlyPrice,
-                  yearlyPrice
-                };
-              })
-            );
-            setPlans(enriched);
-          }
-        }
-      } catch (err) {
-        console.error("Lỗi tải thông tin giá cả:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
+    fetchData();
   }, []);
 
-  const filteredPlans = plans.filter((p) => p.categoryId === selectedCategory);
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const catRes = await apiFetch("/api/service-categories");
+      if (catRes.ok) {
+        const catData = await catRes.json();
+        if (Array.isArray(catData) && catData.length > 0) {
+          setCategories(catData);
+        }
+      }
 
-  const formatPrice = (value: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND"
-    }).format(value);
+      const planRes = await apiFetch("/api/service-plans");
+      if (planRes.ok) {
+        const planData = await planRes.json();
+        if (Array.isArray(planData) && planData.length > 0) {
+          setPlans(planData);
+        }
+      }
+    } catch {
+      console.warn("Sử dụng bảng giá cấu hình mặc định.");
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const filteredPlans = plans.filter((p) => {
+    if (selectedCat === "all") return true;
+    return p.categoryId === selectedCat;
+  });
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 py-16 px-6 relative">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-slate-50 text-slate-800 py-16 px-6">
+      <div className="max-w-7xl mx-auto">
         
-        {/* Header */}
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 text-xs text-slate-500 mb-8 font-medium">
+          <Link href="/" className="hover:text-blue-600">Trang chủ</Link>
+          <span>/</span>
+          <span className="text-blue-600 font-bold">Bảng báo giá</span>
+        </div>
+
+        {/* Title */}
         <div className="text-center mb-12">
-          <span className="text-xs font-bold text-blue-500 uppercase tracking-widest block mb-3">Bảng giá rõ ràng</span>
-          <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight mb-4">
-            Bảng Giá Dịch Vụ Đám Mây
+          <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block mb-3">
+            Bảng Giá Dịch Vụ Niêm Yết
+          </span>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-4">
+            Bảng Báo Giá Minh Bạch & Tiết Kiệm
           </h1>
-          <p className="text-sm text-slate-400 max-w-xl mx-auto">
-            Không phí ẩn, không cam kết dài hạn phiền phức. Hoàn tiền 100% trong vòng 7 ngày nếu không hài lòng.
+          <p className="text-sm text-slate-600 max-w-2xl mx-auto leading-relaxed">
+            Không phát sinh chi phí ẩn. Cam kết hoàn tiền 100% trong vòng 30 ngày nếu không hài lòng với chất lượng dịch vụ.
           </p>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mb-12 bg-slate-900 p-4 rounded-xl border border-white/5">
-          {/* Category Tabs */}
-          <div className="flex gap-2 w-full sm:w-auto">
+        {/* Controls: Category Filter & Billing Cycle Toggle */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-12 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+          
+          {/* Categories */}
+          <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+            <button
+              onClick={() => setSelectedCat("all")}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${
+                selectedCat === "all"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+              }`}
+            >
+              Tất Cả Dịch Vụ
+            </button>
             {categories.map((cat) => (
               <button
                 key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`flex-1 sm:flex-none px-6 py-2 rounded-lg text-xs font-semibold transition-colors ${
-                  selectedCategory === cat.id
-                    ? "bg-blue-600 text-white"
-                    : "bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-white border border-white/5"
+                onClick={() => setSelectedCat(cat.id)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${
+                  selectedCat === cat.id
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                 }`}
               >
                 {cat.name}
@@ -180,206 +218,126 @@ export default function PricingPage() {
           </div>
 
           {/* Billing Cycle Toggle */}
-          <div className="flex items-center gap-3">
-            <span className={`text-xs ${billingCycle === "monthly" ? "text-white font-bold" : "text-slate-400"}`}>
-              Theo tháng
-            </span>
+          <div className="flex items-center gap-3 bg-slate-100 p-1.5 rounded-xl border border-slate-200 shrink-0">
             <button
-              onClick={() => setBillingCycle(billingCycle === "monthly" ? "yearly" : "monthly")}
-              className="w-12 h-6 rounded-full bg-slate-800 border border-white/10 relative p-1 transition-colors"
+              onClick={() => setBillingCycle("monthly")}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                billingCycle === "monthly"
+                  ? "bg-white text-slate-900 shadow-xs"
+                  : "text-slate-500 hover:text-slate-900"
+              }`}
             >
-              <div
-                className={`w-4 h-4 rounded-full bg-blue-500 transition-transform ${
-                  billingCycle === "yearly" ? "translate-x-6" : ""
-                }`}
-              ></div>
+              Thanh Toán Hàng Tháng
             </button>
-            <span className={`text-xs flex items-center gap-1.5 ${billingCycle === "yearly" ? "text-white font-bold" : "text-slate-400"}`}>
-              Theo năm <span className="px-1.5 py-0.5 rounded bg-green-950 text-green-400 font-bold text-[9px] uppercase">Tiết kiệm 20%</span>
-            </span>
+            <button
+              onClick={() => setBillingCycle("yearly")}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
+                billingCycle === "yearly"
+                  ? "bg-white text-blue-600 shadow-xs"
+                  : "text-slate-500 hover:text-slate-900"
+              }`}
+            >
+              <span>Theo Năm</span>
+              <span className="text-[10px] bg-rose-500 text-white px-1.5 py-0.2 rounded-full font-bold">
+                -20%
+              </span>
+            </button>
           </div>
+
         </div>
 
-        {/* Pricing Grid */}
-        {loading ? (
-          <div className="text-center py-20 text-slate-400 text-sm">Đang tải cấu hình bảng giá...</div>
-        ) : filteredPlans.length === 0 ? (
-          <div className="text-center py-20 text-slate-400 text-sm">Không tìm thấy gói dịch vụ nào trong mục này.</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {filteredPlans.map((plan) => {
-              const currentPrice = billingCycle === "monthly" ? plan.monthlyPrice : plan.yearlyPrice;
-              const perMonthEquivalent = billingCycle === "monthly" ? currentPrice : Math.round(currentPrice / 12);
-              
-              return (
-                <div key={plan.id} className="bg-slate-900 border border-white/5 rounded-2xl p-8 flex flex-col justify-between hover:border-white/10 transition-colors relative">
-                  <div>
-                    <h3 className="text-lg font-bold text-white mb-2">{plan.name}</h3>
-                    <p className="text-[11px] text-slate-400 mb-6 leading-relaxed">
-                      {plan.description || `Gói cấu hình hiệu năng cao phục vụ cho website và lập trình.`}
-                    </p>
+        {/* Pricing Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+          {filteredPlans.map((plan) => {
+            const displayPrice =
+              billingCycle === "yearly"
+                ? `${Math.round((plan.yearlyPrice || plan.monthlyPrice * 12 * 0.8) / 12).toLocaleString("vi-VN")}đ`
+                : `${plan.monthlyPrice.toLocaleString("vi-VN")}đ`;
 
-                    <div className="mb-6">
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-3xl font-black text-white">{formatPrice(perMonthEquivalent)}</span>
-                        <span className="text-xs text-slate-400">/ tháng</span>
-                      </div>
-                      {billingCycle === "yearly" && (
-                        <p className="text-[10px] text-green-400 mt-1 font-semibold">
-                          Thanh toán {formatPrice(currentPrice)} / năm
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Specs Table */}
-                    <div className="border-t border-white/5 pt-4 space-y-3 mb-8">
-                      {plan.cpu && (
-                        <div className="flex justify-between text-xs">
-                          <span className="text-slate-400">Vi xử lý CPU:</span>
-                          <span className="text-white font-semibold">{plan.cpu}</span>
-                        </div>
-                      )}
-                      {plan.ram && (
-                        <div className="flex justify-between text-xs">
-                          <span className="text-slate-400">Dung lượng RAM:</span>
-                          <span className="text-white font-semibold">{plan.ram}</span>
-                        </div>
-                      )}
-                      {plan.storage && (
-                        <div className="flex justify-between text-xs">
-                          <span className="text-slate-400">Ổ cứng NVMe SSD:</span>
-                          <span className="text-white font-semibold">{plan.storage}</span>
-                        </div>
-                      )}
-                      {plan.bandwidth && (
-                        <div className="flex justify-between text-xs">
-                          <span className="text-slate-400">Băng thông:</span>
-                          <span className="text-white font-semibold">{plan.bandwidth}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => setSelectedPlanForPayment(plan)}
-                    className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center transition-colors shadow-sm"
-                  >
-                    Đăng Ký & Thanh Toán
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* FAQ section */}
-        <section className="mt-24 border-t border-white/10 pt-16">
-          <h2 className="text-xl font-bold text-white mb-8 text-center">Các câu hỏi thường gặp</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-xs text-slate-300">
-            <div>
-              <h4 className="font-bold text-white mb-2">Tôi có thể nâng cấp gói sau này không?</h4>
-              <p className="leading-relaxed text-slate-400">
-                Có, bạn có thể tự động nâng cấp CPU, RAM, dung lượng SSD bất kỳ lúc nào trực tiếp trong trang quản trị mà không làm gián đoạn hay mất dữ liệu hệ thống.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-bold text-white mb-2">Hình thức thanh toán nào được chấp nhận?</h4>
-              <p className="leading-relaxed text-slate-400">
-                Chúng tôi chấp nhận hình thức chuyển khoản ngân hàng thông qua mã QR quét tự động bảo lãnh ngân hàng MB Bank, MoMo, hoặc thẻ Visa/Mastercard.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Simulated QR Code Modal */}
-        {selectedPlanForPayment && (
-          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-slate-900 border border-white/10 rounded-2xl max-w-sm w-full p-6 relative">
-              <button
-                onClick={() => setSelectedPlanForPayment(null)}
-                className="absolute top-4 right-4 text-slate-400 hover:text-white text-lg font-bold"
+            return (
+              <div
+                key={plan.id}
+                className={`p-7 rounded-2xl border bg-white flex flex-col justify-between relative transition-all ${
+                  plan.popular
+                    ? "border-blue-500 shadow-xl shadow-blue-500/10 ring-2 ring-blue-500/20"
+                    : "border-slate-200 hover:border-blue-300 hover:shadow-lg"
+                }`}
               >
-                ✕
-              </button>
-              
-              <h3 className="text-base font-bold text-white mb-2 text-center">Thông Tin Thanh Toán</h3>
-              <p className="text-[11px] text-slate-400 text-center mb-6">
-                Vui lòng quét mã QR dưới đây hoặc chuyển khoản đúng số tiền để hệ thống kích hoạt tự động.
-              </p>
-
-              {/* QR Code Graphic (SVG) */}
-              <div className="bg-white p-4 rounded-xl w-48 h-48 mx-auto mb-6 flex flex-col justify-between items-center border border-slate-200">
-                {/* SVG mock QR code */}
-                <svg className="w-40 h-40 text-slate-950" viewBox="0 0 100 100" fill="currentColor">
-                  {/* Outer borders */}
-                  <path d="M0 0h30v10H10v20H0zm0 100h30V90H10V70H0zm100-100H70v10h20v20h10zm0 100H70V90h20V70h10z" />
-                  {/* Inners */}
-                  <path d="M15 15h10v10H15zm60 0h10v10H75zm0 60h10v10H75zm-30-30h10v10H45z" />
-                  <path d="M35 15h10v5H35zm0 25h20v5H35zm25 15h10v15H60zm-20 20h15v5H40zm-15-5h10v5H25z" />
-                  <path d="M5 45h5v15H5zm50-10h5v10h-5zm15-20h5v5h-5zm0 30h5v5h-5zm-15-5h5v5h-5z" />
-                  {/* Center branding */}
-                  <rect x="42" y="42" width="16" height="16" fill="#1e3a8a" rx="2" />
-                  <text x="50" y="53" fill="white" fontSize="9" fontWeight="bold" textAnchor="middle">CS</text>
-                </svg>
-              </div>
-
-              {/* Payment Text Details */}
-              <div className="space-y-2 border-t border-white/5 pt-4 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Gói đăng ký:</span>
-                  <span className="text-white font-bold">{selectedPlanForPayment.name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Chu kỳ:</span>
-                  <span className="text-white">{billingCycle === "monthly" ? "1 Tháng" : "1 Năm (Giảm 20%)"}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Số tiền:</span>
-                  <span className="text-blue-400 font-extrabold font-mono">
-                    {formatPrice(billingCycle === "monthly" ? selectedPlanForPayment.monthlyPrice : selectedPlanForPayment.yearlyPrice)}
+                {plan.popular && (
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[10px] font-bold bg-blue-600 text-white shadow-sm">
+                    Gói Phổ Biến Nhất
                   </span>
-                </div>
-                <div className="border-t border-white/5 pt-2 mt-2">
-                  <div className="flex justify-between text-[10px]">
-                    <span className="text-slate-400">Ngân hàng:</span>
-                    <span className="text-white font-semibold">MB BANK (Ngân hàng Quân Đội)</span>
-                  </div>
-                  <div className="flex justify-between text-[10px]">
-                    <span className="text-slate-400">Số tài khoản:</span>
-                    <span className="text-white font-mono font-bold">1900 8888 6666</span>
-                  </div>
-                  <div className="flex justify-between text-[10px]">
-                    <span className="text-slate-400">Chủ tài khoản:</span>
-                    <span className="text-white font-semibold">CONG TY CP CLOUDSERVICE</span>
-                  </div>
-                  <div className="flex justify-between text-[10px]">
-                    <span className="text-slate-400">Nội dung CK:</span>
-                    <span className="text-yellow-400 font-mono font-bold">PAY {selectedPlanForPayment.id} {billingCycle.toUpperCase()}</span>
-                  </div>
-                </div>
-              </div>
+                )}
 
-              <div className="mt-6 flex gap-3">
-                <button
-                  onClick={() => setSelectedPlanForPayment(null)}
-                  className="flex-1 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white transition-colors"
-                >
-                  Đóng lại
-                </button>
-                <button
-                  onClick={() => {
-                    alert("Yêu cầu thanh toán của bạn đang được hệ thống xử lý tự động. Vui lòng kiểm tra email của bạn để nhận thông tin cấu hình VPS.");
-                    setSelectedPlanForPayment(null);
-                  }}
-                  className="flex-1 h-9 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white transition-colors"
-                >
-                  Xác nhận chuyển
-                </button>
-              </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900 mb-2">{plan.name}</h3>
+                  <div className="flex items-baseline gap-1 mb-6">
+                    <span className="text-3xl font-black text-blue-600">{displayPrice}</span>
+                    <span className="text-xs text-slate-500 font-normal">/ tháng</span>
+                  </div>
 
-            </div>
-          </div>
-        )}
+                  <div className="h-[1px] bg-slate-100 mb-6"></div>
+
+                  <ul className="space-y-3 text-xs text-slate-700 mb-8">
+                    {plan.cpu && (
+                      <li className="flex items-center gap-2.5">
+                        <span className="text-blue-600 font-bold">⚡ CPU:</span>
+                        <span>{plan.cpu}</span>
+                      </li>
+                    )}
+                    {plan.ram && (
+                      <li className="flex items-center gap-2.5">
+                        <span className="text-blue-600 font-bold">💾 RAM:</span>
+                        <span>{plan.ram}</span>
+                      </li>
+                    )}
+                    {plan.storage && (
+                      <li className="flex items-center gap-2.5">
+                        <span className="text-blue-600 font-bold">💽 Lưu trữ:</span>
+                        <span>{plan.storage}</span>
+                      </li>
+                    )}
+                    {plan.bandwidth && (
+                      <li className="flex items-center gap-2.5">
+                        <span className="text-blue-600 font-bold">🚀 Băng thông:</span>
+                        <span>{plan.bandwidth}</span>
+                      </li>
+                    )}
+                    <li className="flex items-center gap-2.5">
+                      <span className="text-emerald-600 font-bold">🛡️ Bảo mật:</span>
+                      <span>Anti-DDoS Firewall & SSL miễn phí</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <Link
+                  href={`/order?planId=${plan.id}&cycle=${billingCycle === "yearly" ? "12m" : "1m"}`}
+                  className={`w-full py-3.5 rounded-xl font-bold text-xs flex items-center justify-center transition-all ${
+                    plan.popular
+                      ? "bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20"
+                      : "bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-700 border border-blue-200"
+                  }`}
+                >
+                  Đăng Ký Khởi Tạo Ngay →
+                </Link>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Guarantee Strip */}
+        <div className="p-8 rounded-2xl bg-white border border-slate-200 text-center shadow-sm">
+          <h3 className="text-lg font-bold text-slate-900 mb-2">Bạn Cần Báo Giá Cấu Hình Riêng Biệt?</h3>
+          <p className="text-xs text-slate-600 max-w-xl mx-auto mb-6">
+            Đội ngũ chuyên viên của CloudService sẵn sàng hỗ trợ khảo sát và tối ưu bảng giá theo quy mô dự án của bạn.
+          </p>
+          <Link
+            href="/order"
+            className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs inline-block transition-colors shadow-sm"
+          >
+            Liên Hệ Kỹ Sư Tư Vấn
+          </Link>
+        </div>
 
       </div>
     </div>

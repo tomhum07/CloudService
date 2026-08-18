@@ -58,45 +58,46 @@ function NewsContent() {
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [loading, setLoading] = useState(true);
+  const [categoriesList, setCategoriesList] = useState<string[]>(["Tất cả", "Khuyến Mãi", "Sự Kiện", "Hướng Dẫn"]);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-
-  const categoriesList = ["Tất cả", "Khuyến Mãi", "Sự Kiện", "Hướng Dẫn"];
 
   useEffect(() => {
     async function loadNews() {
       setLoading(true);
       try {
-        const catQuery = selectedCategory !== "Tất cả" ? `&category=${encodeURIComponent(selectedCategory)}` : "";
-        const searchQuery = searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : "";
-        const res = await apiFetch(`/api/news?page=${currentPage}&pageSize=6${searchQuery}${catQuery}`);
-        
+        let url = `/api/news?pageNumber=${currentPage}&pageSize=9`;
+        if (searchTerm.trim()) {
+          url += `&search=${encodeURIComponent(searchTerm.trim())}`;
+        }
+        if (selectedCategory && selectedCategory !== "Tất cả") {
+          url += `&category=${encodeURIComponent(selectedCategory)}`;
+        }
+
+        const res = await apiFetch(url);
         if (res.ok) {
           const data = await res.json();
-          // Backend returns PagedNewsResult: { items: [...], totalCount: 15, page: 1, pageSize: 6 }
-          if (data && Array.isArray(data.items) && data.items.length > 0) {
-            const activeItems = data.items.filter((n: any) => n.isActive !== false);
-            setNews(activeItems);
-            setTotalPages(Math.ceil(data.totalCount / 6) || 1);
+          const items = data.items || data;
+          if (Array.isArray(items) && items.length > 0) {
+            setNews(items);
+            if (data.totalPages) setTotalPages(data.totalPages);
             setLoading(false);
             return;
           }
         }
       } catch (err) {
-        console.error("Lỗi tải tin tức từ API:", err);
+        console.warn("Dùng dữ liệu tin tức mẫu.");
       }
 
-      // Local Mock Filter Fallback
-      let filtered = MOCK_ALL_NEWS.filter((n: any) => n.isActive !== false);
+      // Fallback filter
+      let filtered = MOCK_ALL_NEWS;
       if (selectedCategory !== "Tất cả") {
-        filtered = filtered.filter((n) => n.categoryName === selectedCategory);
+        filtered = filtered.filter(n => n.categoryName === selectedCategory);
       }
-      if (searchTerm) {
-        filtered = filtered.filter(
-          (n) =>
-            n.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            n.summary.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+      if (searchTerm.trim()) {
+        const query = searchTerm.toLowerCase();
+        filtered = filtered.filter(n => n.title.toLowerCase().includes(query) || n.summary.toLowerCase().includes(query));
       }
 
       setNews(filtered);
@@ -113,22 +114,30 @@ function NewsContent() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 py-16 px-6">
+    <div className="min-h-screen bg-slate-50 text-slate-800 py-16 px-6">
       <div className="max-w-6xl mx-auto">
         
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 text-xs text-slate-500 mb-8 font-medium">
+          <Link href="/" className="hover:text-blue-600">Trang chủ</Link>
+          <span>/</span>
+          <span className="text-blue-600 font-bold">Tin tức & Sự kiện</span>
+        </div>
+
         {/* Header */}
         <div className="text-center mb-12">
-          <span className="text-xs font-bold text-blue-500 uppercase tracking-widest block mb-3">Thông tin đa chiều</span>
-          <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight mb-4">
+          <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block mb-3">Thông Tin & Cẩm Nang</span>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-4">
             Tin Tức & Sự Kiện Công Nghệ
           </h1>
-          <p className="text-sm text-slate-400 max-w-xl mx-auto">
-            Khám phá các cẩm nang, tài liệu hướng dẫn lập trình, tin khuyến mãi và cập nhật kỹ thuật từ CloudService.
+          <p className="text-sm text-slate-600 max-w-xl mx-auto">
+            Khám phá các cẩm nang, tài liệu hướng dẫn kỹ thuật, tin khuyến mãi và cập nhật tính năng mới nhất từ CloudService.
           </p>
         </div>
 
         {/* Search & Category filter */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12 items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+          
           {/* Categories */}
           <div className="lg:col-span-2 flex flex-wrap gap-2 items-center">
             {categoriesList.map((cat) => (
@@ -138,10 +147,10 @@ function NewsContent() {
                   setSelectedCategory(cat);
                   setCurrentPage(1);
                 }}
-                className={`px-5 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${
                   selectedCategory === cat
-                    ? "bg-blue-600 text-white"
-                    : "bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-white/5"
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "bg-slate-100 hover:bg-slate-200 text-slate-700"
                 }`}
               >
                 {cat}
@@ -156,11 +165,11 @@ function NewsContent() {
               placeholder="Tìm kiếm bài viết..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1 px-4 py-2 bg-slate-900 border border-white/10 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
+              className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
             />
             <button
               type="submit"
-              className="px-4 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-lg border border-white/5 transition-colors"
+              className="px-5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm"
             >
               Tìm
             </button>
@@ -169,58 +178,39 @@ function NewsContent() {
 
         {/* Articles List */}
         {loading ? (
-          <div className="text-center py-20 text-slate-400 text-sm">Đang tải tin tức...</div>
+          <div className="text-center py-20 text-slate-500 text-sm">Đang tải tin tức...</div>
         ) : news.length === 0 ? (
-          <div className="text-center py-20 text-slate-400 text-sm bg-slate-900/50 border border-white/5 rounded-2xl">
+          <div className="text-center py-20 text-slate-500 text-sm bg-white border border-slate-200 rounded-2xl">
             Không tìm thấy bài viết nào phù hợp.
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {news.map((item) => (
-              <div key={item.id} className="bg-slate-900 border border-white/5 rounded-2xl p-6 flex flex-col justify-between hover:border-white/10 transition-colors">
+              <div key={item.id} className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col justify-between hover:border-blue-300 hover:shadow-lg transition-all shadow-sm group">
                 <div>
-                  <div className="flex items-center justify-between text-[10px] text-slate-500 mb-3">
-                    <span>{new Date(item.createdAt).toLocaleDateString("vi-VN")}</span>
-                    <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-semibold">{item.categoryName || "Tin Tức"}</span>
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                      {item.categoryName || item.category || "Tin Tức"}
+                    </span>
+                    <span className="text-[11px] text-slate-400">
+                      {new Date(item.createdAt || Date.now()).toLocaleDateString("vi-VN")}
+                    </span>
                   </div>
-                  <h3 className="text-base font-bold text-white mb-3 line-clamp-2 hover:text-blue-400 transition-colors">
-                    <Link href={`/news/${item.id}`}>{item.title}</Link>
+                  <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors mb-2 line-clamp-2">
+                    {item.title}
                   </h3>
-                  <p className="text-xs text-slate-400 leading-relaxed line-clamp-3 mb-6">
-                    {item.summary}
+                  <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed mb-6">
+                    {item.summary || item.content}
                   </p>
                 </div>
                 <Link
                   href={`/news/${item.id}`}
-                  className="text-xs font-semibold text-blue-400 hover:underline mt-auto inline-block"
+                  className="w-full py-2.5 rounded-xl bg-slate-50 hover:bg-blue-600 hover:text-white border border-slate-200 text-center text-xs font-bold text-blue-600 transition-all block"
                 >
-                  Đọc tiếp →
+                  Đọc Chi Tiết →
                 </Link>
               </div>
             ))}
-          </div>
-        )}
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-2 mt-12">
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="px-3 py-1.5 rounded bg-slate-900 text-xs font-semibold text-slate-300 disabled:opacity-50"
-            >
-              Trang Trước
-            </button>
-            <span className="text-xs text-slate-400">
-              Trang {currentPage} / {totalPages}
-            </span>
-            <button
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1.5 rounded bg-slate-900 text-xs font-semibold text-slate-300 disabled:opacity-50"
-            >
-              Trang Sau
-            </button>
           </div>
         )}
 
@@ -231,7 +221,7 @@ function NewsContent() {
 
 export default function NewsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">Đang tải trang tin tức...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center text-xs text-slate-500">Đang tải...</div>}>
       <NewsContent />
     </Suspense>
   );
