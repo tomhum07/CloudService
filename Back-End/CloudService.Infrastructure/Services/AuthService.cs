@@ -25,12 +25,15 @@ namespace CloudService.Infrastructure.Services
 
         public async Task<AuthResponse?> LoginAsync(LoginRequest request, Action<string> setRefreshTokenCookie)
         {
+            var cleanUsername = request.Username?.Trim() ?? string.Empty;
+            var cleanPassword = request.Password ?? string.Empty;
+
             var user = await _context.AppUsers
                 .IgnoreQueryFilters()
                 .Include(u => u.Role)
-                .FirstOrDefaultAsync(u => u.Username == request.Username);
+                .FirstOrDefaultAsync(u => u.Username.ToLower() == cleanUsername.ToLower());
 
-            if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+            if (user == null || !BCrypt.Net.BCrypt.Verify(cleanPassword, user.PasswordHash))
             {
                 return null;
             }

@@ -14,12 +14,17 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setLoading(true);
+    const trimmedUsername = username.trim();
+    if (!trimmedUsername || !password) {
+      setError("Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.");
+      setLoading(false);
+      return;
+    }
 
     try {
       const res = await apiFetch("/api/auth/login", {
         method: "POST",
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username: trimmedUsername, password })
       });
 
       if (res.ok) {
