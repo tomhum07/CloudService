@@ -64,29 +64,29 @@ export default function AdminDashboard() {
 
   const stats = [
     { 
-      label: "Doanh thu tháng này", 
+      label: "Doanh Thu Tháng Này", 
       value: formatCurrency(statsData.monthlyRevenue || 0), 
-      change: statsData.totalRevenue > 0 ? `Tổng: ${formatCurrency(statsData.totalRevenue)}` : "Chưa có doanh thu", 
+      change: statsData.totalRevenue > 0 ? `Tổng tích lũy: ${formatCurrency(statsData.totalRevenue)}` : "Chưa có doanh thu", 
       isPositive: true, 
       icon: "💰" 
     },
     { 
-      label: "Tổng số đơn hàng", 
+      label: "Tổng Số Đơn Hàng", 
       value: (statsData.totalOrders || 0).toLocaleString(), 
       change: statsData.pendingOrders > 0 ? `${statsData.pendingOrders} đơn chờ duyệt` : "Tất cả đã xử lý", 
       isPositive: statsData.pendingOrders === 0, 
       icon: "🛒" 
     },
     { 
-      label: "Đối tác CTV hoạt động", 
+      label: "Đối Tác CTV Hoạt Động", 
       value: `${statsData.activeAffiliates || 0} CTV`, 
       change: `Tổng ${statsData.totalUsers || 0} tài khoản`, 
       isPositive: true, 
       icon: "👥" 
     },
     { 
-      label: "Gói cước hoạt động", 
-      value: `${statsData.totalPlans || 0} gói dịch vụ`, 
+      label: "Gói Dịch Vụ Khả Dụng", 
+      value: `${statsData.totalPlans || 0} Gói cước`, 
       change: "Uptime 99.99%", 
       isPositive: true, 
       icon: "🛡️" 
@@ -120,183 +120,197 @@ export default function AdminDashboard() {
   const popularPlans = (statsData.popularPlans && statsData.popularPlans.length > 0)
     ? statsData.popularPlans
     : [
-        { planName: "Cloud VPS Pro", orderCount: 0, percentage: 0 },
-        { planName: "Cloud Hosting NVMe", orderCount: 0, percentage: 0 },
+        { planName: "Cloud VPS NVMe", orderCount: 0, percentage: 0 },
+        { planName: "Web Hosting NVMe", orderCount: 0, percentage: 0 },
         { planName: "Tên Miền (Domain)", orderCount: 0, percentage: 0 }
       ];
 
-  const colors = ["bg-blue-600", "bg-emerald-600", "bg-indigo-600", "bg-purple-600", "bg-slate-500"];
+  const colors = ["bg-blue-600", "bg-emerald-600", "bg-indigo-600", "bg-amber-600", "bg-slate-500"];
 
   return (
     <div className="space-y-8">
+      
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-2xl font-bold text-white">Hệ Thống Quản Trị CloudAdmin</h1>
-          <p className="text-xs text-slate-400 mt-1">Dữ liệu thời gian thực được tổng hợp từ máy chủ đám mây</p>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900">Tổng Quan Hệ Thống Quản Trị</h1>
+          <p className="text-xs text-slate-500 mt-1">Dữ liệu thời gian thực được đồng bộ từ trung tâm dữ liệu</p>
         </div>
         <button
           onClick={fetchDashboardData}
           disabled={loading}
-          className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 border border-white/5 text-xs text-white rounded-lg transition-colors flex items-center gap-2"
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-xs font-bold text-white rounded-xl transition-colors flex items-center gap-2 shadow-sm shadow-blue-500/20"
         >
           <span>🔄</span>
-          <span>{loading ? "Đang tải..." : "Làm mới dữ liệu"}</span>
+          <span>{loading ? "Đang cập nhật..." : "Làm mới dữ liệu"}</span>
         </button>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, idx) => (
-          <div key={idx} className="bg-slate-900 border border-white/5 rounded-2xl p-6 flex items-center justify-between">
-            <div className="space-y-2">
+          <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:border-blue-300 transition-all flex items-center justify-between">
+            <div className="space-y-1.5">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{stat.label}</span>
-              <div className="text-xl font-extrabold text-white">{stat.value}</div>
-              <div className="flex items-center gap-1.5 text-[10px]">
-                <span className={stat.isPositive ? "text-green-400 font-bold" : "text-yellow-400 font-bold"}>
+              <div className="text-2xl font-black text-slate-900">{stat.value}</div>
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold">
+                <span className={stat.isPositive ? "text-emerald-600" : "text-amber-600"}>
                   {stat.change}
                 </span>
               </div>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-slate-800 border border-white/5 flex items-center justify-center text-xl">
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl border border-blue-100">
               {stat.icon}
             </div>
           </div>
         ))}
       </div>
 
-      {/* Charts Section */}
+      {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Chart 1: Revenue over months (Line graph representation) */}
-        <div className="lg:col-span-2 bg-slate-900 border border-white/5 rounded-2xl p-6">
-          <div className="flex justify-between items-center mb-6">
+        {/* Biểu đồ Doanh thu & Đơn hàng */}
+        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-100">
             <div>
-              <h3 className="text-sm font-bold text-white">Biến Động Doanh Thu 6 Tháng Qua</h3>
-              <p className="text-[10px] text-slate-400">Đơn vị: VND (Dựa trên hóa đơn đã hoàn tất)</p>
+              <h3 className="text-base font-bold text-slate-900">Biểu Đồ Doanh Thu & Xu Hướng Đơn Hàng</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Biểu đồ thể hiện tăng trưởng theo các tháng gần nhất</p>
             </div>
-            <span className="text-[10px] px-2.5 py-1 rounded bg-slate-800 text-slate-300 font-medium">Dữ liệu thời gian thực</span>
+            <span className="text-xs font-bold px-3 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-200">
+              Năm {new Date().getFullYear()}
+            </span>
           </div>
 
-          {/* SVG Line Chart */}
-          <div className="h-64 w-full relative">
-            <svg className="w-full h-full text-slate-800" viewBox="0 0 500 200" preserveAspectRatio="none">
-              {/* Grid Lines */}
-              <line x1="0" y1="40" x2="500" y2="40" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
-              <line x1="0" y1="80" x2="500" y2="80" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
-              <line x1="0" y1="120" x2="500" y2="120" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
-              <line x1="0" y1="160" x2="500" y2="160" stroke="rgba(255,255,255,0.1)" strokeWidth="1.5" />
+          <div className="h-64 w-full relative flex items-center justify-center">
+            <svg viewBox="0 0 500 200" className="w-full h-full overflow-visible">
+              <defs>
+                <linearGradient id="blueGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#2563eb" stopOpacity="0.2" />
+                  <stop offset="100%" stopColor="#2563eb" stopOpacity="0.0" />
+                </linearGradient>
+              </defs>
 
-              {/* Chart Path Line */}
-              <path
-                d={chartD}
-                fill="none"
-                stroke="#3b82f6"
-                strokeWidth="3.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+              {/* Grid lines */}
+              {[40, 80, 120, 160].map((y) => (
+                <line key={y} x1="40" y1={y} x2="480" y2={y} stroke="#f1f5f9" strokeWidth="1" />
+              ))}
 
-              {/* Dynamic Data Points */}
-              {chartPoints.map((pt: any, i: number) => (
-                <g key={i}>
-                  <circle
-                    cx={pt.x}
-                    cy={pt.y}
-                    r="5"
-                    fill="#3b82f6"
-                    stroke="#0f172a"
-                    strokeWidth="2"
-                    className="hover:r-7 transition-all cursor-pointer"
-                  >
-                    <title>{`${pt.month}: ${formatCurrency(pt.val)} (${pt.orderCount} đơn)`}</title>
-                  </circle>
-                  <text x={pt.x} y="185" fill="#94a3b8" fontSize="9" textAnchor="middle">
-                    {pt.month}
+              {/* Area fill */}
+              {chartPoints.length > 0 && (
+                <path
+                  d={`${chartD} L ${chartPoints[chartPoints.length - 1].x},160 L ${chartPoints[0].x},160 Z`}
+                  fill="url(#blueGrad)"
+                />
+              )}
+
+              {/* Line chart */}
+              <path d={chartD} fill="none" stroke="#2563eb" strokeWidth="3" strokeLinecap="round" />
+
+              {/* Points */}
+              {chartPoints.map((p: any, idx: number) => (
+                <g key={idx}>
+                  <circle cx={p.x} cy={p.y} r="4" fill="#ffffff" stroke="#2563eb" strokeWidth="2.5" />
+                  <text x={p.x} y={p.y - 10} fill="#2563eb" fontSize="10" fontWeight="bold" textAnchor="middle">
+                    {p.val > 0 ? `${(p.val / 1000).toLocaleString()}k` : `${p.orderCount || 0} đơn`}
+                  </text>
+                  <text x={p.x} y="180" fill="#64748b" fontSize="11" textAnchor="middle">
+                    {p.month}
                   </text>
                 </g>
               ))}
-
-              {/* Y Axis Value Labels */}
-              <text x="5" y="40" fill="#64748b" fontSize="8">{formatCurrency(maxVal)}</text>
-              <text x="5" y="80" fill="#64748b" fontSize="8">{formatCurrency(maxVal * 0.66)}</text>
-              <text x="5" y="120" fill="#64748b" fontSize="8">{formatCurrency(maxVal * 0.33)}</text>
-              <text x="5" y="160" fill="#64748b" fontSize="8">0 đ</text>
             </svg>
           </div>
         </div>
 
-        {/* Chart 2: Popular Services breakdown (Horizontal Progress bars) */}
-        <div className="bg-slate-900 border border-white/5 rounded-2xl p-6">
-          <div className="mb-6">
-            <h3 className="text-sm font-bold text-white">Dịch Vụ Được Quan Tâm</h3>
-            <p className="text-[10px] text-slate-400">Tỷ lệ đơn đặt hàng theo từng gói cước</p>
+        {/* Tỷ lệ dịch vụ phổ biến */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+          <div>
+            <h3 className="text-base font-bold text-slate-900 mb-1">Cơ Cấu Dịch Vụ Ưa Chuộng</h3>
+            <p className="text-xs text-slate-500 mb-6">Tỷ lệ các nhóm dịch vụ được đăng ký nhiều nhất</p>
+
+            <div className="space-y-4">
+              {popularPlans.map((item: any, idx: number) => (
+                <div key={idx} className="space-y-1.5">
+                  <div className="flex justify-between text-xs font-bold text-slate-800">
+                    <span>{item.planName}</span>
+                    <span className="text-blue-600">{item.percentage || 0}% ({item.orderCount || 0} đơn)</span>
+                  </div>
+                  <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${colors[idx % colors.length]}`}
+                      style={{ width: `${Math.max(item.percentage || 0, 5)}%` }}
+                    ></div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="space-y-5">
-            {popularPlans.map((srv: any, idx: number) => (
-              <div key={idx} className="space-y-1.5">
-                <div className="flex justify-between text-xs font-medium">
-                  <span className="text-slate-300 truncate max-w-[150px]">{srv.planName}</span>
-                  <span className="text-slate-500">{srv.orderCount} đơn ({srv.percentage}%)</span>
-                </div>
-                <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-white/5">
-                  <div className={`h-full ${colors[idx % colors.length]}`} style={{ width: `${Math.max(srv.percentage, 4)}%` }}></div>
-                </div>
-              </div>
-            ))}
+          <div className="mt-6 p-4 rounded-xl bg-blue-50 border border-blue-100 text-xs text-slate-600">
+            <strong className="text-blue-900 block mb-1">💡 Gợi ý kinh doanh:</strong>
+            Gói Cloud VPS NVMe và Web Hosting đang là sản phẩm có mức tăng trưởng doanh thu cao nhất.
           </div>
         </div>
 
       </div>
 
       {/* Recent Orders Table */}
-      <div className="bg-slate-900 border border-white/5 rounded-2xl p-6">
-        <h3 className="text-sm font-bold text-white mb-6">Đơn Hàng Mới Nhất</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="border-b border-white/10 text-slate-400 font-semibold">
-                <th className="pb-3">Mã đơn</th>
-                <th className="pb-3">Khách hàng</th>
-                <th className="pb-3">Dịch vụ</th>
-                <th className="pb-3">Tổng tiền</th>
-                <th className="pb-3">Trạng thái</th>
-                <th className="pb-3">Ngày đặt</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5 text-slate-300">
-              {recentOrders.length === 0 ? (
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+        <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-100">
+          <div>
+            <h3 className="text-base font-bold text-slate-900">Đơn Hàng Gần Đây Cần Xử Lý</h3>
+            <p className="text-xs text-slate-500 mt-0.5">Danh sách các yêu cầu đặt mua dịch vụ mới nhất</p>
+          </div>
+          <a
+            href="/admin/orders"
+            className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"
+          >
+            Xem toàn bộ đơn hàng →
+          </a>
+        </div>
+
+        {recentOrders.length === 0 ? (
+          <div className="text-center py-10 text-xs text-slate-400">
+            Chưa có đơn hàng mới nào.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 text-slate-700 uppercase font-bold border-b border-slate-200">
                 <tr>
-                  <td colSpan={6} className="py-6 text-center text-slate-500 italic">
-                    Chưa có đơn hàng nào trong hệ thống.
-                  </td>
+                  <th className="py-3 px-4">Mã Đơn</th>
+                  <th className="py-3 px-4">Khách Hàng</th>
+                  <th className="py-3 px-4">Gói Dịch Vụ</th>
+                  <th className="py-3 px-4">Giá Tiền</th>
+                  <th className="py-3 px-4">Trạng Thái</th>
+                  <th className="py-3 px-4">Thời Gian</th>
                 </tr>
-              ) : (
-                recentOrders.map((ord, idx) => (
-                  <tr key={idx} className="hover:bg-white/5 transition-colors">
-                    <td className="py-3.5 font-mono font-bold text-slate-200">{ord.id}</td>
-                    <td className="py-3.5">{ord.client}</td>
-                    <td className="py-3.5">{ord.service}</td>
-                    <td className="py-3.5 font-mono font-bold text-slate-100">{ord.amount}</td>
-                    <td className="py-3.5">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {recentOrders.map((ord: any, idx: number) => (
+                  <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="py-3 px-4 font-mono font-bold text-blue-600">{ord.id}</td>
+                    <td className="py-3 px-4 font-semibold text-slate-900">{ord.client}</td>
+                    <td className="py-3 px-4 text-slate-700">{ord.service}</td>
+                    <td className="py-3 px-4 font-bold text-slate-900">{ord.amount}</td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
                         ord.status === "Hoàn tất"
-                          ? "bg-green-950 text-green-400"
-                          : ord.status === "Chờ duyệt" || ord.status === "Đang xử lý"
-                          ? "bg-yellow-950 text-yellow-400"
-                          : "bg-red-950 text-red-400"
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          : ord.status === "Đã hủy"
+                          ? "bg-rose-50 text-rose-700 border border-rose-200"
+                          : "bg-amber-50 text-amber-700 border border-amber-200"
                       }`}>
                         {ord.status}
                       </span>
                     </td>
-                    <td className="py-3.5 text-slate-500">{ord.date}</td>
+                    <td className="py-3 px-4 text-slate-500">{ord.date}</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
     </div>
