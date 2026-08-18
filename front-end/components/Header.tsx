@@ -11,183 +11,189 @@ interface UserProfile {
   role: string;
 }
 
-// Dữ liệu Mega Menu phân loại chuẩn Vietnix
-const MEGA_SERVICES = {
-  hosting: {
-    title: "Hosting",
-    badge: "",
+// Cấu trúc danh mục Dịch Vụ gom chung vào 1 tab Mega Menu
+const SERVICE_CATEGORIES = [
+  {
+    id: "vps",
+    title: "Cloud VPS",
+    badge: "Bán chạy",
+    icon: "⚡",
+    tagline: "Máy chủ ảo đám mây hiệu năng cao KVM, CPU AMD EPYC / Intel Xeon, ổ cứng NVMe Gen4",
+    items: [
+      {
+        slug: "vps-nvme",
+        title: "Cloud VPS NVMe Pro",
+        desc: "2 vCPUs - 4 GB RAM - 60 GB NVMe - AMD EPYC",
+        price: "150.000đ/th",
+        highlight: "Tối ưu database & app"
+      },
+      {
+        slug: "vps-nvme",
+        title: "Cloud VPS NVMe Enterprise",
+        desc: "4 vCPUs - 8 GB RAM - 120 GB NVMe - AMD EPYC",
+        price: "320.000đ/th",
+        highlight: "Chịu tải lớn"
+      },
+      {
+        slug: "vps-nvme",
+        title: "Cloud VPS NVMe Extreme",
+        desc: "8 vCPUs - 16 GB RAM - 200 GB NVMe Gen4",
+        price: "650.000đ/th",
+        highlight: "Cấu hình cực khủng"
+      },
+      {
+        slug: "vps-ssd",
+        title: "Cloud VPS SSD Tiết Kiệm",
+        desc: "1 vCPU - 2 GB RAM - 40 GB SSD Enterprise",
+        price: "90.000đ/th",
+        highlight: "Cân bằng chi phí"
+      }
+    ]
+  },
+  {
+    id: "hosting",
+    title: "Web Hosting",
+    badge: "Tối ưu WP",
+    icon: "🌐",
+    tagline: "Lưu trữ web tốc độ cao sử dụng LiteSpeed Web Server, LSCache và bảo mật Imunify360 AI",
     items: [
       {
         slug: "maxspeed-hosting",
-        title: "MaxSpeed Hosting",
-        desc: "Tốc độ tải vượt trội và hiệu năng tối đa.",
-        tag: "Tối ưu PageSpeed",
-        speed: 95,
-        icon: "🚀",
-        highlight: "AMD EPYC | Vietnix Speed Optimizer"
+        title: "MaxSpeed Hosting NVMe",
+        desc: "LiteSpeed Enterprise, tối ưu điểm PageSpeed 95+",
+        price: "45.000đ/th",
+        highlight: "Tải nhanh < 0.5s"
       },
       {
         slug: "business-hosting",
-        title: "Business Hosting",
-        desc: "CPU mạnh mẽ, backup 2 lần/ngày.",
-        tag: "",
-        speed: 90,
-        icon: "🏢",
-        highlight: "AMD EPYC | Vietnix Speed Optimizer"
+        title: "Business Hosting Doanh Nghiệp",
+        desc: "CPU AMD EPYC riêng biệt, backup 2 lần/ngày",
+        price: "120.000đ/th",
+        highlight: "Tài nguyên độc lập"
       },
       {
         slug: "wordpress-hosting",
-        title: "WordPress Hosting",
-        desc: "Tối ưu WordPress, tăng tốc tải trang.",
-        tag: "",
-        speed: 90,
-        icon: "🌐",
-        highlight: "Vietnix Speed Optimizer"
-      },
-      {
-        slug: "nvme-hosting",
-        title: "NVMe Hosting",
-        desc: "Tải nhanh <1s, ổ cứng NVMe cao cấp.",
-        tag: "",
-        speed: 85,
-        icon: "⚡",
-        highlight: "Vietnix Speed Optimizer"
+        title: "WordPress Hosting Chuyên Sâu",
+        desc: "Tích hợp WP Toolkit, tự động vá lỗi bảo mật",
+        price: "39.000đ/th",
+        highlight: "1-Click cài đặt WP"
       },
       {
         slug: "seo-hosting",
-        title: "SEO Hosting",
-        desc: "IP đa dạng, nhiều domain, diệt mã độc tự động.",
-        tag: "",
-        speed: 80,
-        icon: "🔍",
-        highlight: "Multi IP Class C"
+        title: "SEO Hosting Multi IP",
+        desc: "Nhiều dải IP Class C khác nhau xây dựng web vệ tinh",
+        price: "150.000đ/th",
+        highlight: "Tối ưu hóa SEO"
       }
-    ],
-    banner: {
-      text: "Công nghệ VIETNIX SPEED OPTIMIZER mang đến tốc độ vượt trội",
-      cta: "Khám phá →",
-      link: "/services/maxspeed-hosting"
-    }
+    ]
   },
-  domain: {
-    title: "Tên miền",
-    badge: "",
+  {
+    id: "domain",
+    title: "Tên Miền (Domain)",
+    badge: "VNNIC",
+    icon: "🏷️",
+    tagline: "Đăng ký tên miền Việt Nam (.vn) & Quốc tế (.com, .net), kích hoạt DNS Anycast tức thì",
     items: [
       {
         slug: "domain-register",
-        title: "Đăng Ký Tên Miền",
-        desc: "Mua domain cho website để bắt đầu kinh doanh online.",
-        tag: "Giá tốt",
-        icon: "🌐",
-        highlight: "Kích hoạt DNS tức thì"
+        title: "Đăng Ký Tên Miền Quốc Tế (.com, .net)",
+        desc: "Quản lý DNS Anycast toàn cầu, miễn phí Whois Privacy",
+        price: "249.000đ/năm",
+        highlight: "Kích hoạt tức thì"
       },
       {
         slug: "domain-vn",
-        title: "Tên Miền .VN",
-        desc: "Tên miền Việt Nam uy tín, chuyên nghiệp.",
-        tag: "Quốc Gia",
-        icon: "🇻🇳",
-        highlight: "Bảo hộ thương hiệu VNNIC"
-      },
-      {
-        slug: "pricing?cat=domain",
-        title: "Bảng Giá Tên Miền",
-        desc: "Kiểm tra giá domain Việt Nam và Quốc Tế nhanh chóng.",
-        tag: "",
-        icon: "🏷️",
-        highlight: "Chỉ từ 249.000đ/năm"
+        title: "Tên Miền Quốc Gia .VN",
+        desc: "Khẳng định thương hiệu, được pháp luật Việt Nam bảo hộ",
+        price: "450.000đ/năm",
+        highlight: "Ưu tiên SEO VN"
       },
       {
         slug: "domain-transfer",
         title: "Chuyển Tên Miền Về CloudService",
-        desc: "Miễn phí chuyển tên miền từ nhà cung cấp khác về.",
-        tag: "Tặng 1 năm",
-        icon: "🔄",
-        highlight: "Giữ nguyên bản ghi DNS"
-      }
-    ],
-    whoisCard: {
-      title: "Whois",
-      desc: "Tra cứu nhanh thông tin vòng đời tên miền bạn quan tâm",
-      cta: "Tra cứu thông tin ngay",
-      link: "/#domain-search"
-    }
-  },
-  vps: {
-    title: "VPS",
-    badge: "",
-    items: [
-      {
-        slug: "vps-nvme",
-        title: "Cloud VPS NVMe",
-        desc: "Ổ cứng NVMe siêu tốc, CPU AMD EPYC 7003.",
-        tag: "Bán chạy",
-        speed: 95,
-        icon: "⚡",
-        highlight: "AMD EPYC | NVMe Gen4"
-      },
-      {
-        slug: "vps-ssd",
-        title: "Cloud VPS SSD",
-        desc: "Ổ cứng SSD – Cân bằng hiệu năng, chi phí tối ưu.",
-        tag: "Tiết kiệm",
-        speed: 80,
-        icon: "💾",
-        highlight: "SSD Enterprise | Dung lượng lớn"
+        desc: "Không gián đoạn website, tặng thêm 1 năm duy trì",
+        price: "Miễn phí thủ tục",
+        highlight: "Giữ nguyên DNS"
       }
     ]
   },
-  cloud: {
-    title: "Dịch vụ Cloud",
-    badge: "MỚI",
+  {
+    id: "email",
+    title: "Email Doanh Nghiệp",
+    badge: "Inbox 99.9%",
+    icon: "✉️",
+    tagline: "Hệ thống email theo tên miền riêng (@tenmien.vn), bảo mật chống spam và virus kép",
     items: [
       {
-        slug: "enterprise-cloud",
-        title: "Enterprise Cloud",
-        desc: "Hạ tầng đám mây mạnh mẽ cho doanh nghiệp lớn.",
-        tag: "SLA 99.99%",
-        icon: "☁️",
-        highlight: "Multi-Cloud & Auto Scaling"
+        slug: "email-doanh-nghiep",
+        title: "Email Doanh Nghiệp Pro",
+        desc: "Cấu hình SPF, DKIM, DMARC, tỷ lệ vào Inbox 99.9%",
+        price: "99.000đ/th",
+        highlight: "Tên miền riêng"
       },
       {
-        slug: "s3-object-storage",
-        title: "S3 Object Storage",
-        desc: "Giải pháp lưu trữ S3-API, chi phí tối ưu.",
-        tag: "Giá cực rẻ",
-        icon: "📦",
-        highlight: "Tương thích 100% AWS S3"
+        slug: "email-doanh-nghiep",
+        title: "Email Server Riêng (Mail Cluster)",
+        desc: "Hạ tầng gửi nhận email độc lập, dedicated IP sạch",
+        price: "550.000đ/th",
+        highlight: "Gửi nhận số lượng lớn"
       }
     ]
   },
-  server: {
-    title: "Máy chủ",
-    badge: "",
+  {
+    id: "ssl",
+    title: "Chứng Chỉ Số SSL",
+    badge: "Bảo hiểm lớn",
+    icon: "🔒",
+    tagline: "Mã hóa đường truyền dữ liệu an toàn 256-bit chuẩn quốc tế từ Sectigo, GeoTrust",
     items: [
       {
-        slug: "dedicated-server",
-        title: "Thuê máy chủ",
-        desc: "Cấu hình đa dạng, hạ tầng ổn định, giá tối ưu.",
-        tag: "100% Vật lý",
-        icon: "🖥️",
-        highlight: "Dell PowerEdge / HP Enterprise"
+        slug: "ssl",
+        title: "Sectigo PositiveSSL (DV)",
+        desc: "Xác thực tên miền nhanh chóng, hiển thị ổ khóa xanh an toàn",
+        price: "199.000đ/năm",
+        highlight: "Kích hoạt trong 5 phút"
       },
       {
-        slug: "colocation",
-        title: "Thuê chỗ đặt máy chủ",
-        desc: "Datacenter chuẩn Tier 3 – Băng thông quốc tế lớn.",
-        tag: "Tier 3",
-        icon: "🏢",
-        highlight: "Viettel IDC / VNPT / FPT"
+        slug: "ssl",
+        title: "Sectigo Wildcard SSL (*.domain)",
+        desc: "Bảo vệ không giới hạn tất cả các tên miền con subdomain",
+        price: "1.450.000đ/năm",
+        highlight: "Không giới hạn Subdomain"
+      }
+    ]
+  },
+  {
+    id: "firewall",
+    title: "Firewall Chống DDoS",
+    badge: "Độc quyền",
+    icon: "🛡️",
+    tagline: "Tường lửa lọc sạch tấn công từ chối dịch vụ Layer 3/4/7 thời gian thực với dung lượng 100Gbps+",
+    items: [
+      {
+        slug: "firewall-anti-ddos",
+        title: "Tường Lửa Anti-DDoS Đa Tầng",
+        desc: "Ngăn chặn SYN/UDP Flood, HTTP Request Flood bằng AI",
+        price: "350.000đ/th",
+        highlight: "Độ trễ < 2ms"
+      },
+      {
+        slug: "firewall-anti-ddos",
+        title: "WAF Bảo Vệ Ứng Dụng Web Layer 7",
+        desc: "Chống cào dữ liệu, chống brute-force và spam request",
+        price: "650.000đ/th",
+        highlight: "AI Smart Filter"
       }
     ]
   }
-};
+];
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
+  const [isServicesOpen, setIsServicesOpen] = useState(false);
+  const [activeCategoryTab, setActiveCategoryTab] = useState("vps");
   
   // Modals state
   const [showEditModal, setShowEditModal] = useState(false);
@@ -383,11 +389,13 @@ export default function Header() {
     return null;
   }
 
+  const selectedCategory = SERVICE_CATEGORIES.find((c) => c.id === activeCategoryTab) || SERVICE_CATEGORIES[0];
+
   return (
     <>
       <header
         className="fixed top-0 left-0 w-full z-50 bg-white border-b border-slate-200 shadow-sm transition-all text-slate-800"
-        onMouseLeave={() => setHoveredMenu(null)}
+        onMouseLeave={() => setIsServicesOpen(false)}
       >
         <div className="max-w-7xl mx-auto px-6 h-18 flex items-center justify-between">
           
@@ -401,328 +409,174 @@ export default function Header() {
             </span>
           </Link>
 
-          {/* Desktop Mega Navigation (Vietnix style) */}
-          <nav className="hidden lg:flex items-center gap-1 h-full">
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center gap-2 h-full">
             
-            {/* 1. HOSTING MEGA MENU */}
+            <Link
+              href="/"
+              className={`px-3.5 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                pathname === "/" ? "text-blue-600 bg-blue-50" : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
+              }`}
+            >
+              Trang Chủ
+            </Link>
+
+            {/* TAB DỊCH VỤ - RÊ CHUỘT HIỆN TẤT CẢ DANH MỤC (VPS, Hosting, Domain, Email, SSL, Firewall) */}
             <div
               className="relative h-full flex items-center"
-              onMouseEnter={() => setHoveredMenu("hosting")}
+              onMouseEnter={() => setIsServicesOpen(true)}
             >
               <button
                 type="button"
-                className={`flex items-center gap-1 px-3 py-2 text-sm font-semibold rounded-lg transition-colors ${
-                  hoveredMenu === "hosting" ? "text-blue-600 bg-blue-50" : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
+                className={`flex items-center gap-1 px-4 py-2 text-sm font-bold rounded-lg transition-colors ${
+                  isServicesOpen || pathname?.startsWith("/services") ? "text-blue-600 bg-blue-50" : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
                 }`}
               >
-                <span>Hosting</span>
-                <svg className={`w-3.5 h-3.5 transition-transform ${hoveredMenu === "hosting" ? "rotate-180 text-blue-600" : "text-slate-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-
-              {hoveredMenu === "hosting" && (
-                <div className="absolute top-[calc(100%-4px)] left-0 w-[840px] bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 z-50 text-slate-800 animate-in fade-in zoom-in-95 duration-150">
-                  <div className="grid grid-cols-3 gap-6">
-                    {/* Column 1 & 2: Hosting Items */}
-                    <div className="col-span-2 grid grid-cols-2 gap-4">
-                      {MEGA_SERVICES.hosting.items.slice(0, 4).map((item) => (
-                        <Link
-                          key={item.slug}
-                          href={`/services/${item.slug}`}
-                          onClick={() => setHoveredMenu(null)}
-                          className="p-3.5 rounded-xl border border-slate-100 hover:border-blue-300 hover:bg-blue-50/50 transition-all group flex items-start gap-3"
-                        >
-                          <span className="text-2xl mt-0.5 group-hover:scale-110 transition-transform">{item.icon}</span>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h4 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
-                                {item.title}
-                              </h4>
-                              {item.tag && (
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 border border-rose-200">
-                                  {item.tag}
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs text-slate-500 mt-1 line-clamp-1">{item.desc}</p>
-                            <div className="flex items-center gap-2 mt-2">
-                              <span className="text-[11px] text-slate-500 font-medium">Tốc độ:</span>
-                              <div className="w-14 h-1.5 rounded-full bg-blue-100 overflow-hidden">
-                                <div className="bg-blue-500 h-full rounded-full" style={{ width: `${item.speed}%` }}></div>
-                              </div>
-                            </div>
-                            <div className="text-[10px] text-blue-600 font-medium mt-1">✓ {item.highlight}</div>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-
-                    {/* Column 3: SEO Hosting & Highlight */}
-                    <div className="col-span-1 border-l border-slate-100 pl-6 flex flex-col justify-between">
-                      <Link
-                        href={`/services/${MEGA_SERVICES.hosting.items[4].slug}`}
-                        onClick={() => setHoveredMenu(null)}
-                        className="p-3.5 rounded-xl border border-slate-100 hover:border-blue-300 hover:bg-blue-50/50 transition-all group block"
-                      >
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xl">{MEGA_SERVICES.hosting.items[4].icon}</span>
-                          <h4 className="text-sm font-bold text-slate-900 group-hover:text-blue-600">
-                            {MEGA_SERVICES.hosting.items[4].title}
-                          </h4>
-                        </div>
-                        <p className="text-xs text-slate-500 mb-2">{MEGA_SERVICES.hosting.items[4].desc}</p>
-                        <div className="text-[10px] text-blue-600 font-bold">✓ {MEGA_SERVICES.hosting.items[4].highlight}</div>
-                      </Link>
-
-                      <div className="mt-4 p-3.5 rounded-xl bg-blue-50 border border-blue-100">
-                        <p className="text-xs font-bold text-blue-900 mb-1">⚡ Tối Ưu Tốc Độ Tuyệt Đối</p>
-                        <p className="text-[11px] text-slate-600 mb-2">Tăng tốc 500% cho mọi website WordPress.</p>
-                        <Link
-                          href="/services/maxspeed-hosting"
-                          onClick={() => setHoveredMenu(null)}
-                          className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                        >
-                          Khám phá công nghệ →
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 2. TÊN MIỀN MEGA MENU */}
-            <div
-              className="relative h-full flex items-center"
-              onMouseEnter={() => setHoveredMenu("domain")}
-            >
-              <button
-                type="button"
-                className={`flex items-center gap-1 px-3 py-2 text-sm font-semibold rounded-lg transition-colors ${
-                  hoveredMenu === "domain" ? "text-blue-600 bg-blue-50" : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
-                }`}
-              >
-                <span>Tên miền</span>
-                <svg className={`w-3.5 h-3.5 transition-transform ${hoveredMenu === "domain" ? "rotate-180 text-blue-600" : "text-slate-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-
-              {hoveredMenu === "domain" && (
-                <div className="absolute top-[calc(100%-4px)] left-0 w-[780px] bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 z-50 text-slate-800 animate-in fade-in zoom-in-95 duration-150">
-                  <div className="grid grid-cols-3 gap-6">
-                    <div className="col-span-2 grid grid-cols-2 gap-4">
-                      {MEGA_SERVICES.domain.items.map((item) => (
-                        <Link
-                          key={item.slug}
-                          href={item.slug.startsWith("pricing") ? `/${item.slug}` : `/services/${item.slug}`}
-                          onClick={() => setHoveredMenu(null)}
-                          className="p-3.5 rounded-xl border border-slate-100 hover:border-blue-300 hover:bg-blue-50/50 transition-all group flex items-start gap-3"
-                        >
-                          <span className="text-2xl mt-0.5">{item.icon}</span>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h4 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{item.title}</h4>
-                              {item.tag && (
-                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-200">
-                                  {item.tag}
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs text-slate-500 mt-1 line-clamp-1">{item.desc}</p>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-
-                    {/* Whois Card (Vietnix style) */}
-                    <div className="col-span-1 p-5 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex flex-col justify-between shadow-lg shadow-blue-500/20">
-                      <div>
-                        <div className="text-xs font-bold text-blue-200 uppercase tracking-widest mb-1">Tra cứu</div>
-                        <h4 className="text-lg font-black mb-2">Whois Domain</h4>
-                        <p className="text-xs text-blue-100 leading-relaxed mb-4">
-                          Tra cứu nhanh thông tin vòng đời, chủ sở hữu và DNS của tên miền.
-                        </p>
-                      </div>
-                      <Link
-                        href="/#domain-search"
-                        onClick={() => setHoveredMenu(null)}
-                        className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold text-xs text-center transition-colors shadow-md"
-                      >
-                        🔍 Tra cứu thông tin ngay
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 3. VPS MEGA MENU */}
-            <div
-              className="relative h-full flex items-center"
-              onMouseEnter={() => setHoveredMenu("vps")}
-            >
-              <button
-                type="button"
-                className={`flex items-center gap-1 px-3 py-2 text-sm font-semibold rounded-lg transition-colors ${
-                  hoveredMenu === "vps" ? "text-blue-600 bg-blue-50" : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
-                }`}
-              >
-                <span>VPS</span>
-                <svg className={`w-3.5 h-3.5 transition-transform ${hoveredMenu === "vps" ? "rotate-180 text-blue-600" : "text-slate-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-
-              {hoveredMenu === "vps" && (
-                <div className="absolute top-[calc(100%-4px)] left-0 w-[580px] bg-white rounded-2xl shadow-2xl border border-slate-200 p-5 z-50 text-slate-800 animate-in fade-in zoom-in-95 duration-150">
-                  <div className="grid grid-cols-2 gap-4">
-                    {MEGA_SERVICES.vps.items.map((item) => (
-                      <Link
-                        key={item.slug}
-                        href={`/services/${item.slug}`}
-                        onClick={() => setHoveredMenu(null)}
-                        className="p-4 rounded-xl border border-slate-100 hover:border-blue-300 hover:bg-blue-50/50 transition-all group flex items-start gap-3"
-                      >
-                        <span className="text-2xl mt-0.5">{item.icon}</span>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{item.title}</h4>
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">{item.tag}</span>
-                          </div>
-                          <p className="text-xs text-slate-500 mt-1 mb-2 line-clamp-2">{item.desc}</p>
-                          <div className="text-[10px] text-blue-600 font-bold">✓ {item.highlight}</div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 4. DỊCH VỤ CLOUD */}
-            <div
-              className="relative h-full flex items-center"
-              onMouseEnter={() => setHoveredMenu("cloud")}
-            >
-              <button
-                type="button"
-                className={`flex items-center gap-1 px-3 py-2 text-sm font-semibold rounded-lg transition-colors ${
-                  hoveredMenu === "cloud" ? "text-blue-600 bg-blue-50" : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
-                }`}
-              >
-                <span className="relative">
-                  Dịch vụ Cloud
-                  <span className="absolute -top-2.5 -right-3 text-[9px] font-black bg-rose-500 text-white px-1.5 py-0.2 rounded-full">
-                    MỚI
-                  </span>
+                <span>Dịch Vụ</span>
+                <span className="text-[10px] font-black bg-blue-600 text-white px-1.5 py-0.2 rounded-full ml-0.5">
+                  6+
                 </span>
-                <svg className={`w-3.5 h-3.5 transition-transform ${hoveredMenu === "cloud" ? "rotate-180 text-blue-600" : "text-slate-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${isServicesOpen ? "rotate-180 text-blue-600" : "text-slate-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
 
-              {hoveredMenu === "cloud" && (
-                <div className="absolute top-[calc(100%-4px)] left-0 w-[580px] bg-white rounded-2xl shadow-2xl border border-slate-200 p-5 z-50 text-slate-800 animate-in fade-in zoom-in-95 duration-150">
-                  <div className="grid grid-cols-2 gap-4">
-                    {MEGA_SERVICES.cloud.items.map((item) => (
-                      <Link
-                        key={item.slug}
-                        href={`/services/${item.slug}`}
-                        onClick={() => setHoveredMenu(null)}
-                        className="p-4 rounded-xl border border-slate-100 hover:border-blue-300 hover:bg-blue-50/50 transition-all group flex items-start gap-3"
-                      >
-                        <span className="text-2xl mt-0.5">{item.icon}</span>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{item.title}</h4>
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600">{item.tag}</span>
+              {/* MEGA MENU CONTAINER GIAO DIỆN SÁNG - TONE XANH BIỂN */}
+              {isServicesOpen && (
+                <div className="absolute top-[calc(100%-4px)] left-1/2 -translate-x-1/2 w-[920px] bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 z-50 text-slate-800 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="grid grid-cols-12 gap-6">
+                    
+                    {/* Cột trái: 6 Danh mục Dịch vụ */}
+                    <div className="col-span-4 border-r border-slate-100 pr-4 space-y-1.5">
+                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2 px-2">
+                        Danh Mục Dịch Vụ
+                      </span>
+                      {SERVICE_CATEGORIES.map((cat) => (
+                        <div
+                          key={cat.id}
+                          onMouseEnter={() => setActiveCategoryTab(cat.id)}
+                          className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${
+                            activeCategoryTab === cat.id
+                              ? "bg-blue-50 text-blue-700 font-bold border border-blue-200 shadow-sm"
+                              : "hover:bg-slate-50 text-slate-700 font-medium"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-xl">{cat.icon}</span>
+                            <span className="text-xs">{cat.title}</span>
                           </div>
-                          <p className="text-xs text-slate-500 mt-1 mb-2 line-clamp-2">{item.desc}</p>
-                          <div className="text-[10px] text-blue-600 font-bold">✓ {item.highlight}</div>
+                          {cat.badge && (
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                              activeCategoryTab === cat.id ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"
+                            }`}>
+                              {cat.badge}
+                            </span>
+                          )}
                         </div>
-                      </Link>
-                    ))}
+                      ))}
+                    </div>
+
+                    {/* Cột phải: Các sản phẩm & cấu hình chi tiết của danh mục đang chọn */}
+                    <div className="col-span-8 flex flex-col justify-between pl-2">
+                      <div>
+                        {/* Category Header */}
+                        <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
+                          <div>
+                            <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                              <span>{selectedCategory.icon}</span>
+                              <span>{selectedCategory.title}</span>
+                            </h3>
+                            <p className="text-[11px] text-slate-500 mt-0.5">
+                              {selectedCategory.tagline}
+                            </p>
+                          </div>
+                          <Link
+                            href="/pricing"
+                            onClick={() => setIsServicesOpen(false)}
+                            className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline shrink-0"
+                          >
+                            Bảng giá →
+                          </Link>
+                        </div>
+
+                        {/* Items Grid */}
+                        <div className="grid grid-cols-2 gap-3.5">
+                          {selectedCategory.items.map((item, idx) => (
+                            <Link
+                              key={idx}
+                              href={`/services/${item.slug}`}
+                              onClick={() => setIsServicesOpen(false)}
+                              className="p-3.5 rounded-xl border border-slate-100 hover:border-blue-300 hover:bg-blue-50/40 transition-all group block shadow-xs"
+                            >
+                              <div className="flex items-center justify-between mb-1">
+                                <h4 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                                  {item.title}
+                                </h4>
+                                <span className="text-xs font-black text-blue-600">{item.price}</span>
+                              </div>
+                              <p className="text-[11px] text-slate-500 line-clamp-1 mb-2">
+                                {item.desc}
+                              </p>
+                              <div className="flex items-center gap-1.5 text-[10px] text-emerald-600 font-bold">
+                                <span>✓</span>
+                                <span>{item.highlight}</span>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Bottom Banner */}
+                      <div className="mt-5 p-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-between">
+                        <div className="text-xs">
+                          <strong className="block font-bold">🚀 Miễn Phí Chuyển Đổi Dữ Liệu & Hỗ Trợ 24/7</strong>
+                          <span className="text-[10px] text-blue-100">Cam kết Uptime 99.99% tại Datacenter chuẩn Tier 3.</span>
+                        </div>
+                        <Link
+                          href="/order"
+                          onClick={() => setIsServicesOpen(false)}
+                          className="px-4 py-1.5 rounded-lg bg-white text-blue-700 hover:bg-blue-50 text-xs font-bold transition-colors shadow-sm shrink-0"
+                        >
+                          Khởi Tạo Ngay
+                        </Link>
+                      </div>
+
+                    </div>
+
                   </div>
                 </div>
               )}
             </div>
-
-            {/* 5. MÁY CHỦ */}
-            <div
-              className="relative h-full flex items-center"
-              onMouseEnter={() => setHoveredMenu("server")}
-            >
-              <button
-                type="button"
-                className={`flex items-center gap-1 px-3 py-2 text-sm font-semibold rounded-lg transition-colors ${
-                  hoveredMenu === "server" ? "text-blue-600 bg-blue-50" : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
-                }`}
-              >
-                <span>Máy chủ</span>
-                <svg className={`w-3.5 h-3.5 transition-transform ${hoveredMenu === "server" ? "rotate-180 text-blue-600" : "text-slate-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-
-              {hoveredMenu === "server" && (
-                <div className="absolute top-[calc(100%-4px)] left-0 w-[580px] bg-white rounded-2xl shadow-2xl border border-slate-200 p-5 z-50 text-slate-800 animate-in fade-in zoom-in-95 duration-150">
-                  <div className="grid grid-cols-2 gap-4">
-                    {MEGA_SERVICES.server.items.map((item) => (
-                      <Link
-                        key={item.slug}
-                        href={`/services/${item.slug}`}
-                        onClick={() => setHoveredMenu(null)}
-                        className="p-4 rounded-xl border border-slate-100 hover:border-blue-300 hover:bg-blue-50/50 transition-all group flex items-start gap-3"
-                      >
-                        <span className="text-2xl mt-0.5">{item.icon}</span>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{item.title}</h4>
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700">{item.tag}</span>
-                          </div>
-                          <p className="text-xs text-slate-500 mt-1 mb-2 line-clamp-2">{item.desc}</p>
-                          <div className="text-[10px] text-blue-600 font-bold">✓ {item.highlight}</div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 6. DIRECT LINKS (Email, SSL, Anti-DDoS, Pricing) */}
-            <Link
-              href="/services/email-doanh-nghiep"
-              className="px-3 py-2 text-sm font-semibold text-slate-700 hover:text-blue-600 hover:bg-slate-50 rounded-lg transition-colors"
-            >
-              Email Doanh Nghiệp
-            </Link>
-
-            <Link
-              href="/services/ssl"
-              className="px-3 py-2 text-sm font-semibold text-slate-700 hover:text-blue-600 hover:bg-slate-50 rounded-lg transition-colors"
-            >
-              SSL
-            </Link>
-
-            <Link
-              href="/services/firewall-anti-ddos"
-              className="px-3 py-2 text-sm font-semibold text-slate-700 hover:text-blue-600 hover:bg-slate-50 rounded-lg transition-colors"
-            >
-              Firewall Anti DDoS
-            </Link>
 
             <Link
               href="/pricing"
-              className="px-3 py-2 text-sm font-semibold text-slate-700 hover:text-blue-600 hover:bg-slate-50 rounded-lg transition-colors"
+              className={`px-3.5 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                pathname === "/pricing" ? "text-blue-600 bg-blue-50" : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
+              }`}
             >
               Bảng Giá
             </Link>
+
+            <Link
+              href="/news"
+              className={`px-3.5 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                pathname === "/news" ? "text-blue-600 bg-blue-50" : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
+              }`}
+            >
+              Tin Tức
+            </Link>
+
+            <Link
+              href="/about"
+              className={`px-3.5 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                pathname === "/about" ? "text-blue-600 bg-blue-50" : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
+              }`}
+            >
+              Giới Thiệu
+            </Link>
           </nav>
 
-          {/* Right Action: User Menu / Login Button (Màu xanh biển Vietnix) */}
+          {/* Right Action: User Menu / Login Button */}
           <div className="flex items-center gap-4">
             {user ? (
               <div className="relative">
@@ -843,7 +697,7 @@ export default function Header() {
 
         {/* Mobile Navigation Drawer */}
         {isOpen && (
-          <div className="lg:hidden bg-white border-t border-slate-200 p-6 space-y-4 shadow-xl">
+          <div className="lg:hidden bg-white border-t border-slate-200 p-6 space-y-4 shadow-xl max-h-[80vh] overflow-y-auto">
             <Link
               href="/"
               onClick={() => setIsOpen(false)}
@@ -851,31 +705,31 @@ export default function Header() {
             >
               Trang Chủ
             </Link>
-            <div className="border-t border-slate-100 pt-3">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Hosting</span>
-              <div className="space-y-2 pl-2">
-                <Link href="/services/maxspeed-hosting" onClick={() => setIsOpen(false)} className="block text-xs font-semibold text-slate-700 hover:text-blue-600">MaxSpeed Hosting</Link>
-                <Link href="/services/business-hosting" onClick={() => setIsOpen(false)} className="block text-xs font-semibold text-slate-700 hover:text-blue-600">Business Hosting</Link>
-                <Link href="/services/wordpress-hosting" onClick={() => setIsOpen(false)} className="block text-xs font-semibold text-slate-700 hover:text-blue-600">WordPress Hosting</Link>
-                <Link href="/services/nvme-hosting" onClick={() => setIsOpen(false)} className="block text-xs font-semibold text-slate-700 hover:text-blue-600">NVMe Hosting</Link>
+
+            {SERVICE_CATEGORIES.map((cat) => (
+              <div key={cat.id} className="border-t border-slate-100 pt-3">
+                <span className="text-xs font-bold text-blue-600 uppercase tracking-wider block mb-2">
+                  {cat.icon} {cat.title}
+                </span>
+                <div className="space-y-2 pl-3">
+                  {cat.items.map((it, idx) => (
+                    <Link
+                      key={idx}
+                      href={`/services/${it.slug}`}
+                      onClick={() => setIsOpen(false)}
+                      className="block text-xs font-semibold text-slate-700 hover:text-blue-600"
+                    >
+                      {it.title} - <span className="text-blue-600">{it.price}</span>
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
-            <div className="border-t border-slate-100 pt-3">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Cloud VPS</span>
-              <div className="space-y-2 pl-2">
-                <Link href="/services/vps-nvme" onClick={() => setIsOpen(false)} className="block text-xs font-semibold text-slate-700 hover:text-blue-600">Cloud VPS NVMe</Link>
-                <Link href="/services/vps-ssd" onClick={() => setIsOpen(false)} className="block text-xs font-semibold text-slate-700 hover:text-blue-600">Cloud VPS SSD</Link>
-              </div>
-            </div>
-            <div className="border-t border-slate-100 pt-3">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Dịch Vụ Khác</span>
-              <div className="space-y-2 pl-2">
-                <Link href="/services/domain-register" onClick={() => setIsOpen(false)} className="block text-xs font-semibold text-slate-700 hover:text-blue-600">Đăng Ký Tên Miền</Link>
-                <Link href="/services/email-doanh-nghiep" onClick={() => setIsOpen(false)} className="block text-xs font-semibold text-slate-700 hover:text-blue-600">Email Doanh Nghiệp</Link>
-                <Link href="/services/ssl" onClick={() => setIsOpen(false)} className="block text-xs font-semibold text-slate-700 hover:text-blue-600">Chứng Chỉ SSL</Link>
-                <Link href="/services/firewall-anti-ddos" onClick={() => setIsOpen(false)} className="block text-xs font-semibold text-slate-700 hover:text-blue-600">Firewall Anti-DDoS</Link>
-                <Link href="/pricing" onClick={() => setIsOpen(false)} className="block text-xs font-semibold text-slate-700 hover:text-blue-600">Bảng Báo Giá</Link>
-              </div>
+            ))}
+
+            <div className="border-t border-slate-100 pt-3 space-y-2">
+              <Link href="/pricing" onClick={() => setIsOpen(false)} className="block text-xs font-bold text-slate-800 hover:text-blue-600">Bảng Giá</Link>
+              <Link href="/news" onClick={() => setIsOpen(false)} className="block text-xs font-bold text-slate-800 hover:text-blue-600">Tin Tức</Link>
+              <Link href="/about" onClick={() => setIsOpen(false)} className="block text-xs font-bold text-slate-800 hover:text-blue-600">Giới Thiệu</Link>
             </div>
           </div>
         )}
