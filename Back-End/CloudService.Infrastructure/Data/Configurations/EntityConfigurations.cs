@@ -164,6 +164,7 @@ namespace CloudService.Infrastructure.Data.Configurations
             builder.Property(n => n.Slug).HasMaxLength(300).IsRequired();
             builder.HasIndex(n => n.Slug).IsUnique();
             builder.Property(n => n.Summary).HasMaxLength(1000);
+            builder.Property(n => n.ThumbnailUrl).HasMaxLength(1000);
             builder.Property(n => n.Content).IsRequired();
 
             builder.HasOne(n => n.Author)
