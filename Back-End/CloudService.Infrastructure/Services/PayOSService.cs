@@ -115,11 +115,18 @@ namespace CloudService.Infrastructure.Services
             var checkoutUrl = dataElem.GetProperty("checkoutUrl").GetString() ?? "";
             var qrCode = dataElem.TryGetProperty("qrCode", out var qr) ? qr.GetString() ?? "" : "";
             var status = dataElem.TryGetProperty("status", out var st) ? st.GetString() ?? "PENDING" : "PENDING";
+            var accountNumber = dataElem.TryGetProperty("accountNumber", out var accNo) ? accNo.GetString() ?? "" : "";
+            var accountName = dataElem.TryGetProperty("accountName", out var accName) ? accName.GetString() ?? "" : "";
+            var bin = dataElem.TryGetProperty("bin", out var binElem) ? binElem.GetString() ?? "" : "";
 
             return new PaymentLinkResponse
             {
                 CheckoutUrl = checkoutUrl,
                 QrCode = qrCode,
+                AccountNumber = accountNumber,
+                AccountName = accountName,
+                Bin = bin,
+                Description = description,
                 OrderCode = orderCode,
                 Amount = amount,
                 Status = status
