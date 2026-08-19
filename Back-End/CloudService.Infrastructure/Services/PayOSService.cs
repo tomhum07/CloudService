@@ -19,6 +19,7 @@ namespace CloudService.Infrastructure.Services
         private readonly ApplicationDbContext _context;
         private readonly ILogger<PayOSService> _logger;
         private readonly IConfiguration _configuration;
+        private readonly IEmailService _emailService;
         private readonly HttpClient _httpClient;
 
         private readonly string _clientId;
@@ -28,11 +29,13 @@ namespace CloudService.Infrastructure.Services
         public PayOSService(
             ApplicationDbContext context,
             ILogger<PayOSService> logger,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IEmailService emailService)
         {
             _context = context;
             _logger = logger;
             _configuration = configuration;
+            _emailService = emailService;
             _httpClient = new HttpClient();
 
             _clientId = _configuration["PayOS:ClientId"] ?? "";
@@ -187,13 +190,35 @@ namespace CloudService.Infrastructure.Services
                     var parts = desc.Split(' ');
                     if (parts.Length >= 2 && int.TryParse(parts[1], out int orderId))
                     {
-                        var order = await _context.OrderRequests.FirstOrDefaultAsync(o => o.Id == orderId);
+                        var order = await _context.OrderRequests
+                            .Include(o => o.PlanPrice)
+                                .ThenInclude(p => p!.Plan)
+                            .FirstOrDefaultAsync(o => o.Id == orderId);
+
                         if (order != null)
                         {
                             order.Status = 2; // Completed
                             order.Notes = $"{order.Notes ?? ""} [PayOS: Đã thanh toán tự động {amount:N0}đ]".Trim();
                             await _context.SaveChangesAsync();
                             _logger.LogInformation("[PayOS Webhook] Tự động kích hoạt Đơn Hàng #{OrderId} thành công!", order.Id);
+
+                            // Gửi email xác nhận đăng ký & thanh toán thành công
+                            if (!string.IsNullOrWhiteSpace(order.CustomerEmail))
+                            {
+                                try
+                                {
+                                    var planName = order.PlanPrice?.Plan?.Name ?? "Gói Dịch Vụ Cloud";
+                                    var finalPrice = amount > 0 ? (decimal)amount : (order.PlanPrice?.Price ?? 0);
+                                    var orderCode = $"CS-{order.Id}";
+                                    await _emailService.SendOrderSuccessNotificationAsync(order.CustomerEmail, order.CustomerName, orderCode, planName, finalPrice);
+                                    _logger.LogInformation("[PayOS Webhook] Đã gửi email xác nhận thanh toán thành công tới {Email}", order.CustomerEmail);
+                                }
+                                catch (Exception mailEx)
+                                {
+                                    _logger.LogWarning(mailEx, "[PayOS Webhook] Gửi email thất bại tới {Email}", order.CustomerEmail);
+                                }
+                            }
+
                             return true;
                         }
                     }

@@ -60,22 +60,6 @@ namespace CloudService.WebApi.Controllers
                 payload: $"{created.PlanName} ({created.BillingCycle}) - {created.Price:N0}đ"
             );
 
-            // Gửi email xác nhận tự động qua Resend (background task)
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await _emailService.SendOrderNotificationAsync(
-                        toEmail: created.CustomerEmail,
-                        customerName: created.CustomerName,
-                        orderCode: created.OrderCode,
-                        planName: created.PlanName,
-                        price: created.Price
-                    );
-                }
-                catch { }
-            });
-
             return CreatedAtAction(nameof(GetOrderById), new { id = created.Id }, created);
         }
 
