@@ -162,6 +162,14 @@ function OrderFormContent() {
             setPaymentError(null);
             clearInterval(interval);
             clearInterval(timer);
+
+            // Tự động kích hoạt đơn hàng trong DB khi polling phát hiện đã trả tiền thành công
+            if (createdOrder?.id) {
+              apiFetch(`/api/order-requests/${createdOrder.id}/status`, {
+                method: "PATCH",
+                body: JSON.stringify({ status: 2, notes: `Đã thanh toán thành công qua PayOS [Mã giao dịch: ${payosData.orderCode}]` })
+              }).catch(() => {});
+            }
           }
         }
       } catch {}

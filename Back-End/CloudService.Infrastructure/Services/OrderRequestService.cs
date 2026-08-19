@@ -155,10 +155,13 @@ namespace CloudService.Infrastructure.Services
             var order = await _context.OrderRequests.IgnoreQueryFilters().FirstOrDefaultAsync(o => o.Id == id);
             if (order == null) return null;
 
+            var oldStatus = order.Status;
             order.Status = dto.Status;
             if (!string.IsNullOrWhiteSpace(dto.Notes))
             {
-                order.Notes = dto.Notes;
+                order.Notes = string.IsNullOrWhiteSpace(order.Notes)
+                    ? dto.Notes
+                    : (order.Notes.Contains(dto.Notes) ? order.Notes : $"{order.Notes} | {dto.Notes}");
             }
 
             await _context.SaveChangesAsync();
@@ -277,26 +280,14 @@ namespace CloudService.Infrastructure.Services
             // Nếu trong Notes có ghi nhận số tiền thanh toán thực tế sau khi giảm giá hoặc qua PayOS, ưu tiên hiển thị đúng số tiền đó
             if (!string.IsNullOrEmpty(o.Notes))
             {
-                // Tìm pattern [PayOS: Đã thanh toán 2.000đ] hoặc [Số tiền: 2.000đ]
-                var payMatch = System.Text.RegularExpressions.Regex.Match(o.Notes, @"Đã thanh toán\s+([\d\.\,]+)đ");
-                if (payMatch.Success)
+                // Hỗ trợ [Tổng tiền: 2.000đ], [Tổng tiền: 2,000đ], [PayOS: Đã thanh toán 2.000đ], [Số tiền: 2000đ]
+                var match = System.Text.RegularExpressions.Regex.Match(o.Notes, @"(?:Tổng tiền|Đã thanh toán|Số tiền|Gia tien):\s*([\d\.\,]+)\s*(?:đ|vnd|đồng)?", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                if (match.Success)
                 {
-                    var cleanNum = payMatch.Groups[1].Value.Replace(".", "").Replace(",", "");
-                    if (decimal.TryParse(cleanNum, out decimal parsedPaid))
+                    var cleanNum = match.Groups[1].Value.Replace(".", "").Replace(",", "").Trim();
+                    if (decimal.TryParse(cleanNum, out decimal parsedAmount) && parsedAmount > 0)
                     {
-                        price = parsedPaid;
-                    }
-                }
-                else
-                {
-                    var amountMatch = System.Text.RegularExpressions.Regex.Match(o.Notes, @"Tổng tiền:\s+([\d\.\,]+)đ");
-                    if (amountMatch.Success)
-                    {
-                        var cleanNum = amountMatch.Groups[1].Value.Replace(".", "").Replace(",", "");
-                        if (decimal.TryParse(cleanNum, out decimal parsedAmount))
-                        {
-                            price = parsedAmount;
-                        }
+                        price = parsedAmount;
                     }
                 }
             }

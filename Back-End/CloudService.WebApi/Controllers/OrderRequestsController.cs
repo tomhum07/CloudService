@@ -70,12 +70,31 @@ namespace CloudService.WebApi.Controllers
             var updated = await _orderService.UpdateStatusAsync(id, dto);
             if (updated == null) return NotFound(new { message = "Không tìm thấy đơn đặt hàng." });
 
-            var user = User.Identity?.Name ?? "Admin";
+            var user = User.Identity?.Name ?? "System";
             await _auditLogService.LogAsync(
                 username: user,
                 action: $"Cập nhật trạng thái đơn {updated.OrderCode} sang '{updated.StatusName}'",
                 payload: $"Status={dto.Status}"
             );
+
+            // Tự động gửi email xác nhận nếu trạng thái chuyển sang 2 (Hoàn tất / Đã thanh toán)
+            if (dto.Status == 2 && !string.IsNullOrWhiteSpace(updated.CustomerEmail))
+            {
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await _emailService.SendOrderSuccessNotificationAsync(
+                            toEmail: updated.CustomerEmail,
+                            customerName: updated.CustomerName,
+                            orderCode: updated.OrderCode,
+                            planName: updated.PlanName,
+                            price: updated.Price
+                        );
+                    }
+                    catch { }
+                });
+            }
 
             return Ok(updated);
         }
