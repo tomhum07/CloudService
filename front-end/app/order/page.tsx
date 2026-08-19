@@ -189,6 +189,13 @@ function OrderFormContent() {
         if (st === "PAID" || st === "COMPLETED") {
           setPaymentSuccess(true);
           setPaymentError(null);
+          // Đảm bảo cập nhật trạng thái đơn hàng trong DB thành Completed nếu chưa cập nhật
+          if (createdOrder?.id) {
+            apiFetch(`/api/order-requests/${createdOrder.id}/status`, {
+              method: "PATCH",
+              body: JSON.stringify({ status: 2, notes: `Đã thanh toán thành công qua PayOS [Mã giao dịch: ${payosData.orderCode}]` })
+            }).catch(() => {});
+          }
         } else if (st === "CANCELLED") {
           setPaymentError("Giao dịch này đã bị hủy hoặc hết thời gian thanh toán.");
         } else {
@@ -954,20 +961,14 @@ function OrderFormContent() {
                   </div>
 
                   {/* Nút Điều Hướng */}
-                  <div className="pt-2 flex flex-col sm:flex-row gap-3">
+                  <div className="pt-2">
                     <button
                       type="button"
                       onClick={() => setStep(1)}
-                      className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors"
+                      className="w-full py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors"
                     >
-                      ← Chỉnh Sửa Thông Tin
+                      ← Chỉnh Sửa Thông Tin Đơn Hàng
                     </button>
-                    <Link
-                      href="/my-plans"
-                      className="flex-1 py-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs text-center transition-colors border border-blue-200"
-                    >
-                      Xem Gói Dịch Vụ Của Tôi →
-                    </Link>
                   </div>
                 </div>
               </>
