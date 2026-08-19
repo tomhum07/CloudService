@@ -12,5 +12,6 @@ namespace CloudService.Application.Interfaces
         Task<bool> DeletePriceAsync(int planId, int priceId);
         Task<IEnumerable<PromotionDto>> GetAllPromotionsAsync();
         Task<PromotionDto> CreatePromotionAsync(CreatePromotionRequest request);
+        Task<PromotionDto?> ValidatePromotionAsync(string code);
     }
 }

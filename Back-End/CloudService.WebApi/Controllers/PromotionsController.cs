@@ -25,6 +25,17 @@ namespace CloudService.WebApi.Controllers
             return Ok(promotions);
         }
 
+        [HttpGet("validate/{code}")]
+        public async Task<ActionResult<PromotionDto>> Validate(string code)
+        {
+            var promotion = await _planPriceService.ValidatePromotionAsync(code);
+            if (promotion == null)
+            {
+                return NotFound(new { message = "Mã giảm giá không tồn tại hoặc đã hết hạn sử dụng." });
+            }
+            return Ok(promotion);
+        }
+
         [HttpPost]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<PromotionDto>> Create([FromBody] CreatePromotionRequest request)

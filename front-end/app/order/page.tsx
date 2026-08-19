@@ -36,6 +36,9 @@ function OrderFormContent() {
   const [phone, setPhone] = useState("");
   const [promoCode, setPromoCode] = useState("");
   const [discountPercent, setDiscountPercent] = useState(0);
+  const [appliedPromoName, setAppliedPromoName] = useState("");
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoMessage, setPromoMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [notes, setNotes] = useState("");
   const [validationError, setValidationError] = useState("");
 
@@ -137,14 +140,71 @@ function OrderFormContent() {
 
   const activeCycle = BILLING_CYCLES.find((c) => c.id === billingCycle) || BILLING_CYCLES[3];
 
-  const handleApplyPromo = () => {
-    const code = promoCode.trim().toUpperCase();
-    if (code === "CLOUDSERVICE2026" || code === "VIETNIX" || code === "VIETTELIDC") {
-      setDiscountPercent(15);
-      alert("Áp dụng mã giảm giá thành công! Bạn được chiết khấu thêm 15% tổng giá trị đơn hàng.");
-    } else {
-      alert("Mã giảm giá không hợp lệ.");
+  const handleApplyPromo = async () => {
+    const code = promoCode.trim();
+    if (!code) {
+      setPromoMessage({ type: "error", text: "Vui lòng nhập mã giảm giá." });
       setDiscountPercent(0);
+      setAppliedPromoName("");
+      return;
+    }
+
+    setPromoLoading(true);
+    setPromoMessage(null);
+
+    try {
+      // 1. Gọi API xác thực mã giảm giá từ database
+      const res = await apiFetch(`/api/promotions/validate/${encodeURIComponent(code)}`);
+      if (res.ok) {
+        const data = await res.json();
+        const discount = Number(data.discountPercentage) || 0;
+        setDiscountPercent(discount);
+        setAppliedPromoName(data.name || code);
+        setPromoMessage({
+          type: "success",
+          text: `Áp dụng mã ${data.name} thành công! Giảm ${discount}% tổng giá trị.`
+        });
+      } else {
+        // Fallback kiểm tra các mã ưu đãi mặc định hệ thống
+        const upperCode = code.toUpperCase();
+        if (upperCode === "CLOUDSERVICE2026" || upperCode === "VIETNIX" || upperCode === "VIETTELIDC" || upperCode === "GIAMGIA10") {
+          const discount = upperCode === "GIAMGIA10" ? 10 : 15;
+          setDiscountPercent(discount);
+          setAppliedPromoName(upperCode);
+          setPromoMessage({
+            type: "success",
+            text: `Áp dụng mã ưu đãi ${upperCode} thành công! Giảm ${discount}% tổng giá trị.`
+          });
+        } else {
+          setDiscountPercent(0);
+          setAppliedPromoName("");
+          setPromoMessage({
+            type: "error",
+            text: "Mã giảm giá không tồn tại hoặc đã hết hạn sử dụng."
+          });
+        }
+      }
+    } catch (err) {
+      console.warn("Lỗi kiểm tra mã giảm giá:", err);
+      // Fallback kiểm tra offline
+      const upperCode = code.toUpperCase();
+      if (upperCode === "CLOUDSERVICE2026" || upperCode === "VIETNIX" || upperCode === "VIETTELIDC") {
+        setDiscountPercent(15);
+        setAppliedPromoName(upperCode);
+        setPromoMessage({
+          type: "success",
+          text: `Áp dụng mã ưu đãi ${upperCode} thành công! Giảm 15% tổng giá trị.`
+        });
+      } else {
+        setDiscountPercent(0);
+        setAppliedPromoName("");
+        setPromoMessage({
+          type: "error",
+          text: "Mã giảm giá không hợp lệ hoặc máy chủ không phản hồi."
+        });
+      }
+    } finally {
+      setPromoLoading(false);
     }
   };
 
@@ -491,26 +551,66 @@ function OrderFormContent() {
 
                 {/* 3. Mã giảm giá */}
                 <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-3">
-                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <span>🎁</span>
-                    <span>Mã Ưu Đãi / Khuyến Mãi</span>
-                  </h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                      <span>🎁</span>
+                      <span>Mã Ưu Đãi / Khuyến Mãi</span>
+                    </h3>
+                    {discountPercent > 0 && (
+                      <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                        Đang giảm {discountPercent}% ({appliedPromoName})
+                      </span>
+                    )}
+                  </div>
+
                   <div className="flex gap-2">
                     <input
                       type="text"
-                      placeholder="Nhập mã (VD: CLOUDSERVICE2026)"
+                      placeholder="Nhập mã (VD: CLOUDSERVICE2026, GIAMGIA10...)"
                       value={promoCode}
-                      onChange={(e) => setPromoCode(e.target.value)}
+                      onChange={(e) => {
+                        setPromoCode(e.target.value);
+                        if (promoMessage) setPromoMessage(null);
+                      }}
                       className="flex-1 h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-xs font-mono text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white uppercase"
                     />
-                    <button
-                      type="button"
-                      onClick={handleApplyPromo}
-                      className="px-5 h-11 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors"
-                    >
-                      Áp Dụng
-                    </button>
+                    {discountPercent > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPromoCode("");
+                          setDiscountPercent(0);
+                          setAppliedPromoName("");
+                          setPromoMessage(null);
+                        }}
+                        className="px-4 h-11 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs transition-colors border border-rose-200"
+                      >
+                        Hủy Mã
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={promoLoading || !promoCode.trim()}
+                        onClick={handleApplyPromo}
+                        className="px-5 h-11 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-xs transition-colors shadow-xs"
+                      >
+                        {promoLoading ? "Đang kiểm tra..." : "Áp Dụng"}
+                      </button>
+                    )}
                   </div>
+
+                  {promoMessage && (
+                    <div
+                      className={`p-3 rounded-xl text-xs font-medium flex items-center gap-2 ${
+                        promoMessage.type === "success"
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          : "bg-rose-50 text-rose-700 border border-rose-200"
+                      }`}
+                    >
+                      <span>{promoMessage.type === "success" ? "✓" : "⚠️"}</span>
+                      <span>{promoMessage.text}</span>
+                    </div>
+                  )}
                 </div>
 
                 <button
