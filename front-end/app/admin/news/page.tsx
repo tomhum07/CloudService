@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { apiFetch } from "@/utils/api";
-import { uploadToSupabaseStorage, SUPABASE_URL, SUPABASE_ANON_KEY } from "@/utils/supabase";
+import { uploadToSupabaseStorage, DEFAULT_BUCKET } from "@/utils/supabase";
 
 const PRESET_CATEGORIES = ["Khuyến Mãi", "Sự Kiện", "Hướng Dẫn", "Tin Tức"];
 
@@ -30,30 +30,6 @@ export default function AdminNewsPage() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Custom Supabase config inputs (if user wants to configure directly in UI or via .env)
-  const [showConfigModal, setShowConfigModal] = useState(false);
-  const [supabaseUrlInput, setSupabaseUrlInput] = useState(SUPABASE_URL);
-  const [supabaseKeyInput, setSupabaseKeyInput] = useState(SUPABASE_ANON_KEY);
-  const [bucketNameInput, setBucketNameInput] = useState("news-images");
-
-  // Load custom credentials from localStorage if available
-  useEffect(() => {
-    const savedUrl = localStorage.getItem("CLOUDSVC_SUPA_URL");
-    const savedKey = localStorage.getItem("CLOUDSVC_SUPA_KEY");
-    const savedBucket = localStorage.getItem("CLOUDSVC_SUPA_BUCKET");
-    if (savedUrl) setSupabaseUrlInput(savedUrl);
-    if (savedKey) setSupabaseKeyInput(savedKey);
-    if (savedBucket) setBucketNameInput(savedBucket);
-  }, []);
-
-  const saveSupabaseConfig = () => {
-    localStorage.setItem("CLOUDSVC_SUPA_URL", supabaseUrlInput.trim());
-    localStorage.setItem("CLOUDSVC_SUPA_KEY", supabaseKeyInput.trim());
-    localStorage.setItem("CLOUDSVC_SUPA_BUCKET", bucketNameInput.trim() || "news-images");
-    setShowConfigModal(false);
-    alert("Đã lưu cấu hình kết nối Supabase Storage thành công!");
-  };
 
   const fetchNews = async () => {
     setLoading(true);
@@ -122,21 +98,17 @@ export default function AdminNewsPage() {
     setUploadError(null);
     setUploadSuccess(null);
 
-    const activeUrl = localStorage.getItem("CLOUDSVC_SUPA_URL") || supabaseUrlInput || SUPABASE_URL;
-    const activeKey = localStorage.getItem("CLOUDSVC_SUPA_KEY") || supabaseKeyInput || SUPABASE_ANON_KEY;
-    const activeBucket = localStorage.getItem("CLOUDSVC_SUPA_BUCKET") || bucketNameInput || "news-images";
-
-    const result = await uploadToSupabaseStorage(file, activeBucket, activeUrl, activeKey);
+    const result = await uploadToSupabaseStorage(file, DEFAULT_BUCKET);
 
     setIsUploading(false);
 
     if (result.error) {
-      setUploadError(`Upload lên Supabase thất bại: ${result.error}. Nhấp 'Cài đặt Supabase' để kiểm tra URL & Anon Key.`);
+      setUploadError(`Tải ảnh lên Supabase Storage thất bại: ${result.error}`);
     } else {
       const cleanAlt = file.name.replace(/\.[^/.]+$/, "");
       const markdownTag = `\n\n![${cleanAlt}](${result.url})\n\n`;
       setContent((prev) => prev + markdownTag);
-      setUploadSuccess(`Đã tải ảnh lên Supabase Storage thành công! Đã tự động chèn vào nội dung bài viết.`);
+      setUploadSuccess(`Đã tải ảnh lên Supabase Storage thành công và tự động chèn vào nội dung bài viết!`);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
@@ -202,23 +174,13 @@ export default function AdminNewsPage() {
           <h1 className="text-xl sm:text-2xl font-black text-slate-900">Quản Lý Tin Tức & Blog Kiến Thức</h1>
           <p className="text-xs text-slate-500 mt-1">Dữ liệu bài viết thực tế được lưu trữ trực tiếp trong Database</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowConfigModal(true)}
-            className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all flex items-center gap-1.5 border border-slate-300"
-            title="Cài đặt thông số kết nối Supabase Storage"
-          >
-            <span>⚙️</span>
-            <span>Cài Đặt Supabase Storage</span>
-          </button>
-          <button
-            onClick={handleOpenCreate}
-            className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-all shadow-md shadow-blue-500/20 flex items-center gap-2"
-          >
-            <span>➕</span>
-            <span>Viết Bài Mới</span>
-          </button>
-        </div>
+        <button
+          onClick={handleOpenCreate}
+          className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-all shadow-md shadow-blue-500/20 flex items-center gap-2"
+        >
+          <span>➕</span>
+          <span>Viết Bài Mới</span>
+        </button>
       </div>
 
       {/* Table */}
@@ -388,7 +350,7 @@ export default function AdminNewsPage() {
                       ☁️ Tải Ảnh Từ Máy Tính Lên Supabase Storage
                     </label>
                     <span className="text-[11px] text-slate-500">
-                      Ảnh được tải trực tiếp lên bucket <strong>{localStorage.getItem("CLOUDSVC_SUPA_BUCKET") || bucketNameInput || "news-images"}</strong> và chèn tự động vào bài.
+                      Chọn file ảnh từ máy tính để hệ thống tự động đẩy lên Supabase và chèn vào bài.
                     </span>
                   </div>
                   <div>
@@ -478,78 +440,6 @@ export default function AdminNewsPage() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Cài Đặt Kết Nối Supabase Storage */}
-      {showConfigModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="w-full max-w-lg bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl space-y-4">
-            <div>
-              <h3 className="text-lg font-bold text-slate-900 mb-1">⚙️ Cấu Hình Supabase Storage</h3>
-              <p className="text-xs text-slate-500">
-                Nhập thông số kết nối Supabase của dự án bạn để trình duyệt tải ảnh trực tiếp lên Storage.
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Supabase Project URL *</label>
-                <input
-                  type="text"
-                  placeholder="https://your-project-id.supabase.co"
-                  value={supabaseUrlInput}
-                  onChange={(e) => setSupabaseUrlInput(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Supabase Anon Public API Key *</label>
-                <input
-                  type="password"
-                  placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                  value={supabaseKeyInput}
-                  onChange={(e) => setSupabaseKeyInput(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white font-mono"
-                />
-                <span className="text-[10px] text-slate-400 mt-0.5 block">
-                  Lấy trong: <em>Supabase Dashboard &gt; Project Settings &gt; API &gt; Project API keys (anon public)</em>
-                </span>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Tên Storage Bucket *</label>
-                <input
-                  type="text"
-                  placeholder="news-images"
-                  value={bucketNameInput}
-                  onChange={(e) => setBucketNameInput(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
-                />
-                <span className="text-[10px] text-emerald-600 font-medium mt-0.5 block">
-                  Đảm bảo bucket này đã được bật <strong>Public bucket: ON</strong> trên Supabase.
-                </span>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setShowConfigModal(false)}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700"
-              >
-                Đóng
-              </button>
-              <button
-                type="button"
-                onClick={saveSupabaseConfig}
-                className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white shadow-md shadow-blue-500/20"
-              >
-                Lưu Cấu Hình
-              </button>
-            </div>
           </div>
         </div>
       )}

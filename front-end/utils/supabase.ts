@@ -1,10 +1,11 @@
 /**
- * Supabase Storage Direct Uploader Utility (Zero Dependencies, thuần REST API)
- * Không cần cài thêm thư viện @supabase/supabase-js, tải trực tiếp lên Supabase Bucket
+ * Supabase Storage Configuration & Direct Uploader
+ * Cấu hình trực tiếp trong code và hỗ trợ đọc qua biến môi trường .env
  */
 
-export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://fdfdtrcwyfgtygtdqfcf.supabase.co"; // Sẽ đọc từ .env hoặc fallback
-export const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+// Cấu hình cố định trực tiếp trong Code (Bạn có thể thay URL & Key của dự án tại đây)
+export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://fdfdtrcwyfgtygtdqfcf.supabase.co";
+export const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZkZmR0cmN3eWZndHlndGRxZmNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjMyNTY4NDEsImV4cCI6MjAzODgzMjg0MX0.YOUR_ANON_KEY_OR_ENV";
 export const DEFAULT_BUCKET = "news-images";
 
 export interface UploadResult {
@@ -16,24 +17,19 @@ export interface UploadResult {
 /**
  * Tải file hình ảnh trực tiếp lên Supabase Storage bucket
  * @param file Đối tượng File từ thẻ <input type="file" />
- * @param bucket Tên bucket (Mặc định: news-images)
- * @param customUrl Supabase Project URL (Tùy chọn)
- * @param customKey Supabase Anon Key (Tùy chọn)
  */
 export async function uploadToSupabaseStorage(
   file: File,
-  bucket: string = DEFAULT_BUCKET,
-  customUrl?: string,
-  customKey?: string
+  bucket: string = DEFAULT_BUCKET
 ): Promise<UploadResult> {
-  const url = (customUrl || SUPABASE_URL).replace(/\/$/, "");
-  const anonKey = customKey || SUPABASE_ANON_KEY;
+  const url = SUPABASE_URL.replace(/\/$/, "");
+  const anonKey = SUPABASE_ANON_KEY;
 
   if (!url) {
     return { url: "", fileName: "", error: "Chưa cấu hình Supabase URL." };
   }
 
-  // Tạo tên file ngẫu nhiên an toàn: news_timestamp_random.ext
+  // Tạo tên file ngẫu nhiên an toàn: timestamp-filename.ext
   const fileExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
   const cleanName = file.name
     .replace(/\.[^/.]+$/, "")
