@@ -8,17 +8,22 @@ interface Category {
   name: string;
   slug: string;
   description: string;
+  isActive: boolean;
 }
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+  const totalItems = categories.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
   const [error, setError] = useState<string | null>(null);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<Category | null>(null);
   
-  const [formData, setFormData] = useState({ name: "", slug: "", description: "" });
+  const [formData, setFormData] = useState({ name: "", slug: "", description: "", isActive: true });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -30,12 +35,13 @@ export default function CategoriesPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await apiFetch("/api/service-categories");
-      if (!res.ok) throw new Error("Failed to fetch categories");
+      const res = await apiFetch("/api/service-categories?includeInactive=true");
+      if (!res.ok) throw new Error("Không thể tải danh sách danh mục dịch vụ.");
       const data = await res.json();
       setCategories(data);
+      setCurrentPage(1);
     } catch (err: any) {
-      setError(err.message || "An error occurred while fetching data.");
+      setError(err.message || "Đã xảy ra lỗi khi tải danh mục.");
     } finally {
       setIsLoading(false);
     }
@@ -45,10 +51,10 @@ export default function CategoriesPage() {
     setFormError(null);
     if (category) {
       setCurrentCategory(category);
-      setFormData({ name: category.name, slug: category.slug, description: category.description || "" });
+      setFormData({ name: category.name, slug: category.slug, description: category.description || "", isActive: category.isActive });
     } else {
       setCurrentCategory(null);
-      setFormData({ name: "", slug: "", description: "" });
+      setFormData({ name: "", slug: "", description: "", isActive: true });
     }
     setIsFormModalOpen(true);
   };
@@ -84,12 +90,12 @@ export default function CategoriesPage() {
         body: JSON.stringify(formData)
       });
 
-      if (!res.ok) throw new Error("Failed to save category");
+      if (!res.ok) throw new Error("Lưu danh mục thất bại.");
       
       handleCloseFormModal();
       fetchCategories();
     } catch (err: any) {
-      setFormError(err.message || "Failed to save category.");
+      setFormError(err.message || "Không thể lưu danh mục.");
     } finally {
       setIsSubmitting(false);
     }
@@ -100,100 +106,121 @@ export default function CategoriesPage() {
     setIsSubmitting(true);
     setFormError(null);
     try {
-      const res = await apiFetch(`/api/service-categories/${currentCategory.id}`, {
-        method: "DELETE"
-      });
-      if (!res.ok) throw new Error("Failed to delete category");
+      let res;
+      if (currentCategory.isActive) {
+        res = await apiFetch(`/api/service-categories/${currentCategory.id}`, {
+          method: "DELETE"
+        });
+      } else {
+        res = await apiFetch(`/api/service-categories/${currentCategory.id}`, {
+          method: "PUT",
+          body: JSON.stringify({
+            name: currentCategory.name,
+            slug: currentCategory.slug,
+            description: currentCategory.description || "",
+            isActive: true
+          })
+        });
+      }
+      if (!res.ok) throw new Error(currentCategory.isActive ? "Ẩn danh mục thất bại." : "Kích hoạt lại danh mục thất bại.");
       
       handleCloseDeleteModal();
       fetchCategories();
     } catch (err: any) {
-      setFormError(err.message || "Failed to delete category.");
+      setFormError(err.message || "Lỗi thay đổi trạng thái danh mục.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="p-8 min-h-screen">
-      <div className="flex justify-between items-center mb-8">
+    <div className="space-y-6">
+      
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 mb-2">Service Categories</h1>
-          <p className="text-gray-400">Manage your product and service categories</p>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900">Quản Lý Danh Mục Dịch Vụ</h1>
+          <p className="text-xs text-slate-500 mt-1">Phân loại các nhóm sản phẩm (Cloud VPS, Hosting, Tên miền, Email, SSL, Firewall...)</p>
         </div>
         <button 
           onClick={() => handleOpenFormModal()}
-          className="px-6 py-3 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-medium transition-all shadow-[0_0_15px_rgba(37,99,235,0.4)] flex items-center gap-2"
+          className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-all shadow-md shadow-blue-500/20 flex items-center gap-2"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-          Add Category
+          <span>➕</span>
+          <span>Thêm Danh Mục Mới</span>
         </button>
       </div>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl mb-6 flex items-center gap-3">
-           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          {error}
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
+          ⚠️ {error}
         </div>
       )}
 
-      <div className="glassmorphism rounded-2xl overflow-hidden border border-gray-800 shadow-2xl">
+      {/* Table */}
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-900/50 border-b border-gray-800 text-gray-300">
-                <th className="p-5 font-semibold text-sm uppercase tracking-wider">Name</th>
-                <th className="p-5 font-semibold text-sm uppercase tracking-wider">Slug</th>
-                <th className="p-5 font-semibold text-sm uppercase tracking-wider">Description</th>
-                <th className="p-5 font-semibold text-sm uppercase tracking-wider text-right">Actions</th>
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50 text-slate-700 uppercase font-bold border-b border-slate-200">
+              <tr>
+                <th className="py-3.5 px-4">Tên Danh Mục</th>
+                <th className="py-3.5 px-4">Đường Dẫn (Slug)</th>
+                <th className="py-3.5 px-4">Mô Tả Dịch Vụ</th>
+                <th className="py-3.5 px-4">Trạng Thái</th>
+                <th className="py-3.5 px-4 text-right">Thao Tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-800/50">
+            <tbody className="divide-y divide-slate-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={4} className="p-8 text-center text-gray-500">
-                    <div className="flex justify-center items-center space-x-2">
-                      <div className="w-4 h-4 rounded-full bg-blue-500 animate-bounce"></div>
-                      <div className="w-4 h-4 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                      <div className="w-4 h-4 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                    </div>
-                  </td>
+                  <td colSpan={5} className="p-8 text-center text-slate-400">Đang tải danh mục...</td>
                 </tr>
               ) : categories.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="p-8 text-center text-gray-500">No categories found. Create one to get started.</td>
+                  <td colSpan={5} className="p-8 text-center text-slate-400">Không tìm thấy danh mục nào.</td>
                 </tr>
               ) : (
-                categories.map((category) => (
-                  <tr key={category.id} className="hover:bg-gray-800/30 transition-colors group">
-                    <td className="p-5 text-gray-200 font-medium">
+                categories.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((category) => (
+                  <tr key={category.id} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="py-3.5 px-4 font-bold text-slate-900">
                       {category.name}
                     </td>
-                    <td className="p-5">
-                      <span className="px-3 py-1 bg-gray-800 rounded-md text-sm text-gray-400 font-mono border border-gray-700 group-hover:border-blue-500/30 transition-colors">
+                    <td className="py-3.5 px-4">
+                      <span className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg font-mono text-[11px]">
                         {category.slug}
                       </span>
                     </td>
-                    <td className="p-5 text-gray-400 max-w-xs truncate" title={category.description}>
+                    <td className="py-3.5 px-4 text-slate-600 max-w-xs truncate" title={category.description}>
                       {category.description || "-"}
                     </td>
-                    <td className="p-5 text-right">
-                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button 
-                          onClick={() => handleOpenFormModal(category)}
-                          className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded-lg transition-colors"
-                          title="Edit"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                        </button>
-                        <button 
-                          onClick={() => handleOpenDeleteModal(category)}
-                          className="p-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors"
-                          title="Delete"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                        </button>
-                      </div>
+                    <td className="py-3.5 px-4">
+                      {category.isActive ? (
+                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                          Đang hiện
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold">
+                          Đang ẩn
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3.5 px-4 text-right space-x-1">
+                      <button 
+                        onClick={() => handleOpenFormModal(category)}
+                        className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-[11px] transition-colors"
+                      >
+                        Sửa
+                      </button>
+                      <button 
+                        onClick={() => handleOpenDeleteModal(category)}
+                        className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-colors ${
+                          category.isActive
+                            ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+                            : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200'
+                        }`}
+                      >
+                        {category.isActive ? "Ẩn" : "Hiện"}
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -201,69 +228,103 @@ export default function CategoriesPage() {
             </tbody>
           </table>
         </div>
+
+        {totalPages > 1 && (
+          <div className="p-4 border-t border-slate-100 flex items-center justify-between">
+            <span className="text-xs text-slate-500">
+              Trang {currentPage} / {totalPages} ({totalItems} danh mục)
+            </span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                className="px-3 py-1 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-xs font-bold rounded-lg"
+              >
+                Trước
+              </button>
+              <button
+                type="button"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+                className="px-3 py-1 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-xs font-bold rounded-lg"
+              >
+                Sau
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Form Modal */}
       {isFormModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="glassmorphism w-full max-w-md rounded-2xl border border-gray-700 shadow-2xl p-6 animate-in fade-in zoom-in duration-200">
-            <h2 className="text-2xl font-bold text-white mb-6">
-              {currentCategory ? "Edit Category" : "Add New Category"}
-            </h2>
-            
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-slate-900 mb-1">
+              {currentCategory ? "Chỉnh Sửa Danh Mục" : "Thêm Danh Mục Dịch Vụ Mới"}
+            </h3>
+            <p className="text-xs text-slate-500 mb-4">Điền đầy đủ thông tin tên và đường dẫn (slug) cho danh mục.</p>
+
             {formError && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg mb-4 text-sm">
-                {formError}
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium mb-4">
+                ⚠️ {formError}
               </div>
             )}
-            
+
             <form onSubmit={handleFormSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Name</label>
-                <input 
-                  type="text" 
+                <label className="text-xs font-bold text-slate-700 block mb-1">Tên Danh Mục *</label>
+                <input
+                  type="text"
                   required
+                  placeholder="VD: Cloud VPS, Web Hosting, Email Doanh Nghiệp"
                   value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
-                  placeholder="e.g. Cloud Hosting"
+                  onChange={(e) => {
+                    const name = e.target.value;
+                    const slug = name.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-");
+                    setFormData({ ...formData, name, slug: currentCategory ? formData.slug : slug });
+                  }}
+                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Slug</label>
-                <input 
-                  type="text" 
+                <label className="text-xs font-bold text-slate-700 block mb-1">Đường Dẫn (Slug) *</label>
+                <input
+                  type="text"
                   required
+                  placeholder="cloud-vps, web-hosting"
                   value={formData.slug}
-                  onChange={(e) => setFormData({...formData, slug: e.target.value})}
-                  className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
-                  placeholder="e.g. cloud-hosting"
+                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
-                <textarea 
+                <label className="text-xs font-bold text-slate-700 block mb-1">Mô Tả Ngắn</label>
+                <textarea
+                  rows={3}
+                  placeholder="Mô tả về tính năng nổi bật của danh mục dịch vụ này..."
                   value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all resize-none h-24"
-                  placeholder="Category description..."
-                />
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full p-3 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+                ></textarea>
               </div>
-              
-              <div className="flex gap-3 pt-4">
-                <button 
-                  type="button" 
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
                   onClick={handleCloseFormModal}
-                  className="flex-1 px-4 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white font-medium transition-colors border border-gray-700"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700"
                 >
-                  Cancel
+                  Hủy Bỏ
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 disabled:opacity-50 text-white font-medium transition-colors shadow-[0_0_15px_rgba(37,99,235,0.3)]"
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-xs font-bold text-white shadow-md shadow-blue-500/20"
                 >
-                  {isSubmitting ? "Saving..." : "Save Category"}
+                  {isSubmitting ? "Đang lưu..." : "Lưu Danh Mục"}
                 </button>
               </div>
             </form>
@@ -271,50 +332,40 @@ export default function CategoriesPage() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="glassmorphism w-full max-w-md rounded-2xl border border-red-900/50 shadow-2xl p-6 animate-in fade-in zoom-in duration-200">
-            <div className="flex items-center gap-4 mb-4 text-red-400">
-              <div className="p-3 bg-red-500/10 rounded-full">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-              </div>
-              <h2 className="text-2xl font-bold text-white">Delete Category?</h2>
-            </div>
-            
-            {formError && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg mb-4 text-sm">
-                {formError}
-              </div>
-            )}
-            
-            <div className="mb-6 bg-red-900/20 border border-red-800/30 p-4 rounded-xl">
-              <p className="text-red-200 font-medium">Hành động này sẽ ẩn toàn bộ gói cước và bảng giá thuộc danh mục này!</p>
-              <p className="text-gray-400 text-sm mt-2">
-                Are you sure you want to delete <span className="text-white font-semibold">{currentCategory?.name}</span>?
-              </p>
-            </div>
-            
-            <div className="flex gap-3">
-              <button 
-                type="button" 
+      {/* Delete / Toggle Modal */}
+      {isDeleteModalOpen && currentCategory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="w-full max-w-sm bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl text-center">
+            <div className="text-3xl mb-3">{currentCategory.isActive ? "👁️‍🗨️" : "👁️"}</div>
+            <h3 className="text-lg font-bold text-slate-900 mb-1">
+              {currentCategory.isActive ? "Ẩn Danh Mục Này?" : "Hiện Lại Danh Mục?"}
+            </h3>
+            <p className="text-xs text-slate-500 mb-6">
+              Bạn có chắc muốn {currentCategory.isActive ? "ẩn" : "kích hoạt lại"} danh mục <strong>{currentCategory.name}</strong> ngoài trang bán hàng?
+            </p>
+            <div className="flex justify-center gap-3">
+              <button
+                type="button"
                 onClick={handleCloseDeleteModal}
-                className="flex-1 px-4 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white font-medium transition-colors border border-gray-700"
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 rounded-xl"
               >
-                Cancel
+                Hủy Bỏ
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={handleDelete}
                 disabled={isSubmitting}
-                className="flex-1 px-4 py-3 rounded-xl bg-red-600 hover:bg-red-500 disabled:bg-red-800 disabled:opacity-50 text-white font-medium transition-colors shadow-[0_0_15px_rgba(220,38,38,0.3)]"
+                className={`px-5 py-2 text-xs font-bold text-white rounded-xl shadow-sm ${
+                  currentCategory.isActive ? "bg-rose-600 hover:bg-rose-700" : "bg-emerald-600 hover:bg-emerald-700"
+                }`}
               >
-                {isSubmitting ? "Deleting..." : "Yes, Delete"}
+                {isSubmitting ? "Đang xử lý..." : currentCategory.isActive ? "Xác Nhận Ẩn" : "Xác Nhận Hiện"}
               </button>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }

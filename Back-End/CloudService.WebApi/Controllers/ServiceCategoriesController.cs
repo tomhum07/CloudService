@@ -18,9 +18,9 @@ namespace CloudService.WebApi.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] bool includeInactive = false)
         {
-            var categories = await _serviceCategoryService.GetAllAsync();
+            var categories = await _serviceCategoryService.GetAllAsync(includeInactive);
             return Ok(categories);
         }
 

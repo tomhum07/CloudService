@@ -14,6 +14,8 @@ namespace CloudService.Domain.Entities
         public virtual Role? Role { get; set; }
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpiryTime { get; set; }
+        public string? ResetPasswordOtp { get; set; }
+        public DateTime? ResetPasswordOtpExpiry { get; set; }
         public virtual ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
         public virtual ICollection<NewsArticle> NewsArticles { get; set; } = new List<NewsArticle>();
     }

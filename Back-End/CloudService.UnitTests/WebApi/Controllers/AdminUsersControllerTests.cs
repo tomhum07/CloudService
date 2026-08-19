@@ -54,6 +54,11 @@ namespace CloudService.UnitTests.WebApi.Controllers
                 if (AdminResetPasswordHandler != null) return AdminResetPasswordHandler(id, newPassword);
                 return Task.FromResult(true);
             }
+
+            public Task<UserDto?> GetProfileAsync(string username) => Task.FromResult<UserDto?>(null);
+            public Task<bool> UpdateProfileAsync(string username, UpdateProfileRequest request) => Task.FromResult(true);
+            public Task<bool> SendForgotPasswordOtpAsync(ForgotPasswordRequest request) => Task.FromResult(true);
+            public Task<(bool Success, string Message)> ResetPasswordWithOtpAsync(VerifyResetOtpRequest request) => Task.FromResult((true, "Thành công"));
         }
 
         [Fact]

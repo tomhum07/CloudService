@@ -6,6 +6,7 @@ using System.Text;
 using CloudService.Infrastructure.Data;
 using CloudService.Application.Interfaces;
 using CloudService.Infrastructure.Services;
+using Resend;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,9 +24,20 @@ builder.Services.AddScoped<IServicePlanService, ServicePlanService>();
 builder.Services.AddScoped<IPlanPriceService, PlanPriceService>();
 builder.Services.AddScoped<INewsArticleService, NewsArticleService>();
 builder.Services.AddScoped<ITestimonialService, TestimonialService>();
+builder.Services.AddScoped<IOrderRequestService, OrderRequestService>();
+builder.Services.AddScoped<IAffiliateService, AffiliateService>();
+builder.Services.AddScoped<IStatisticsService, StatisticsService>();
+builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+
+// Cấu hình Resend Email Service
+builder.Services.AddScoped<IEmailService, ResendEmailService>();
 
 // Cấu hình JWT Authentication
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "SuperSecretDefaultKeyWithAtLeast32BytesLength!";
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey))
+{
+    throw new InvalidOperationException("Chưa cấu hình 'Jwt:Key' trong appsettings.json hoặc UserSecrets.");
+}
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

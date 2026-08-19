@@ -56,6 +56,10 @@ namespace CloudService.UnitTests.WebApi.Controllers
             }
 
             public Task<bool> AdminResetPasswordAsync(int id, string newPassword) => Task.FromResult(true);
+            public Task<UserDto?> GetProfileAsync(string username) => Task.FromResult<UserDto?>(new UserDto { Username = username, FullName = "Test", Email = "test@example.com" });
+            public Task<bool> UpdateProfileAsync(string username, UpdateProfileRequest request) => Task.FromResult(true);
+            public Task<bool> SendForgotPasswordOtpAsync(ForgotPasswordRequest request) => Task.FromResult(true);
+            public Task<(bool Success, string Message)> ResetPasswordWithOtpAsync(VerifyResetOtpRequest request) => Task.FromResult((true, "Thành công"));
         }
 
 

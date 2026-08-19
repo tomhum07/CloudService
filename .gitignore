@@ -7,8 +7,8 @@
 /docs/
 /.github/
 /docker-compose.yml
-/docker-compose.override.yml
-
+/.agents/
+/skills-lock.json
 # =========================================================================
 # 2. Bo qua cac file cau hinh va thu muc tam cua IDE (Visual Studio / VS Code)
 # =========================================================================

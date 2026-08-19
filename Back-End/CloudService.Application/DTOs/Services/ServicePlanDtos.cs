@@ -16,6 +16,7 @@ namespace CloudService.Application.DTOs.Services
         public string? QrCodeUrl { get; set; }
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
+        public System.Collections.Generic.ICollection<PlanPriceDto> Prices { get; set; } = new System.Collections.Generic.List<PlanPriceDto>();
     }
 
     public class CreateServicePlanRequest
@@ -37,5 +38,6 @@ namespace CloudService.Application.DTOs.Services
         public string? Ram { get; set; }
         public string? Storage { get; set; }
         public string? Bandwidth { get; set; }
+        public bool IsActive { get; set; } = true;
     }
 }

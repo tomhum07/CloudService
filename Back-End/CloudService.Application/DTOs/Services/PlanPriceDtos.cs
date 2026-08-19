@@ -24,5 +24,6 @@ namespace CloudService.Application.DTOs.Services
         public string BillingCycle { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public int? PromotionId { get; set; }
+        public bool IsActive { get; set; } = true;
     }
 }

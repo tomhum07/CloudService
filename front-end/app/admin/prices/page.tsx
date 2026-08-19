@@ -39,19 +39,23 @@ export default function PricesPage() {
   const [isLoadingPrices, setIsLoadingPrices] = useState(false);
   const [isLoadingPromotions, setIsLoadingPromotions] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+  const totalPriceItems = prices.length;
+  const totalPricePages = Math.ceil(totalPriceItems / itemsPerPage) || 1;
 
   // Modals state
   const [isPriceModalOpen, setIsPriceModalOpen] = useState(false);
   const [isDeletePriceModalOpen, setIsDeletePriceModalOpen] = useState(false);
   const [currentPrice, setCurrentPrice] = useState<PlanPrice | null>(null);
-
   const [isPromoModalOpen, setIsPromoModalOpen] = useState(false);
 
   // Forms state
   const [priceForm, setPriceForm] = useState({
     billingCycle: "Monthly",
     price: 0,
-    promotionId: "" as string | number
+    promotionId: "" as string | number,
+    isActive: true
   });
 
   const [promoForm, setPromoForm] = useState({
@@ -80,16 +84,18 @@ export default function PricesPage() {
   const fetchPlans = async () => {
     setIsLoadingPlans(true);
     try {
-      const res = await apiFetch("/api/service-plans");
+      const res = await apiFetch("/api/service-plans?includeInactive=true&pageSize=200");
       if (res.ok) {
         const data = await res.json();
-        const planList = data.items || [];
-        setPlans(planList);
-        if (planList.length > 0) {
-          setSelectedPlanId(planList[0].id.toString());
+        const planList = data.items || data;
+        if (Array.isArray(planList)) {
+          setPlans(planList);
+          if (planList.length > 0) {
+            setSelectedPlanId(planList[0].id.toString());
+          }
         }
       } else {
-        throw new Error("Failed to load plans");
+        throw new Error("Không thể tải danh sách gói cước");
       }
     } catch (err: any) {
       setError(err.message);
@@ -105,8 +111,6 @@ export default function PricesPage() {
       if (res.ok) {
         const data = await res.json();
         setPromotions(data);
-      } else {
-        throw new Error("Failed to load promotions");
       }
     } catch (err: any) {
       setError(err.message);
@@ -118,12 +122,10 @@ export default function PricesPage() {
   const fetchPrices = async (planId: string) => {
     setIsLoadingPrices(true);
     try {
-      const res = await apiFetch(`/api/service-plans/${planId}/prices`);
+      const res = await apiFetch(`/api/service-plans/${planId}/prices?includeInactive=true`);
       if (res.ok) {
         const data = await res.json();
         setPrices(data);
-      } else {
-        throw new Error("Failed to load prices for the selected plan");
       }
     } catch (err: any) {
       setError(err.message);
@@ -132,7 +134,6 @@ export default function PricesPage() {
     }
   };
 
-  // Price Modal Handlers
   const handleOpenPriceModal = (price?: PlanPrice) => {
     setFormError(null);
     if (price) {
@@ -140,20 +141,36 @@ export default function PricesPage() {
       setPriceForm({
         billingCycle: price.billingCycle,
         price: price.price,
-        promotionId: price.promotionId || ""
+        promotionId: price.promotionId || "",
+        isActive: price.isActive
       });
     } else {
       setCurrentPrice(null);
       setPriceForm({
         billingCycle: "Monthly",
         price: 0,
-        promotionId: ""
+        promotionId: "",
+        isActive: true
       });
     }
     setIsPriceModalOpen(true);
   };
 
-  const handleClosePriceModal = () => setIsPriceModalOpen(false);
+  const handleClosePriceModal = () => {
+    setIsPriceModalOpen(false);
+    setCurrentPrice(null);
+  };
+
+  const handleOpenDeletePriceModal = (price: PlanPrice) => {
+    setFormError(null);
+    setCurrentPrice(price);
+    setIsDeletePriceModalOpen(true);
+  };
+
+  const handleCloseDeletePriceModal = () => {
+    setIsDeletePriceModalOpen(false);
+    setCurrentPrice(null);
+  };
 
   const handlePriceSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -166,31 +183,29 @@ export default function PricesPage() {
         ? `/api/service-plans/${selectedPlanId}/prices/${currentPrice.id}` 
         : `/api/service-plans/${selectedPlanId}/prices`;
 
-      const payload = {
+      const payload: any = {
         billingCycle: priceForm.billingCycle,
         price: Number(priceForm.price),
-        promotionId: priceForm.promotionId ? Number(priceForm.promotionId) : null
+        isActive: priceForm.isActive
       };
+      if (priceForm.promotionId) {
+        payload.promotionId = Number(priceForm.promotionId);
+      }
 
       const res = await apiFetch(endpoint, {
         method,
         body: JSON.stringify(payload)
       });
 
-      if (!res.ok) throw new Error("Failed to save price");
-      
+      if (!res.ok) throw new Error("Lưu bảng giá thất bại.");
+
       handleClosePriceModal();
       fetchPrices(selectedPlanId);
     } catch (err: any) {
-      setFormError(err.message || "Failed to save price.");
+      setFormError(err.message || "Không thể lưu giá.");
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleOpenDeletePrice = (price: PlanPrice) => {
-    setCurrentPrice(price);
-    setIsDeletePriceModalOpen(true);
   };
 
   const handleDeletePrice = async () => {
@@ -198,29 +213,37 @@ export default function PricesPage() {
     setIsSubmitting(true);
     setFormError(null);
     try {
-      const res = await apiFetch(`/api/service-plans/${selectedPlanId}/prices/${currentPrice.id}`, {
-        method: "DELETE"
-      });
-      if (!res.ok) throw new Error("Failed to delete price");
-      
-      setIsDeletePriceModalOpen(false);
+      let res;
+      if (currentPrice.isActive) {
+        res = await apiFetch(`/api/service-plans/${selectedPlanId}/prices/${currentPrice.id}`, {
+          method: "DELETE"
+        });
+      } else {
+        res = await apiFetch(`/api/service-plans/${selectedPlanId}/prices/${currentPrice.id}`, {
+          method: "PUT",
+          body: JSON.stringify({
+            billingCycle: currentPrice.billingCycle,
+            price: currentPrice.price,
+            promotionId: currentPrice.promotionId,
+            isActive: true
+          })
+        });
+      }
+
+      if (!res.ok) throw new Error(currentPrice.isActive ? "Vô hiệu hóa giá thất bại." : "Kích hoạt giá thất bại.");
+
+      handleCloseDeletePriceModal();
       fetchPrices(selectedPlanId);
     } catch (err: any) {
-      setFormError(err.message || "Failed to delete price.");
+      setFormError(err.message || "Lỗi thay đổi trạng thái giá.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Promo Modal Handlers
   const handleOpenPromoModal = () => {
     setFormError(null);
-    setPromoForm({
-      name: "",
-      discountPercentage: 0,
-      startDate: new Date().toISOString().split("T")[0],
-      endDate: new Date(Date.now() + 30*24*60*60*1000).toISOString().split("T")[0]
-    });
+    setPromoForm({ name: "", discountPercentage: 0, startDate: "", endDate: "" });
     setIsPromoModalOpen(true);
   };
 
@@ -229,273 +252,245 @@ export default function PricesPage() {
     setIsSubmitting(true);
     setFormError(null);
     try {
-      const payload = {
-        name: promoForm.name,
-        discountPercentage: Number(promoForm.discountPercentage),
-        startDate: new Date(promoForm.startDate).toISOString(),
-        endDate: new Date(promoForm.endDate).toISOString()
-      };
-
       const res = await apiFetch("/api/promotions", {
         method: "POST",
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          name: promoForm.name,
+          discountPercentage: Number(promoForm.discountPercentage),
+          startDate: promoForm.startDate ? new Date(promoForm.startDate).toISOString() : new Date().toISOString(),
+          endDate: promoForm.endDate ? new Date(promoForm.endDate).toISOString() : new Date(Date.now() + 30*86400000).toISOString()
+        })
       });
 
-      if (!res.ok) throw new Error("Failed to create promotion");
-      
+      if (!res.ok) throw new Error("Tạo mã khuyến mãi thất bại.");
+
       setIsPromoModalOpen(false);
       fetchPromotions();
     } catch (err: any) {
-      setFormError(err.message || "Failed to create promotion.");
+      setFormError(err.message || "Không thể tạo khuyến mãi.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Format currency helper
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('vi-VN');
+  const getCycleLabel = (cycle: string) => {
+    switch (cycle.toLowerCase()) {
+      case "monthly": return "1 Tháng";
+      case "quarterly": return "3 Tháng";
+      case "semiannually": return "6 Tháng";
+      case "yearly": return "12 Tháng (1 Năm)";
+      case "biennially": return "24 Tháng (2 Năm)";
+      default: return cycle;
+    }
   };
 
   return (
-    <div className="p-8 min-h-screen">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 mb-2">
-          Pricing & Promotions
-        </h1>
-        <p className="text-gray-400">Manage pricing models and promotional campaigns</p>
+    <div className="space-y-6">
+      
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900">Quản Lý Bảng Giá & Khuyến Mãi</h1>
+          <p className="text-xs text-slate-500 mt-1">Cấu hình giá cước theo từng chu kỳ thanh toán và gắn chương trình ưu đãi giảm giá</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={handleOpenPromoModal}
+            className="px-4 py-2.5 rounded-xl bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 font-bold text-xs transition-colors flex items-center gap-1.5"
+          >
+            <span>🏷️</span>
+            <span>Tạo Khuyến Mãi</span>
+          </button>
+          <button 
+            onClick={() => handleOpenPriceModal()}
+            disabled={!selectedPlanId}
+            className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-xs transition-all shadow-md shadow-blue-500/20 flex items-center gap-1.5"
+          >
+            <span>➕</span>
+            <span>Thêm Mức Giá</span>
+          </button>
+        </div>
       </div>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl mb-6 flex items-center gap-3">
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          {error}
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
+          ⚠️ {error}
         </div>
       )}
 
-      {/* Plan Selector */}
-      <div className="mb-8 glassmorphism p-6 rounded-2xl border border-gray-800 shadow-xl">
-        <label className="block text-sm font-medium text-gray-300 mb-2">Select Service Plan</label>
-        {isLoadingPlans ? (
-          <div className="h-12 w-full bg-gray-800 animate-pulse rounded-xl"></div>
-        ) : (
-          <select 
-            value={selectedPlanId}
-            onChange={(e) => setSelectedPlanId(e.target.value)}
-            className="w-full max-w-md bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
-          >
-            {plans.map(p => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
-        )}
+      {/* Plan Selector Filter */}
+      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center gap-4">
+        <label className="text-xs font-bold text-slate-800 shrink-0">Chọn Gói Cước Cần Định Giá:</label>
+        <select 
+          value={selectedPlanId} 
+          onChange={(e) => setSelectedPlanId(e.target.value)}
+          className="w-full md:w-80 h-10 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+        >
+          {plans.map(p => (
+            <option key={p.id} value={p.id}>{p.name}</option>
+          ))}
+        </select>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Left Column: Prices */}
-        <div className="glassmorphism rounded-2xl overflow-hidden border border-gray-800 shadow-2xl flex flex-col">
-          <div className="p-6 border-b border-gray-800 flex justify-between items-center bg-gray-900/50">
-            <h2 className="text-xl font-semibold text-white">Plan Prices</h2>
-            <button 
-              onClick={() => handleOpenPriceModal()}
-              disabled={!selectedPlanId}
-              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-medium transition-all shadow-[0_0_10px_rgba(37,99,235,0.3)] flex items-center gap-2 text-sm"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-              Add Price
-            </button>
-          </div>
-          
-          <div className="p-0 overflow-x-auto flex-1">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-800/30 text-gray-400 text-xs uppercase tracking-wider">
-                  <th className="p-4 font-semibold">Billing Cycle</th>
-                  <th className="p-4 font-semibold">Price</th>
-                  <th className="p-4 font-semibold">Promotion</th>
-                  <th className="p-4 font-semibold">Final Price</th>
-                  <th className="p-4 font-semibold text-right">Actions</th>
+      {/* Prices Table */}
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50 text-slate-700 uppercase font-bold border-b border-slate-200">
+              <tr>
+                <th className="py-3.5 px-4">Chu Kỳ Thanh Toán</th>
+                <th className="py-3.5 px-4">Giá Niêm Yết (VND)</th>
+                <th className="py-3.5 px-4">Khuyến Mãi Kèm Theo</th>
+                <th className="py-3.5 px-4">Giá Sau Giảm</th>
+                <th className="py-3.5 px-4">Trạng Thái</th>
+                <th className="py-3.5 px-4 text-right">Thao Tác</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {isLoadingPrices ? (
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-slate-400">Đang tải bảng giá...</td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-800/50">
-                {isLoadingPrices ? (
-                  <tr>
-                    <td colSpan={5} className="p-8 text-center text-gray-500">Loading prices...</td>
-                  </tr>
-                ) : prices.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="p-8 text-center text-gray-500">No prices configured for this plan.</td>
-                  </tr>
-                ) : (
-                  prices.map(price => {
-                    const finalPrice = price.discountPercentage 
-                      ? price.price * (1 - price.discountPercentage / 100)
-                      : price.price;
-                    
-                    return (
-                      <tr key={price.id} className="hover:bg-gray-800/30 transition-colors group">
-                        <td className="p-4 text-white font-medium">{price.billingCycle}</td>
-                        <td className="p-4 text-gray-300">{formatCurrency(price.price)}</td>
-                        <td className="p-4">
-                          {price.promotionName ? (
-                            <span className="px-2 py-1 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-md text-xs">
-                              {price.promotionName} (-{price.discountPercentage}%)
-                            </span>
-                          ) : (
-                            <span className="text-gray-500 text-sm">-</span>
-                          )}
-                        </td>
-                        <td className="p-4 text-green-400 font-semibold">{formatCurrency(finalPrice)}</td>
-                        <td className="p-4 text-right">
-                          <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button 
-                              onClick={() => handleOpenPriceModal(price)}
-                              className="p-1.5 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded-lg transition-colors"
-                              title="Edit"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                            </button>
-                            <button 
-                              onClick={() => handleOpenDeletePrice(price)}
-                              className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors"
-                              title="Delete"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+              ) : prices.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-slate-400">Gói cước này chưa được thiết lập mức giá nào.</td>
+                </tr>
+              ) : (
+                prices.map((p) => {
+                  const finalPrice = p.discountPercentage
+                    ? p.price * (1 - p.discountPercentage / 100)
+                    : p.price;
 
-        {/* Right Column: Promotions */}
-        <div className="glassmorphism rounded-2xl overflow-hidden border border-gray-800 shadow-2xl flex flex-col">
-          <div className="p-6 border-b border-gray-800 flex justify-between items-center bg-gray-900/50">
-            <h2 className="text-xl font-semibold text-white">Promotions</h2>
-            <button 
-              onClick={handleOpenPromoModal}
-              className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-medium transition-all shadow-[0_0_10px_rgba(147,51,234,0.3)] flex items-center gap-2 text-sm"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-              New Promo
-            </button>
-          </div>
-          
-          <div className="p-0 overflow-x-auto flex-1">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-800/30 text-gray-400 text-xs uppercase tracking-wider">
-                  <th className="p-4 font-semibold">Name</th>
-                  <th className="p-4 font-semibold">Discount</th>
-                  <th className="p-4 font-semibold">Duration</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-800/50">
-                {isLoadingPromotions ? (
-                  <tr>
-                    <td colSpan={3} className="p-8 text-center text-gray-500">Loading promotions...</td>
-                  </tr>
-                ) : promotions.length === 0 ? (
-                  <tr>
-                    <td colSpan={3} className="p-8 text-center text-gray-500">No promotions available.</td>
-                  </tr>
-                ) : (
-                  promotions.map(promo => (
-                    <tr key={promo.id} className="hover:bg-gray-800/30 transition-colors">
-                      <td className="p-4 text-white font-medium">
-                        {promo.name}
-                        {!promo.isActive && <span className="ml-2 text-xs px-2 py-0.5 bg-red-500/10 text-red-400 rounded">Inactive</span>}
+                  return (
+                    <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-3.5 px-4 font-bold text-slate-900">
+                        {getCycleLabel(p.billingCycle)}
                       </td>
-                      <td className="p-4 text-purple-400 font-bold">{promo.discountPercentage}%</td>
-                      <td className="p-4 text-gray-400 text-sm">
-                        {formatDate(promo.startDate)} - {formatDate(promo.endDate)}
+                      <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
+                        {p.price.toLocaleString("vi-VN")} đ
+                      </td>
+                      <td className="py-3.5 px-4">
+                        {p.promotionName ? (
+                          <span className="px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-bold">
+                            {p.promotionName} (-{p.discountPercentage}%)
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 text-[11px]">Không áp dụng</span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4 font-mono font-bold text-blue-600">
+                        {Math.round(finalPrice).toLocaleString("vi-VN")} đ
+                      </td>
+                      <td className="py-3.5 px-4">
+                        {p.isActive ? (
+                          <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                            Khả dụng
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold">
+                            Đã tắt
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4 text-right space-x-1">
+                        <button 
+                          onClick={() => handleOpenPriceModal(p)}
+                          className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-[11px] transition-colors"
+                        >
+                          Sửa
+                        </button>
+                        <button 
+                          onClick={() => handleOpenDeletePriceModal(p)}
+                          className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-colors ${
+                            p.isActive
+                              ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+                              : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200'
+                          }`}
+                        >
+                          {p.isActive ? "Tắt" : "Bật"}
+                        </button>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
       {/* Price Form Modal */}
       {isPriceModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="glassmorphism w-full max-w-md rounded-2xl border border-gray-700 shadow-2xl p-6 animate-in fade-in zoom-in duration-200">
-            <h2 className="text-2xl font-bold text-white mb-6">
-              {currentPrice ? "Edit Plan Price" : "Add Plan Price"}
-            </h2>
-            
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-slate-900 mb-1">
+              {currentPrice ? "Chỉnh Sửa Mức Giá" : "Thêm Mức Giá Mới"}
+            </h3>
+            <p className="text-xs text-slate-500 mb-4">Cấu hình chu kỳ và số tiền thanh toán.</p>
+
             {formError && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg mb-4 text-sm">
-                {formError}
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium mb-4">
+                ⚠️ {formError}
               </div>
             )}
-            
+
             <form onSubmit={handlePriceSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Billing Cycle</label>
-                <input 
-                  type="text" 
-                  required
+                <label className="text-xs font-bold text-slate-700 block mb-1">Chu Kỳ Thanh Toán *</label>
+                <select
                   value={priceForm.billingCycle}
-                  onChange={(e) => setPriceForm({...priceForm, billingCycle: e.target.value})}
-                  className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
-                  placeholder="e.g. Monthly, Yearly"
-                />
+                  onChange={(e) => setPriceForm({ ...priceForm, billingCycle: e.target.value })}
+                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+                >
+                  <option value="Monthly">1 Tháng (Monthly)</option>
+                  <option value="Quarterly">3 Tháng (Quarterly)</option>
+                  <option value="SemiAnnually">6 Tháng (SemiAnnually)</option>
+                  <option value="Yearly">12 Tháng (Yearly)</option>
+                  <option value="Biennially">24 Tháng (Biennially)</option>
+                </select>
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Price (VND)</label>
-                <input 
-                  type="number" 
+                <label className="text-xs font-bold text-slate-700 block mb-1">Giá Tiền (VND) *</label>
+                <input
+                  type="number"
                   required
                   min="0"
-                  step="1000"
+                  placeholder="VD: 150000"
                   value={priceForm.price}
-                  onChange={(e) => setPriceForm({...priceForm, price: Number(e.target.value)})}
-                  className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+                  onChange={(e) => setPriceForm({ ...priceForm, price: Number(e.target.value) })}
+                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Applied Promotion</label>
-                <select 
+                <label className="text-xs font-bold text-slate-700 block mb-1">Chương Trình Khuyến Mãi (Nếu có)</label>
+                <select
                   value={priceForm.promotionId}
-                  onChange={(e) => setPriceForm({...priceForm, promotionId: e.target.value})}
-                  className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+                  onChange={(e) => setPriceForm({ ...priceForm, promotionId: e.target.value })}
+                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
                 >
-                  <option value="">None</option>
-                  {promotions.map(promo => (
-                    <option key={promo.id} value={promo.id}>{promo.name} (-{promo.discountPercentage}%)</option>
+                  <option value="">-- Không áp dụng khuyến mãi --</option>
+                  {promotions.map((pr) => (
+                    <option key={pr.id} value={pr.id}>{pr.name} (Giảm {pr.discountPercentage}%)</option>
                   ))}
                 </select>
               </div>
 
-              <div className="flex gap-3 pt-4 mt-6">
-                <button 
-                  type="button" 
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
                   onClick={handleClosePriceModal}
-                  className="flex-1 px-4 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white font-medium transition-colors border border-gray-700"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700"
                 >
-                  Cancel
+                  Hủy Bỏ
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 disabled:opacity-50 text-white font-medium transition-colors shadow-[0_0_15px_rgba(37,99,235,0.3)]"
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-xs font-bold text-white shadow-md shadow-blue-500/20"
                 >
-                  {isSubmitting ? "Saving..." : "Save Price"}
+                  {isSubmitting ? "Đang lưu..." : "Lưu Bảng Giá"}
                 </button>
               </div>
             </form>
@@ -503,132 +498,100 @@ export default function PricesPage() {
         </div>
       )}
 
-      {/* Delete Price Confirmation Modal */}
-      {isDeletePriceModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="glassmorphism w-full max-w-md rounded-2xl border border-red-900/50 shadow-2xl p-6 animate-in fade-in zoom-in duration-200">
-            <div className="flex items-center gap-4 mb-4 text-red-400">
-              <div className="p-3 bg-red-500/10 rounded-full">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-              </div>
-              <h2 className="text-2xl font-bold text-white">Delete Price?</h2>
-            </div>
-            
-            {formError && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg mb-4 text-sm">
-                {formError}
-              </div>
-            )}
-            
-            <p className="text-gray-300 mb-6">
-              Are you sure you want to delete the <span className="font-semibold text-white">{currentPrice?.billingCycle}</span> pricing?
+      {/* Delete Price Modal */}
+      {isDeletePriceModalOpen && currentPrice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="w-full max-w-sm bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl text-center">
+            <h3 className="text-lg font-bold text-slate-900 mb-1">
+              {currentPrice.isActive ? "Tắt Mức Giá Này?" : "Bật Lại Mức Giá Này?"}
+            </h3>
+            <p className="text-xs text-slate-500 mb-6">
+              Bạn có chắc muốn thay đổi trạng thái áp dụng cho chu kỳ <strong>{getCycleLabel(currentPrice.billingCycle)}</strong>?
             </p>
-            
-            <div className="flex gap-3">
-              <button 
-                type="button" 
-                onClick={() => setIsDeletePriceModalOpen(false)}
-                className="flex-1 px-4 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white font-medium transition-colors border border-gray-700"
+            <div className="flex justify-center gap-3">
+              <button
+                type="button"
+                onClick={handleCloseDeletePriceModal}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 rounded-xl"
               >
-                Cancel
+                Hủy Bỏ
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={handleDeletePrice}
                 disabled={isSubmitting}
-                className="flex-1 px-4 py-3 rounded-xl bg-red-600 hover:bg-red-500 disabled:bg-red-800 disabled:opacity-50 text-white font-medium transition-colors shadow-[0_0_15px_rgba(220,38,38,0.3)]"
+                className={`px-5 py-2 text-xs font-bold text-white rounded-xl shadow-sm ${
+                  currentPrice.isActive ? "bg-rose-600 hover:bg-rose-700" : "bg-emerald-600 hover:bg-emerald-700"
+                }`}
               >
-                {isSubmitting ? "Deleting..." : "Yes, Delete"}
+                {isSubmitting ? "Đang xử lý..." : currentPrice.isActive ? "Xác Nhận Tắt" : "Xác Nhận Bật"}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Promo Form Modal */}
+      {/* Promotion Form Modal */}
       {isPromoModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="glassmorphism w-full max-w-md rounded-2xl border border-purple-900/30 shadow-2xl p-6 animate-in fade-in zoom-in duration-200">
-            <h2 className="text-2xl font-bold text-white mb-6">
-              Create Promotion
-            </h2>
-            
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-slate-900 mb-1">Tạo Chương Trình Khuyến Mãi Mới</h3>
+            <p className="text-xs text-slate-500 mb-4">Mã giảm giá sẽ tự động trừ % khi khách hàng chọn gói cước.</p>
+
             {formError && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg mb-4 text-sm">
-                {formError}
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium mb-4">
+                ⚠️ {formError}
               </div>
             )}
-            
+
             <form onSubmit={handlePromoSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Promotion Name</label>
-                <input 
-                  type="text" 
+                <label className="text-xs font-bold text-slate-700 block mb-1">Tên Chương Trình *</label>
+                <input
+                  type="text"
                   required
+                  placeholder="VD: Khuyến Mãi Mùa Hè 2026"
                   value={promoForm.name}
-                  onChange={(e) => setPromoForm({...promoForm, name: e.target.value})}
-                  className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
-                  placeholder="e.g. Summer Sale 2026"
+                  onChange={(e) => setPromoForm({ ...promoForm, name: e.target.value })}
+                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
                 />
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Discount Percentage (%)</label>
-                <input 
-                  type="number" 
+                <label className="text-xs font-bold text-slate-700 block mb-1">Phần Trăm Giảm Giá (%) *</label>
+                <input
+                  type="number"
                   required
-                  min="0"
+                  min="1"
                   max="100"
-                  step="0.1"
+                  placeholder="VD: 20"
                   value={promoForm.discountPercentage}
-                  onChange={(e) => setPromoForm({...promoForm, discountPercentage: Number(e.target.value)})}
-                  className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+                  onChange={(e) => setPromoForm({ ...promoForm, discountPercentage: Number(e.target.value) })}
+                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Start Date</label>
-                  <input 
-                    type="date" 
-                    required
-                    value={promoForm.startDate}
-                    onChange={(e) => setPromoForm({...promoForm, startDate: e.target.value})}
-                    className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">End Date</label>
-                  <input 
-                    type="date" 
-                    required
-                    value={promoForm.endDate}
-                    onChange={(e) => setPromoForm({...promoForm, endDate: e.target.value})}
-                    className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-4 mt-6">
-                <button 
-                  type="button" 
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
                   onClick={() => setIsPromoModalOpen(false)}
-                  className="flex-1 px-4 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white font-medium transition-colors border border-gray-700"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700"
                 >
-                  Cancel
+                  Hủy Bỏ
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 px-4 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:bg-purple-800 disabled:opacity-50 text-white font-medium transition-colors shadow-[0_0_15px_rgba(147,51,234,0.3)]"
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-xs font-bold text-white shadow-md shadow-blue-500/20"
                 >
-                  {isSubmitting ? "Creating..." : "Create Promo"}
+                  {isSubmitting ? "Đang tạo..." : "Tạo Khuyến Mãi"}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
     </div>
   );
 }

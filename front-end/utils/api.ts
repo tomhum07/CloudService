@@ -40,7 +40,20 @@ export async function apiFetch(endpoint: string, options: FetchOptions = {}): Pr
     fetchOptions.headers["Authorization"] = `Bearer ${inMemoryToken}`;
   }
 
-  let response = await fetch(url, fetchOptions);
+  let response: Response;
+  try {
+    response = await fetch(url, fetchOptions);
+  } catch (error) {
+    console.warn("Backend connection failed:", error);
+    return new Response(
+      JSON.stringify({ error: "Backend is currently offline or unreachable", isOffline: true }),
+      {
+        status: 503,
+        statusText: "Service Unavailable",
+        headers: { "Content-Type": "application/json" }
+      }
+    );
+  }
 
   // Cơ chế tự động làm mới Token (Silent Refresh) nếu Access Token hết hạn (Lỗi 401)
   if (response.status === 401 && endpoint !== "/api/auth/login" && endpoint !== "/api/auth/refresh-token") {
@@ -82,8 +95,8 @@ export async function refreshAccessToken(): Promise<boolean> {
           return true;
         }
       }
-    } catch (error) {
-      console.error("Lỗi tự động gia hạn token:", error);
+    } catch {
+      // Backend đang khởi động lại hoặc không thể kết nối
     }
     return false;
   })();

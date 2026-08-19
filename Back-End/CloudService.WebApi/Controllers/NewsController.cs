@@ -20,18 +20,20 @@ namespace CloudService.WebApi.Controllers
         }
 
         [HttpGet]
-public async Task<ActionResult<PagedNewsResult>> GetAll(
-    int page = 1,
-    int pageSize = 10,
-    string? search = null)
-{
-    var articles = await _newsArticleService.GetAllAsync(
-        page,
-        pageSize,
-        search);
+        public async Task<ActionResult<PagedNewsResult>> GetAll(
+            int page = 1,
+            int pageSize = 10,
+            string? search = null,
+            bool includeInactive = false)
+        {
+            var articles = await _newsArticleService.GetAllAsync(
+                page,
+                pageSize,
+                search,
+                includeInactive);
 
-    return Ok(articles);
-}
+            return Ok(articles);
+        }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<NewsArticleDto>> GetById(int id)
@@ -56,10 +58,20 @@ public async Task<ActionResult<PagedNewsResult>> GetAll(
         }
 
         [HttpPost]
-[Authorize(Roles = "Admin,Editor")]
-public async Task<ActionResult<NewsArticleDto>> Create(
+        [Authorize(Roles = "Admin,Editor")]
+        public async Task<ActionResult<NewsArticleDto>> Create(
             [FromBody] CreateNewsArticleRequest request)
         {
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(userIdClaim, out var userId))
+            {
+                request.AuthorId = userId;
+            }
+            else
+            {
+                return Unauthorized(new { message = "Không xác định được danh tính người viết bài." });
+            }
+
             var article = await _newsArticleService.CreateAsync(request);
 
             return CreatedAtAction(
