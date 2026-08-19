@@ -18,8 +18,8 @@ function OrderFormContent() {
   const planIdParam = searchParams.get("planId");
   const cycleParam = searchParams.get("cycle");
 
-  // Step 1: Điền thông tin đăng ký (Bỏ qua bước chọn gói vì đã chọn gói từ trước)
-  // Step 2: Bước Thanh Toán (VietQR & Hóa đơn)
+  // Step 1: Điền thông tin đăng ký
+  // Step 2: Bước Thanh Toán (Cổng PayOS & VietQR)
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [planLoading, setPlanLoading] = useState(true);
@@ -39,8 +39,10 @@ function OrderFormContent() {
   const [notes, setNotes] = useState("");
   const [validationError, setValidationError] = useState("");
 
-  // Completed Order State
+  // Completed Order & PayOS State
   const [createdOrder, setCreatedOrder] = useState<any | null>(null);
+  const [payosData, setPayosData] = useState<{ checkoutUrl?: string; qrCode?: string } | null>(null);
+  const [creatingPayment, setCreatingPayment] = useState(false);
 
   // 1. Kiểm tra trạng thái Đăng Nhập & Tự động điền thông tin người dùng
   useEffect(() => {
@@ -78,7 +80,6 @@ function OrderFormContent() {
             const data = await res.json();
             setPlan(data);
           } else {
-            // Fallback lấy danh sách
             const allRes = await apiFetch("/api/service-plans?pageSize=100");
             if (allRes.ok) {
               const allData = await allRes.json();
@@ -88,7 +89,6 @@ function OrderFormContent() {
             }
           }
         } else {
-          // Nếu không có param, lấy gói đầu tiên
           const allRes = await apiFetch("/api/service-plans?pageSize=100");
           if (allRes.ok) {
             const allData = await allRes.json();
@@ -136,7 +136,7 @@ function OrderFormContent() {
     return Math.max(0, subtotal - promoDiscount);
   };
 
-  // Xử lý gửi đơn đặt hàng & Chuyển sang bước Thanh Toán
+  // Xử lý gửi đơn đặt hàng & Tự động gọi API tạo Link PayOS
   const handleProceedToPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setValidationError("");
@@ -186,7 +186,8 @@ function OrderFormContent() {
       notes: `${notes || ""}${promoCode ? ` [Mã KM: ${promoCode}]` : ""}${domainName ? ` [Tên miền: ${domainName}]` : ""}`.trim(),
       totalAmount,
       createdAt: new Date().toISOString(),
-      orderCode
+      orderCode,
+      id: 0
     };
 
     try {
@@ -202,13 +203,33 @@ function OrderFormContent() {
           notes: orderData.notes
         })
       });
+
       if (res.ok) {
         const responseData = await res.json();
-        setCreatedOrder({
-          ...orderData,
-          orderCode: responseData.orderCode || orderData.orderCode,
-          id: responseData.id
-        });
+        const finalOrderId = responseData.id || 0;
+        orderData.id = finalOrderId;
+        orderData.orderCode = responseData.orderCode || orderData.orderCode;
+        setCreatedOrder(orderData);
+
+        // Tạo link thanh toán PayOS trực tiếp cho đơn hàng này
+        if (finalOrderId > 0) {
+          try {
+            const payRes = await apiFetch("/api/payment/create-link", {
+              method: "POST",
+              body: JSON.stringify({
+                orderId: finalOrderId,
+                returnUrl: `${window.location.origin}/my-plans`,
+                cancelUrl: `${window.location.origin}/pricing`
+              })
+            });
+            if (payRes.ok) {
+              const payData = await payRes.json();
+              setPayosData(payData);
+            }
+          } catch (payErr) {
+            console.warn("PayOS Link Generation Warning:", payErr);
+          }
+        }
       } else {
         setCreatedOrder(orderData);
       }
@@ -265,7 +286,7 @@ function OrderFormContent() {
             Đăng Ký Gói: <span className="text-blue-600">{plan.name}</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto">
-            Nhập thông tin liên hệ của bạn để tiến hành khởi tạo dịch vụ và chuyển đến bước thanh toán.
+            Nhập thông tin liên hệ của bạn để tiến hành khởi tạo dịch vụ và chuyển đến bước thanh toán PayOS.
           </p>
         </div>
 
@@ -291,13 +312,13 @@ function OrderFormContent() {
               2
             </div>
             <span className={`text-xs font-bold ${step >= 2 ? "text-blue-600" : "text-slate-400"}`}>
-              Thanh Toán & Hóa Đơn
+              Cổng Thanh Toán PayOS
             </span>
           </div>
         </div>
 
         {/* ========================================================= */}
-        {/* STEP 1: NHẬP THÔNG TIN ĐĂNG KÝ (ĐÃ BỎ BƯỚC CHỌN GÓI) */}
+        {/* STEP 1: NHẬP THÔNG TIN ĐĂNG KÝ */}
         {/* ========================================================= */}
         {step === 1 && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -467,7 +488,7 @@ function OrderFormContent() {
                   disabled={loading}
                   className="w-full h-12 rounded-2xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-sm transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"
                 >
-                  {loading ? "Đang xử lý thông tin..." : "Tiến Hành Thanh Toán →"}
+                  {loading ? "Đang xử lý thông tin..." : "Tiến Hành Thanh Toán (PayOS) →"}
                 </button>
               </form>
             </div>
@@ -555,7 +576,7 @@ function OrderFormContent() {
         )}
 
         {/* ========================================================= */}
-        {/* STEP 2: BƯỚC THANH TOÁN (HÓA ĐƠN & VIETQR) */}
+        {/* STEP 2: BƯỚC THANH TOÁN (CỔNG PAYOS & VIETQR CHUYỂN KHOẢN) */}
         {/* ========================================================= */}
         {step === 2 && createdOrder && (
           <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in">
@@ -565,7 +586,7 @@ function OrderFormContent() {
               <div className="w-12 h-12 bg-emerald-600 text-white rounded-full flex items-center justify-center text-xl mx-auto shadow-md">
                 ✓
               </div>
-              <h2 className="text-xl font-bold text-emerald-900">Đơn Đặt Hàng Đã Được Tiếp Nhận!</h2>
+              <h2 className="text-xl font-bold text-emerald-900">Đơn Đặt Hàng Đã Được Khởi Tạo Thành Công!</h2>
               <p className="text-xs text-emerald-700">
                 Mã đơn hàng: <strong className="font-mono text-sm">{createdOrder.orderCode}</strong>
               </p>
@@ -587,18 +608,41 @@ function OrderFormContent() {
                 </div>
               </div>
 
-              {/* Hướng Dẫn Thanh Toán VietQR Tự Động */}
+              {/* Tùy chọn 1: Nút Thanh Toán Trực Tuyến PayOS */}
+              {payosData?.checkoutUrl && (
+                <div className="p-6 bg-blue-50 border border-blue-200 rounded-3xl text-center space-y-4 shadow-sm">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">
+                    🚀 THANH TOÁN TỰ ĐỘNG QUA PAYOS GATEWAY
+                  </div>
+                  <h4 className="text-base font-bold text-slate-900">
+                    Chuyển sang Cổng Thanh Toán PayOS (Quét QR hoặc Thẻ)
+                  </h4>
+                  <p className="text-xs text-slate-600 max-w-md mx-auto">
+                    Hệ thống sẽ tự động xác thực giao dịch và kích hoạt dịch vụ của bạn trong vòng vài giây.
+                  </p>
+                  <a
+                    href={payosData.checkoutUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-2xl shadow-lg shadow-blue-500/25 transition-all"
+                  >
+                    <span>Mở Cổng Thanh Toán PayOS Ngay</span>
+                    <span>↗</span>
+                  </a>
+                </div>
+              )}
+
+              {/* Tùy chọn 2: Quét Mã VietQR Chuyển Khoản Trực Tiếp */}
               <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-4">
                 <div className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Quét Mã VietQR Chuyển Khoản Tự Động 24/7
+                  Hoặc Quét Mã VietQR Chuyển Khoản Ngân Hàng 24/7
                 </div>
 
-                {/* QR Code VietQR */}
                 <div className="inline-block p-3 bg-white border border-slate-200 rounded-2xl shadow-sm">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={`https://img.vietqr.io/image/MB-0333336666-compact2.png?amount=${createdOrder.totalAmount}&addInfo=${encodeURIComponent(createdOrder.orderCode)}&accountName=CONG%20TY%20CLOUDSERVICE`}
-                    alt="VietQR Payment"
+                    src={payosData?.qrCode || `https://img.vietqr.io/image/MB-0333336666-compact2.png?amount=${createdOrder.totalAmount}&addInfo=${encodeURIComponent(createdOrder.orderCode)}&accountName=CONG%20TY%20CLOUDSERVICE`}
+                    alt="Payment QR"
                     className="w-52 h-52 mx-auto object-contain"
                   />
                 </div>
@@ -619,10 +663,10 @@ function OrderFormContent() {
                   ← Chỉnh Sửa Thông Tin
                 </button>
                 <Link
-                  href="/"
+                  href="/my-plans"
                   className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs text-center transition-colors shadow-md shadow-blue-500/20"
                 >
-                  Hoàn Tất & Về Trang Chủ
+                  Xem Gói Dịch Vụ Của Tôi →
                 </Link>
               </div>
             </div>

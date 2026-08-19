@@ -35,6 +35,9 @@ builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 // Cấu hình Resend Email Service
 builder.Services.AddScoped<IEmailService, ResendEmailService>();
 
+// Cấu hình PayOS Payment Gateway
+builder.Services.AddScoped<IPayOSService, PayOSService>();
+
 // Cấu hình JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"];
 if (string.IsNullOrWhiteSpace(jwtKey))
