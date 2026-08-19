@@ -58,6 +58,8 @@ function OrderFormContent() {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState(300); // 5 phút = 300 giây
+  const [isExpired, setIsExpired] = useState(false);
 
   // 1. Kiểm tra trạng thái Đăng Nhập & Tự động điền thông tin người dùng
   useEffect(() => {
@@ -120,10 +122,35 @@ function OrderFormContent() {
     fetchPlan();
   }, [planIdParam]);
 
-  // 3. Polling tự động kiểm tra trạng thái thanh toán khi ở Step 2
+  // 3. Polling tự động kiểm tra trạng thái thanh toán & Bộ đếm 5 phút tự động hủy giao dịch
   useEffect(() => {
-    if (step !== 2 || !payosData?.orderCode || paymentSuccess) return;
+    if (step !== 2 || !payosData?.orderCode || paymentSuccess || isExpired) return;
 
+    // Bộ đếm lùi 5 phút (300 giây)
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setIsExpired(true);
+          // Tự động gửi lệnh hủy giao dịch lên PayOS & Cập nhật đơn hàng thành Đã hủy
+          if (createdOrder?.id) {
+            apiFetch(`/api/order-requests/${createdOrder.id}/status`, {
+              method: "PATCH",
+              body: JSON.stringify({ status: 3, notes: "Hệ thống: Tự động hủy đơn do quá hạn thanh toán 5 phút" })
+            }).catch(() => {});
+          }
+          if (payosData?.orderCode) {
+            apiFetch(`/api/payment/cancel/${payosData.orderCode}`, {
+              method: "POST"
+            }).catch(() => {});
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // Polling kiểm tra trạng thái thanh toán định kỳ 3 giây
     const interval = setInterval(async () => {
       try {
         const res = await apiFetch(`/api/payment/info/${payosData.orderCode}`);
@@ -134,13 +161,17 @@ function OrderFormContent() {
             setPaymentSuccess(true);
             setPaymentError(null);
             clearInterval(interval);
+            clearInterval(timer);
           }
         }
       } catch {}
     }, 3000);
 
-    return () => clearInterval(interval);
-  }, [step, payosData, paymentSuccess]);
+    return () => {
+      clearInterval(timer);
+      clearInterval(interval);
+    };
+  }, [step, payosData, paymentSuccess, isExpired, createdOrder]);
 
   // Hàm thủ công kiểm tra kết quả giao dịch
   const handleCheckPaymentStatus = async () => {
@@ -748,8 +779,37 @@ function OrderFormContent() {
         {step === 2 && createdOrder && (
           <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in">
             
-            {/* GIAO DIỆN KHI THANH TOÁN THÀNH CÔNG (HÌNH 2) */}
-            {paymentSuccess ? (
+            {/* GIAO DIỆN KHI GIAO DỊCH HẾT HẠN (QUÁ 5 PHÚT) */}
+            {isExpired ? (
+              <div className="bg-rose-50 border border-rose-300 rounded-3xl p-10 text-center space-y-4 shadow-sm animate-in zoom-in-95 my-6">
+                <div className="w-16 h-16 bg-rose-600 text-white rounded-full flex items-center justify-center text-3xl mx-auto shadow-lg shadow-rose-600/30">
+                  ✕
+                </div>
+                <h2 className="text-2xl font-black text-rose-950 tracking-tight">Giao Dịch Đã Hết Hạn!</h2>
+                <p className="text-xs text-rose-800/90 max-w-md mx-auto leading-relaxed">
+                  Đã quá thời gian chờ thanh toán (5 phút). Đơn hàng <strong>{createdOrder.orderCode}</strong> đã được hệ thống tự động hủy để đảm bảo an toàn giao dịch.
+                </p>
+                <div className="pt-4 flex justify-center gap-3">
+                  <button
+                    onClick={() => {
+                      setTimeLeft(300);
+                      setIsExpired(false);
+                      setStep(1);
+                    }}
+                    className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-2xl shadow-md transition-all inline-block hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                  >
+                    🔄 Đặt Hàng Lại Gói Này
+                  </button>
+                  <Link
+                    href="/pricing"
+                    className="px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-2xl transition-all inline-block"
+                  >
+                    Xem Các Gói Khác
+                  </Link>
+                </div>
+              </div>
+            ) : paymentSuccess ? (
+              /* GIAO DIỆN KHI THANH TOÁN THÀNH CÔNG (HÌNH 2) */
               <div className="bg-emerald-50 border border-emerald-300 rounded-3xl p-10 text-center space-y-4 shadow-sm animate-in zoom-in-95 my-6">
                 <div className="w-16 h-16 bg-emerald-600 text-white rounded-full flex items-center justify-center text-3xl mx-auto shadow-lg shadow-emerald-600/30">
                   ✓
@@ -770,12 +830,19 @@ function OrderFormContent() {
             ) : (
               /* GIAO DIỆN KHI ĐANG CHỜ THANH TOÁN (HÌNH 1) */
               <>
-                <div className="bg-blue-50 border border-blue-200 rounded-3xl p-5 text-center space-y-1 shadow-xs">
-                  <div className="inline-flex items-center gap-2 text-xs font-bold text-blue-700">
-                    <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping"></span>
-                    ĐANG CHỜ THANH TOÁN QUÉT MÃ QR
+                <div className="bg-blue-50 border border-blue-200 rounded-3xl p-5 text-center space-y-2 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <div className="inline-flex items-center gap-2 text-xs font-bold text-blue-700">
+                      <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping"></span>
+                      ĐANG CHỜ THANH TOÁN QUÉT MÃ QR
+                    </div>
+                    {/* Đồng hồ đếm ngược 5 phút */}
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-blue-200 rounded-full font-mono text-xs font-bold text-rose-600 shadow-xs">
+                      <span>⏱️ Hết hạn sau:</span>
+                      <span>{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, "0")}</span>
+                    </div>
                   </div>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-slate-500 text-left sm:text-center">
                     Mở ứng dụng Ngân hàng bất kỳ để quét mã QR bên dưới, hệ thống sẽ tự động duyệt ngay sau khi chuyển khoản.
                   </p>
                 </div>

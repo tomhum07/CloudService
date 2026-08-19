@@ -252,29 +252,14 @@ export default function AdminOrdersPage() {
                           {ord.status}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-right space-x-2">
+                      <td className="py-3.5 px-4 text-right">
                         <button
                           onClick={() => setSelectedOrder(ord)}
-                          className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-[11px] transition-colors"
+                          className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-bold text-[11px] transition-colors border border-blue-200 inline-flex items-center gap-1.5"
                         >
-                          👁️ Chi Tiết
+                          <span>👁️</span>
+                          <span>Xem Chi Tiết</span>
                         </button>
-                        {ord.statusCode === 0 && (
-                          <>
-                            <button
-                              onClick={() => handleOrderStatus(ord.id, "Hoàn tất")}
-                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-[11px] transition-colors shadow-xs"
-                            >
-                              Duyệt
-                            </button>
-                            <button
-                              onClick={() => handleOrderStatus(ord.id, "Đã hủy")}
-                              className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-[11px] transition-colors shadow-xs"
-                            >
-                              Hủy
-                            </button>
-                          </>
-                        )}
                       </td>
                     </tr>
                   ))
@@ -516,26 +501,13 @@ export default function AdminOrdersPage() {
             </div>
 
             {/* Footer Modal Action */}
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
-              {selectedOrder.statusCode === 0 && (
-                <>
-                  <button
-                    onClick={() => handleOrderStatus(selectedOrder.id, "Hoàn tất")}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition-colors shadow-sm"
-                  >
-                    ✓ Duyệt & Kích Hoạt
-                  </button>
-                  <button
-                    onClick={() => handleOrderStatus(selectedOrder.id, "Đã hủy")}
-                    className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-xs transition-colors shadow-sm"
-                  >
-                    ✕ Hủy Đơn Hàng
-                  </button>
-                </>
-              )}
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+              <span className="italic text-[11px]">
+                * Hệ thống tự động đồng bộ và kích hoạt đơn hàng qua cổng thanh toán PayOS.
+              </span>
               <button
                 onClick={() => setSelectedOrder(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition-colors"
+                className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-xs transition-colors shadow-xs"
               >
                 Đóng
               </button>
