@@ -1,52 +1,85 @@
 "use client";
-import React, { use, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { apiFetch } from "@/utils/api";
 
-export default function ArticleDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = use(params);
-  const idStr = resolvedParams.id;
-
+export default function NewsDetailPage() {
+  const { id } = useParams();
   const [article, setArticle] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadArticle() {
+    async function fetchArticle() {
       try {
-        const res = await apiFetch(`/api/news/${idStr}`);
+        const res = await apiFetch(`/api/news/${id}`);
         if (res.ok) {
           const data = await res.json();
           setArticle(data);
-          setLoading(false);
-          return;
+        } else {
+          setArticle(null);
         }
       } catch (err) {
-        console.warn("Lỗi tải chi tiết bài viết:", err);
+        console.error("Lỗi khi tải chi tiết bài viết:", err);
+      } finally {
+        setLoading(false);
       }
-      setArticle(null);
-      setLoading(false);
     }
 
-    loadArticle();
-  }, [idStr]);
+    if (id) fetchArticle();
+  }, [id]);
+
+  // Helper parser for Markdown images: ![alt](url)
+  const renderFormattedContent = (content: string) => {
+    if (!content) return null;
+    
+    // Split by image markdown pattern ![alt](url)
+    const parts = content.split(/(!\[.*?\]\(.*?\))/g);
+
+    return parts.map((part, index) => {
+      const match = part.match(/^!\[(.*?)\]\((.*?)\)$/);
+      if (match) {
+        const alt = match[1] || "Hình ảnh bài viết";
+        const url = match[2];
+        return (
+          <figure key={index} className="my-6 text-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={url}
+              alt={alt}
+              className="rounded-2xl max-h-[480px] w-auto mx-auto object-cover border border-slate-200 shadow-md"
+            />
+            {alt && <figcaption className="text-xs text-slate-400 mt-2 italic">{alt}</figcaption>}
+          </figure>
+        );
+      }
+
+      return (
+        <div key={index} className="whitespace-pre-line leading-loose text-slate-700 text-sm">
+          {part}
+        </div>
+      );
+    });
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center py-20">
-        <span className="w-8 h-8 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin"></span>
+        <div className="text-center space-y-3">
+          <div className="w-8 h-8 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+          <p className="text-xs text-slate-500 font-medium">Đang tải nội dung bài viết...</p>
+        </div>
       </div>
     );
   }
 
   if (!article) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center py-20 px-4 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-3xl mb-4 border border-rose-200">
-          📰
-        </div>
-        <h1 className="text-2xl font-bold text-slate-900 mb-2">Không Tìm Thấy Bài Viết</h1>
-        <p className="text-xs text-slate-500 max-w-md mb-6">
-          Bài viết bạn đang tìm kiếm không tồn tại hoặc đã bị ẩn khỏi hệ thống cơ sở dữ liệu.
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-4 py-20 text-center">
+        <div className="text-5xl mb-4">📰</div>
+        <h1 className="text-xl font-bold text-slate-900 mb-2">Bài Viết Không Tồn Tại Hoặc Đã Bị Ẩn</h1>
+        <p className="text-xs text-slate-500 max-w-sm mb-6">
+          Nội dung bạn đang tìm kiếm có thể đã được gỡ bỏ hoặc tạm ẩn trong hệ thống.
         </p>
         <Link
           href="/news"
@@ -80,9 +113,9 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
           </h1>
 
           <div className="flex items-center gap-4 text-xs text-slate-400 pt-2 border-t border-slate-100">
-            <span>📅 Ngày đăng: {new Date(article.createdAt || Date.now()).toLocaleDateString("vi-VN")}</span>
+            <span>📅 Ngày đăng: {new Date(article.publishedAt || article.createdAt || Date.now()).toLocaleDateString("vi-VN")}</span>
             <span>•</span>
-            <span>✍️ Tác giả: Ban Biên Tập CloudService</span>
+            <span>✍️ Tác giả: {article.authorName || "Ban Biên Tập CloudService"}</span>
           </div>
         </div>
       </section>
@@ -96,8 +129,8 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
             </div>
           )}
 
-          <div className="text-sm text-slate-700 leading-loose space-y-4 whitespace-pre-line">
-            {article.content}
+          <div className="space-y-4">
+            {renderFormattedContent(article.content)}
           </div>
 
           <div className="pt-8 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">

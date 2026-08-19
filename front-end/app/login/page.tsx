@@ -87,11 +87,11 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1.5">Tên Đăng Nhập *</label>
+            {/* <label className="text-xs font-bold text-slate-700 block mb-1.5">Tên Đăng Nhập</label> */}
             <input
               type="text"
               required
-              placeholder="VD: admin, customer01"
+              placeholder="Username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
@@ -100,19 +100,19 @@ export default function LoginPage() {
 
           <div>
             <div className="flex justify-between items-center mb-1.5">
-              <label className="text-xs font-bold text-slate-700">Mật Khẩu *</label>
-              <Link href="/forgot-password" className="text-xs font-semibold text-blue-600 hover:text-blue-700">
-                Quên mật khẩu?
-              </Link>
+              {/* <label className="text-xs font-bold text-slate-700">Mật Khẩu</label> */}
             </div>
             <input
               type="password"
               required
-              placeholder="••••••••"
+              placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
             />
+              <div className="mt-2 text-right">
+                  <Link href="/forgot-password" className="text-xs font-semibold text-blue-600 hover:text-blue-700">Quên mật khẩu?</Link>
+              </div>
           </div>
 
           <button

@@ -135,18 +135,34 @@ namespace CloudService.Infrastructure.Services
 
         public async Task<NewsArticleDto> CreateAsync(CreateNewsArticleRequest request)
         {
+            var slug = string.IsNullOrWhiteSpace(request.Slug)
+                ? GenerateSlug(request.Title)
+                : request.Slug.Trim();
+
+            // Ensure unique slug
+            var baseSlug = slug;
+            var counter = 1;
+            while (await _context.NewsArticles.IgnoreQueryFilters().AnyAsync(x => x.Slug == slug))
+            {
+                slug = $"{baseSlug}-{counter++}";
+            }
+
+            var publishedDate = request.IsActive
+                ? (request.PublishedAt ?? System.DateTime.UtcNow)
+                : (DateTime?)null;
+
             var article = new NewsArticle
             {
-                Title = request.Title,
-                Slug = request.Slug,
-                Summary = request.Summary,
-                Content = request.Content,
+                Title = request.Title.Trim(),
+                Slug = slug,
+                Summary = request.Summary?.Trim(),
+                Content = request.Content ?? string.Empty,
                 AuthorId = request.AuthorId,
-                PublishedAt = request.PublishedAt
+                PublishedAt = publishedDate,
+                IsActive = request.IsActive
             };
 
             _context.NewsArticles.Add(article);
-
             await _context.SaveChangesAsync();
 
             return (await GetByIdAsync(article.Id))!;
@@ -163,16 +179,66 @@ namespace CloudService.Infrastructure.Services
             if (article == null)
                 return null;
 
-            article.Title = request.Title;
-            article.Slug = request.Slug;
-            article.Summary = request.Summary;
-            article.Content = request.Content;
-            article.PublishedAt = request.PublishedAt;
+            var slug = string.IsNullOrWhiteSpace(request.Slug)
+                ? GenerateSlug(request.Title)
+                : request.Slug.Trim();
+
+            var baseSlug = slug;
+            var counter = 1;
+            while (await _context.NewsArticles.IgnoreQueryFilters().AnyAsync(x => x.Slug == slug && x.Id != id))
+            {
+                slug = $"{baseSlug}-{counter++}";
+            }
+
+            article.Title = request.Title.Trim();
+            article.Slug = slug;
+            article.Summary = request.Summary?.Trim();
+            article.Content = request.Content ?? string.Empty;
+            article.PublishedAt = request.IsActive 
+                ? (request.PublishedAt ?? article.PublishedAt ?? System.DateTime.UtcNow) 
+                : null;
             article.IsActive = request.IsActive;
 
             await _context.SaveChangesAsync();
 
             return await GetByIdAsync(id);
+        }
+
+        private static string GenerateSlug(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return "bai-viet-" + System.Guid.NewGuid().ToString("N")[..6];
+
+            string unaccented = text.ToLowerInvariant();
+            // Remove vietnamese accents
+            string[] vietnameseSigns = new string[]
+            {
+                "aAeEoOuUiIdDyY",
+                "áàạảãâấầậẩẫăắằặẳẵ",
+                "ÁÀẠẢÃÂẤẦẬẨẪĂẮẰẶẲẴ",
+                "éèẹẻẽêếềệểễ",
+                "ÉÈẸẺẼÊẾỀỆỂỄ",
+                "óòọỏõôốồộổỗơớờợởỡ",
+                "ÓÒỌỎÕÔỐỒỘỔỖƠỚỜỢỞỠ",
+                "úùụủũưứừựửữ",
+                "ÚÙỤỦŨƯỨỪỰỬỮ",
+                "íìịỉĩ",
+                "ÍÌỊỈĨ",
+                "đ",
+                "Đ",
+                "ýỳỵỷỹ",
+                "ÝỲỴỶỸ"
+            };
+
+            for (int i = 1; i < vietnameseSigns.Length; i++)
+            {
+                for (int j = 0; j < vietnameseSigns[i].Length; j++)
+                    unaccented = unaccented.Replace(vietnameseSigns[i][j], vietnameseSigns[0][i - 1]);
+            }
+
+            var clean = System.Text.RegularExpressions.Regex.Replace(unaccented, @"[^a-z0-9\s-]", "");
+            clean = System.Text.RegularExpressions.Regex.Replace(clean, @"\s+", " ").Trim();
+            clean = clean.Replace(" ", "-");
+            return string.IsNullOrWhiteSpace(clean) ? "bai-viet-" + System.Guid.NewGuid().ToString("N")[..6] : clean;
         }
 
         public async Task<bool> DeleteAsync(int id)

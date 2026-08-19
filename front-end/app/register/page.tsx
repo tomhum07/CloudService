@@ -109,11 +109,11 @@ export default function RegisterPage() {
 
         <form onSubmit={handleRegister} className="space-y-4">
           <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1.5">Họ và Tên *</label>
+            {/* <label className="text-xs font-bold text-slate-700 block mb-1.5">Họ và Tên</label> */}
             <input
               type="text"
               required
-              placeholder="VD: Nguyễn Văn A"
+              placeholder="Họ và Tên"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
@@ -121,11 +121,11 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1.5">Tên Đăng Nhập *</label>
+            {/* <label className="text-xs font-bold text-slate-700 block mb-1.5">Tên Đăng Nhập</label> */}
             <input
               type="text"
               required
-              placeholder="VD: nguyen_a"
+              placeholder="Tên Đăng Nhập"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
@@ -133,11 +133,11 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1.5">Địa Chỉ Email *</label>
+            {/* <label className="text-xs font-bold text-slate-700 block mb-1.5">Địa Chỉ Email</label> */}
             <input
               type="email"
               required
-              placeholder="VD: user@domain.com"
+              placeholder="Địa Chỉ Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
@@ -145,11 +145,11 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1.5">Mật Khẩu *</label>
+            {/* <label className="text-xs font-bold text-slate-700 block mb-1.5">Mật Khẩu</label> */}
             <input
               type="password"
               required
-              placeholder="Tối thiểu 6 ký tự"
+              placeholder="Mật Khẩu"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
