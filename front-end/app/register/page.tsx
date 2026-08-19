@@ -57,18 +57,18 @@ export default function RegisterPage() {
           password,
           fullName: trimmedFullName,
           email: trimmedEmail,
-          roleId: 0 // defaults to Customer on Backend
+          roleId: 0
         })
       });
 
       if (res.ok) {
-        setSuccess("Đăng ký tài khoản khách hàng thành công! Đang chuyển hướng đăng nhập...");
+        setSuccess("Đăng ký tài khoản thành công! Đang chuyển đến trang đăng nhập...");
         setTimeout(() => {
           router.push("/login");
         }, 1500);
       } else {
         const errData = await res.json();
-        setError(errData.message || "Đăng ký thất bại. Tên đăng nhập hoặc email đã tồn tại.");
+        setError(errData.message || "Tên đăng nhập hoặc email đã tồn tại trên hệ thống.");
       }
     } catch {
       setError("Không thể kết nối đến máy chủ Backend.");
@@ -78,101 +78,102 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#030712] flex items-center justify-center px-4 relative overflow-hidden pt-28 pb-12">
-      {/* Glow background */}
-      <div className="absolute w-96 h-96 bg-blue-500/10 rounded-full blur-[120px] top-1/4 left-1/4 pointer-events-none"></div>
-      <div className="absolute w-96 h-96 bg-purple-500/10 rounded-full blur-[120px] bottom-1/4 right-1/4 pointer-events-none"></div>
-
-      <div className="w-full max-w-md glassmorphism rounded-2xl p-8 border border-white/5 relative z-10 shadow-2xl">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-16">
+      <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-8 shadow-xl">
+        
+        {/* Brand Header */}
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center font-bold text-white text-xl shadow-lg shadow-blue-500/20 mx-auto mb-4">
-            C
-          </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Đăng Ký Tài Khoản</h1>
-          <p className="text-xs text-gray-400 mt-2">Đăng ký tài khoản khách hàng mới sử dụng dịch vụ</p>
+          <Link href="/" className="inline-flex items-center gap-2.5 mb-4 group">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-black text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
+              C
+            </div>
+            <span className="text-2xl font-black tracking-tight text-slate-900">
+              CloudService
+            </span>
+          </Link>
+          <h1 className="text-xl font-bold text-slate-900 mb-1">Tạo Tài Khoản Khách Hàng</h1>
+          <p className="text-xs text-slate-500">Khởi tạo và quản trị hạ tầng Cloud của bạn dễ dàng</p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-400 font-medium">
+          <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium mb-6">
             ⚠️ {error}
           </div>
         )}
 
         {success && (
-          <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 font-medium">
+          <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium mb-6">
             ✓ {success}
           </div>
         )}
 
-        <form onSubmit={handleRegister} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-gray-300">Họ và Tên</label>
+        <form onSubmit={handleRegister} className="space-y-4">
+          <div>
+            <label className="text-xs font-bold text-slate-700 block mb-1.5">Họ và Tên *</label>
             <input
               type="text"
               required
+              placeholder="VD: Nguyễn Văn A"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="Nhập họ và tên đầy đủ..."
-              className="w-full h-11 px-4 rounded-xl bg-gray-900/50 border border-white/5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:bg-gray-900 transition-all"
+              className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
             />
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-gray-300">Email</label>
+          <div>
+            <label className="text-xs font-bold text-slate-700 block mb-1.5">Tên Đăng Nhập *</label>
+            <input
+              type="text"
+              required
+              placeholder="VD: nguyen_a"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-bold text-slate-700 block mb-1.5">Địa Chỉ Email *</label>
             <input
               type="email"
               required
+              placeholder="VD: user@domain.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Nhập địa chỉ email..."
-              className="w-full h-11 px-4 rounded-xl bg-gray-900/50 border border-white/5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:bg-gray-900 transition-all"
+              className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
             />
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-gray-300">Tên Đăng Nhập</label>
-            <input
-              type="text"
-              required
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Nhập tên tài khoản..."
-              className="w-full h-11 px-4 rounded-xl bg-gray-900/50 border border-white/5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:bg-gray-900 transition-all"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-gray-300">Mật Khẩu</label>
+          <div>
+            <label className="text-xs font-bold text-slate-700 block mb-1.5">Mật Khẩu *</label>
             <input
               type="password"
               required
+              placeholder="Tối thiểu 6 ký tự"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Tối thiểu 6 ký tự..."
-              minLength={6}
-              className="w-full h-11 px-4 rounded-xl bg-gray-900/50 border border-white/5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:bg-gray-900 transition-all"
+              className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-11 mt-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold flex items-center justify-center shadow-lg shadow-blue-500/10 transition-all duration-300 hover:-translate-y-0.5 disabled:opacity-50 disabled:pointer-events-none"
+            className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-xs transition-all shadow-md shadow-blue-500/20 mt-2"
           >
-            {loading ? (
-              <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-            ) : (
-              "Đăng Ký Tài Khoản"
-            )}
+            {loading ? "Đang xử lý..." : "Đăng Ký Tài Khoản"}
           </button>
+        </form>
 
-          <p className="text-xs text-gray-400 text-center mt-4">
+        <div className="mt-8 pt-6 border-t border-slate-100 text-center">
+          <p className="text-xs text-slate-500">
             Đã có tài khoản?{" "}
-            <Link href="/admin/login" className="text-blue-400 hover:text-blue-300 transition-colors font-medium">
+            <Link href="/login" className="font-bold text-blue-600 hover:text-blue-700">
               Đăng nhập ngay
             </Link>
           </p>
-        </form>
+        </div>
+
       </div>
     </div>
   );

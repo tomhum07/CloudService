@@ -27,7 +27,6 @@ namespace CloudService.Infrastructure.Services
             }
 
             var prices = await query
-                .Include(p => p.Promotion)
                 .Where(p => p.PlanId == planId)
                 .Select(p => new PlanPriceDto
                 {
@@ -37,7 +36,7 @@ namespace CloudService.Infrastructure.Services
                     Price = p.Price,
                     PromotionId = p.PromotionId,
                     PromotionName = p.Promotion != null ? p.Promotion.Name : null,
-                    DiscountPercentage = p.Promotion != null ? p.Promotion.DiscountPercentage : (decimal?)null,
+                    DiscountPercentage = p.Promotion != null ? (decimal?)p.Promotion.DiscountPercentage : null,
                     IsActive = p.IsActive
                 })
                 .ToListAsync();
@@ -140,7 +139,6 @@ namespace CloudService.Infrastructure.Services
         {
             var price = await _context.PlanPrices
                 .IgnoreQueryFilters()
-                .Include(p => p.Promotion)
                 .Where(p => p.Id == priceId)
                 .Select(p => new PlanPriceDto
                 {
@@ -150,7 +148,7 @@ namespace CloudService.Infrastructure.Services
                     Price = p.Price,
                     PromotionId = p.PromotionId,
                     PromotionName = p.Promotion != null ? p.Promotion.Name : null,
-                    DiscountPercentage = p.Promotion != null ? p.Promotion.DiscountPercentage : (decimal?)null,
+                    DiscountPercentage = p.Promotion != null ? (decimal?)p.Promotion.DiscountPercentage : null,
                     IsActive = p.IsActive
                 })
                 .FirstAsync();

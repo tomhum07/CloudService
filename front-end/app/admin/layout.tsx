@@ -9,6 +9,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [role, setRole] = useState("Editor");
+  const [username, setUsername] = useState("Admin");
 
   useEffect(() => {
     if (pathname === "/admin/login") {
@@ -17,7 +18,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
 
     const verifySession = async () => {
-      // Nếu chưa có Access Token trong RAM, chạy Silent Refresh để lấy token mới từ Cookie
       let token = getAccessToken();
       if (!token) {
         const success = await refreshAccessToken();
@@ -34,8 +34,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           if (payloadPart) {
             const payload = JSON.parse(window.atob(payloadPart));
             const userRole = payload["role"] || payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || "Customer";
+            const name = payload["sub"] || payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || payload["name"] || "Admin";
             
-            // CHẶN NGAY NẾU LÀ KHÁCH HÀNG (CUSTOMER)
+            setUsername(name);
+
+            // Chặn khách hàng
             if (userRole !== "Admin" && userRole !== "Editor") {
               setRole("Unauthorized");
               setChecking(false);
@@ -76,28 +79,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (checking) {
     return (
-      <div className="min-h-screen bg-[#0b0f19] flex items-center justify-center">
-        <span className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></span>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <span className="w-8 h-8 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin"></span>
       </div>
     );
   }
 
-  // TRANG CHẶN KHÁCH HÀNG
+  // TRANG TỪ CHỐI TRUY CẬP KHÁCH HÀNG (Clean Light Theme)
   if (role === "Unauthorized") {
     return (
-      <div className="min-h-screen bg-[#030712] text-white flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-20 h-20 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center text-4xl mb-4 shadow-lg shadow-red-500/10">
+      <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-20 h-20 rounded-3xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center text-4xl mb-6 shadow-sm">
           🚫
         </div>
-        <h1 className="text-2xl font-bold text-white mb-2">Truy Cập Bị Từ Chối</h1>
-        <p className="text-sm text-gray-400 max-w-md mb-6 leading-relaxed">
-          Tài khoản của bạn là <span className="text-yellow-400 font-semibold">Khách Hàng (Customer)</span> và không có quyền truy cập vào Cổng quản trị CloudAdmin. Vui lòng quay về trang chủ hoặc đăng nhập bằng tài khoản Quản trị viên.
+        <h1 className="text-2xl font-black text-slate-900 mb-2">Truy Cập Bị Từ Chối</h1>
+        <p className="text-xs sm:text-sm text-slate-600 max-w-md mb-6 leading-relaxed">
+          Tài khoản của bạn là <span className="text-rose-600 font-bold">Khách Hàng (Customer)</span> và không có quyền truy cập vào Cổng quản trị CloudAdmin. Vui lòng quay về trang chủ hoặc đăng nhập bằng tài khoản Quản trị viên.
         </p>
-        <div className="flex flex-wrap gap-4 justify-center">
-          <Link href="/" className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-sm font-semibold transition-all">
+        <div className="flex flex-wrap gap-3 justify-center">
+          <Link href="/" className="px-5 py-2.5 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-xs">
             🏠 Về Trang Chủ
           </Link>
-          <button onClick={handleLogout} className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition-all">
+          <button onClick={handleLogout} className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition-all">
             🔑 Đăng Nhập Quản Trị
           </button>
         </div>
@@ -106,76 +109,90 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   const navLinks = [
-    { label: "Dashboard", href: "/admin/dashboard", icon: "📊" },
-    { label: "Quản lý Danh mục", href: "/admin/categories", icon: "📂" },
-    { label: "Quản lý Gói cước", href: "/admin/plans", icon: "📦" },
-    { label: "Bảng giá & Khuyến mãi", href: "/admin/prices", icon: "💰" },
-    { label: "Duyệt Đơn & CTV", href: "/admin/orders", icon: "🛒" },
-    { label: "Quản lý Tin tức", href: "/admin/news", icon: "📰" },
-    { label: "Nhật ký hệ thống", href: "/admin/audit-logs", icon: "📜" },
+    { label: "Bảng Điều Khiển", href: "/admin/dashboard", icon: "📊" },
+    { label: "Quản Lý Danh Mục", href: "/admin/categories", icon: "📂" },
+    { label: "Quản Lý Gói Cước", href: "/admin/plans", icon: "📦" },
+    { label: "Bảng Giá & Chu Kỳ", href: "/admin/prices", icon: "💰" },
+    { label: "Duyệt Đơn Hàng & CTV", href: "/admin/orders", icon: "🛒" },
+    { label: "Quản Lý Tin Tức", href: "/admin/news", icon: "📰" },
+    { label: "Nhật Ký Hệ Thống", href: "/admin/audit-logs", icon: "📜" },
   ];
 
   if (role === "Admin") {
-    navLinks.push({ label: "Quản lý Tài khoản", href: "/admin/users", icon: "👤" });
+    navLinks.push({ label: "Quản Lý Tài Khoản", href: "/admin/users", icon: "👤" });
   }
 
-  navLinks.push({ label: "Đổi mật khẩu", href: "/admin/change-password", icon: "🔑" });
+  navLinks.push({ label: "Đổi Mật Khẩu", href: "/admin/change-password", icon: "🔑" });
 
   return (
-    <div className="min-h-screen bg-[#0b0f19] text-white flex overflow-hidden">
-      {/* Sidebar */}
-      <aside className="w-64 border-r border-white/10 bg-[#0b0f19] flex-col hidden md:flex z-20">
-        <div className="p-6 border-b border-white/10">
-          <h2 className="text-xl font-bold text-blue-400">
-            CloudAdmin
-          </h2>
-          <p className="text-xs text-gray-400 mt-1">Management Portal</p>
+    <div className="min-h-screen bg-slate-50 text-slate-800 flex overflow-hidden selection:bg-blue-600 selection:text-white">
+      
+      {/* Sidebar Navigation */}
+      <aside className="w-64 border-r border-slate-200 bg-white flex-col hidden md:flex z-20 shadow-xs">
+        <div className="p-6 border-b border-slate-100 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center font-black text-white shadow-md shadow-blue-500/20">
+            C
+          </div>
+          <div>
+            <h2 className="text-base font-black text-slate-900 tracking-tight">
+              CloudAdmin
+            </h2>
+            <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider">Cổng Quản Trị Hệ Thống</p>
+          </div>
         </div>
         
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
+        <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
                   isActive
-                    ? "bg-blue-600/20 text-blue-400 border border-blue-500/30"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                    ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
+                    : "text-slate-600 hover:text-blue-600 hover:bg-blue-50/50"
                 }`}
               >
-                <span>{link.icon}</span>
+                <span className="text-base">{link.icon}</span>
                 <span>{link.label}</span>
               </Link>
             );
           })}
         </nav>
 
-        <div className="p-4 border-t border-white/10 flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold text-white">Vai trò: {role}</p>
-            <p className="text-[10px] text-gray-400">Đang hoạt động</p>
+        {/* User Role Footer */}
+        <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
+              {username.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-900 truncate max-w-[100px]">{username}</p>
+              <p className="text-[10px] text-emerald-600 font-semibold">{role}</p>
+            </div>
           </div>
           <button
             onClick={handleLogout}
-            className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all"
+            className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors"
             title="Đăng xuất"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
           </button>
         </div>
       </aside>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50">
+        
         {/* Top Navbar */}
-        <header className="h-16 border-b border-white/10 bg-[#0b0f19] flex items-center justify-between px-6 z-10">
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-medium text-gray-400">
-              Trang: <span className="text-white capitalize">{pathname.split("/").pop() || "Dashboard"}</span>
+        <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-8 z-10 shadow-xs">
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-medium text-slate-400">Khu vực:</span>
+            <span className="text-xs font-bold text-slate-800 bg-slate-100 px-3 py-1 rounded-lg">
+              {navLinks.find(l => l.href === pathname)?.label || "Quản Trị"}
             </span>
           </div>
 
@@ -183,25 +200,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Link
               href="/"
               target="_blank"
-              className="text-xs text-gray-400 hover:text-white flex items-center gap-1 bg-white/5 px-3 py-1.5 rounded-lg border border-white/5"
+              className="text-xs text-slate-600 hover:text-blue-600 font-bold flex items-center gap-1.5 bg-slate-50 hover:bg-blue-50 px-3.5 py-1.5 rounded-xl border border-slate-200 transition-all"
             >
-              <span>Xem trang chủ</span>
+              <span>🌐 Xem Trang Bán Hàng</span>
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
             </Link>
             
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-600 flex items-center justify-center font-bold text-white text-xs">
+            <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-sm shadow-blue-500/20">
               {role.charAt(0)}
             </div>
           </div>
         </header>
 
-        {/* Content View */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
+        {/* Dynamic Admin Body */}
+        <main className="flex-1 overflow-y-auto p-6 md:p-8">
           {children}
         </main>
       </div>
+
     </div>
   );
 }

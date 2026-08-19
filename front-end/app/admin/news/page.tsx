@@ -4,27 +4,8 @@ import { apiFetch } from "@/utils/api";
 
 const PRESET_CATEGORIES = ["Khuyến Mãi", "Sự Kiện", "Hướng Dẫn", "Tin Tức"];
 
-const INITIAL_MOCK_NEWS = [
-  {
-    id: 1,
-    title: "Chương trình khuyến mãi hè rực rỡ - Tặng 30% giá trị nạp",
-    summary: "Đón chào mùa hè sôi động, CloudService mang đến chương trình ưu đãi cực lớn cho toàn bộ khách hàng đăng ký mới dịch vụ.",
-    content: "Chi tiết ưu đãi: Tặng thêm 30% số tiền nạp tài khoản khi thực hiện giao dịch trong khung giờ vàng từ ngày 15/8 đến 31/8. Chương trình áp dụng tự động cho các gói Cloud VPS Pro và Hosting NVMe từ 6 tháng trở lên.",
-    categoryName: "Khuyến Mãi",
-    createdAt: "2026-08-10T08:00:00Z"
-  },
-  {
-    id: 2,
-    title: "Nâng cấp hạ tầng Datacenters tại Hà Nội và TP.HCM",
-    summary: "Nhằm mang lại trải nghiệm tốt nhất, chúng tôi vừa hoàn thành đợt bảo trì nâng cấp băng thông mạng lên 40Gbps.",
-    content: "Các kỹ sư mạng tại CloudService đã thực hiện nâng cấp thành công hệ thống chuyển mạch và bổ sung dung lượng băng thông xương sống quốc tế tại hai trung tâm Viettel IDC Sóng Thần và VNPT Nam Thăng Long, nâng tổng dung lượng lên gấp đôi.",
-    categoryName: "Sự Kiện",
-    createdAt: "2026-08-05T09:30:00Z"
-  }
-];
-
 export default function AdminNewsPage() {
-  const [articles, setArticles] = useState<any[]>(INITIAL_MOCK_NEWS);
+  const [articles, setArticles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
@@ -40,8 +21,9 @@ export default function AdminNewsPage() {
   const [content, setContent] = useState("");
   const [categoryName, setCategoryName] = useState("Tin Tức");
   const [isActive, setIsActive] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  // Load News from API
   const fetchNews = async () => {
     setLoading(true);
     try {
@@ -49,344 +31,307 @@ export default function AdminNewsPage() {
       if (res.ok) {
         const data = await res.json();
         const items = data.items || data;
-        if (Array.isArray(items) && items.length > 0) {
+        if (Array.isArray(items)) {
           setArticles(items);
-          setLoading(false);
-          return;
         }
       }
     } catch (err) {
-      console.warn("Lỗi API tin tức, chuyển chế độ mock:", err);
+      console.warn("Lỗi API tin tức:", err);
+    } finally {
+      setLoading(false);
     }
-    setArticles(INITIAL_MOCK_NEWS);
-    setLoading(false);
   };
 
   useEffect(() => {
     fetchNews();
   }, []);
 
-  const openCreateModal = () => {
+  const handleOpenCreate = () => {
     setEditingArticle(null);
     setTitle("");
     setSummary("");
     setContent("");
     setCategoryName("Tin Tức");
     setIsActive(true);
+    setFormError(null);
     setShowModal(true);
   };
 
-  const openEditModal = (article: any) => {
-    setEditingArticle(article);
-    setTitle(article.title);
-    setSummary(article.summary || "");
-    setContent(article.content);
-    setCategoryName(article.categoryName || "Tin Tức");
-    setIsActive(article.isActive !== false);
+  const handleOpenEdit = (art: any) => {
+    setEditingArticle(art);
+    setTitle(art.title);
+    setSummary(art.summary || "");
+    setContent(art.content || "");
+    setCategoryName(art.categoryName || art.category || "Tin Tức");
+    setIsActive(art.isActive !== false);
+    setFormError(null);
     setShowModal(true);
   };
 
-  const handleSave = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !summary || !content) {
-      alert("Vui lòng nhập đầy đủ các trường thông tin bắt buộc.");
-      return;
-    }
+    setFormError(null);
+    setSubmitting(true);
 
-    const payload = {
+    const body = {
       title,
       summary,
       content,
       categoryName,
-      slug: title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, ""),
       isActive
     };
 
     try {
-      if (editingArticle) {
-        // Update (PUT)
-        const res = await apiFetch(`/api/news/${editingArticle.id}`, {
-          method: "PUT",
-          body: JSON.stringify(payload)
-        });
-        if (res.ok) {
-          alert("Cập nhật bài viết thành công!");
-          fetchNews();
-        } else {
-          // Fallback simulation
-          setArticles(prev =>
-            prev.map(art => (art.id === editingArticle.id ? { ...art, ...payload } : art))
-          );
-          alert("Lưu bài viết thành công (Chế độ lưu trữ tạm thời).");
-        }
-      } else {
-        // Create (POST)
-        const res = await apiFetch("/api/news", {
-          method: "POST",
-          body: JSON.stringify(payload)
-        });
-        if (res.ok) {
-          alert("Tạo bài viết mới thành công!");
-          fetchNews();
-        } else {
-          // Fallback simulation
-          const newArt = {
-            id: Date.now(),
-            createdAt: new Date().toISOString(),
-            ...payload
-          };
-          setArticles(prev => [newArt, ...prev]);
-          alert("Tạo bài viết mới thành công (Chế độ lưu trữ tạm thời).");
-        }
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Đã xảy ra lỗi khi lưu bài viết.");
-    }
-
-    setShowModal(false);
-  };
-
-  const handleDelete = async (id: number) => {
-    const art = articles.find(a => a.id === id);
-    if (!art) return;
-    const isCurrentlyActive = art.isActive !== false;
-
-    if (!confirm(isCurrentlyActive ? "Bạn có chắc chắn muốn ẩn bài viết này không?" : "Bạn có chắc chắn muốn hiển thị lại bài viết này không?")) return;
-
-    try {
       let res;
-      if (isCurrentlyActive) {
-        res = await apiFetch(`/api/news/${id}`, {
-          method: "DELETE"
+      if (editingArticle) {
+        res = await apiFetch(`/api/news/${editingArticle.id}`, {
+          method: "PUT",
+          body: JSON.stringify(body)
         });
       } else {
-        res = await apiFetch(`/api/news/${id}`, {
-          method: "PUT",
-          body: JSON.stringify({
-            title: art.title,
-            summary: art.summary,
-            content: art.content,
-            categoryName: art.categoryName || "Tin Tức",
-            slug: art.slug || art.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, ""),
-            isActive: true
-          })
+        res = await apiFetch("/api/news", {
+          method: "POST",
+          body: JSON.stringify(body)
         });
       }
+
       if (res.ok) {
-        alert(isCurrentlyActive ? "Ẩn bài viết thành công!" : "Hiển thị lại bài viết thành công!");
+        setShowModal(false);
         fetchNews();
       } else {
-        setArticles(prev => prev.map(a => a.id === id ? { ...a, isActive: !isCurrentlyActive } : a));
-        alert(isCurrentlyActive ? "Ẩn thành công (Chế độ lưu trữ tạm thời)." : "Hiện thành công (Chế độ lưu trữ tạm thời).");
+        const errData = await res.json();
+        setFormError(errData.message || "Lưu bài viết thất bại.");
       }
+    } catch {
+      setFormError("Không thể kết nối đến máy chủ Backend.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleToggleStatus = async (id: number, currentActive: boolean) => {
+    try {
+      await apiFetch(`/api/news/${id}`, {
+        method: "DELETE"
+      });
+      fetchNews();
     } catch (err) {
-      console.error(err);
-      alert("Đã xảy ra lỗi khi cập nhật trạng thái bài viết.");
+      console.warn("Lỗi thay đổi trạng thái bài viết:", err);
     }
   };
 
   return (
     <div className="space-y-6">
       
-      {/* Header section */}
-      <div className="flex justify-between items-center">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-xl font-bold text-white">Quản Lý Tin Tức</h1>
-          <p className="text-xs text-slate-400 mt-1">Đăng tải cẩm nang, tài liệu kỹ thuật và khuyến mãi</p>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900">Quản Lý Tin Tức & Blog Kiến Thức</h1>
+          <p className="text-xs text-slate-500 mt-1">Dữ liệu bài viết thực tế được lưu trữ trực tiếp trong Database</p>
         </div>
         <button
-          onClick={openCreateModal}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white rounded-lg transition-colors"
+          onClick={handleOpenCreate}
+          className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-all shadow-md shadow-blue-500/20 flex items-center gap-2"
         >
-          + Viết Bài Mới
+          <span>➕</span>
+          <span>Viết Bài Mới</span>
         </button>
       </div>
 
-      {/* Articles Listing Table */}
-      {loading ? (
-        <div className="text-center py-20 text-slate-400 text-sm">Đang tải danh sách bài viết...</div>
-      ) : articles.length === 0 ? (
-        <div className="bg-slate-900 border border-white/5 rounded-2xl p-12 text-center text-xs text-slate-400">
-          Chưa có bài viết nào được đăng tải. Nhấn nút viết bài mới để bắt đầu.
-        </div>
-      ) : (
-        <div className="bg-slate-900 border border-white/5 rounded-2xl p-6">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-white/10 text-slate-400 font-semibold">
-                  <th className="pb-3">Tiêu đề bài viết</th>
-                  <th className="pb-3">Danh mục</th>
-                  <th className="pb-3">Ngày đăng</th>
-                  <th className="pb-3">Trạng thái</th>
-                  <th className="pb-3 text-right">Thao tác</th>
+      {/* Table */}
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50 text-slate-700 uppercase font-bold border-b border-slate-200">
+              <tr>
+                <th className="py-3.5 px-4">Tiêu Đề Bài Viết</th>
+                <th className="py-3.5 px-4">Chuyên Mục</th>
+                <th className="py-3.5 px-4">Tóm Tắt Nội Dung</th>
+                <th className="py-3.5 px-4">Ngày Đăng</th>
+                <th className="py-3.5 px-4">Trạng Thái</th>
+                <th className="py-3.5 px-4 text-right">Thao Tác</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-slate-400">Đang tải danh sách bài viết...</td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5 text-slate-300">
-                {articles.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((art) => (
-                  <tr key={art.id} className="hover:bg-white/5 transition-colors">
-                    <td className="py-3.5 pr-4 max-w-sm truncate font-bold text-slate-200">
-                      {art.title}
-                    </td>
-                    <td className="py-3.5">
-                      <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-semibold">
-                        {art.categoryName || "Tin Tức"}
+              ) : articles.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-slate-400">Chưa có bài viết nào trong cơ sở dữ liệu.</td>
+                </tr>
+              ) : (
+                articles.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((art) => (
+                  <tr key={art.id} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="py-3.5 px-4 font-bold text-slate-900 max-w-xs truncate">{art.title}</td>
+                    <td className="py-3.5 px-4">
+                      <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold">
+                        {art.categoryName || art.category || "Tin Tức"}
                       </span>
                     </td>
-                    <td className="py-3.5 text-slate-500">
-                      {new Date(art.createdAt).toLocaleDateString("vi-VN")}
+                    <td className="py-3.5 px-4 text-slate-600 max-w-xs truncate">{art.summary || "-"}</td>
+                    <td className="py-3.5 px-4 text-slate-500 font-mono text-[11px]">
+                      {new Date(art.createdAt || Date.now()).toLocaleDateString("vi-VN")}
                     </td>
-                    <td className="py-3.5">
+                    <td className="py-3.5 px-4">
                       {art.isActive !== false ? (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-green-500/10 text-green-400 border border-green-500/20">Đang hiện</span>
+                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                          Đã xuất bản
+                        </span>
                       ) : (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-red-500/10 text-red-400 border border-red-500/20">Đang ẩn</span>
+                        <span className="px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold">
+                          Bản nháp / Ẩn
+                        </span>
                       )}
                     </td>
-                    <td className="py-3.5 text-right space-x-2">
+                    <td className="py-3.5 px-4 text-right space-x-1">
                       <button
-                        onClick={() => openEditModal(art)}
-                        className="px-2.5 py-1.5 bg-slate-850 hover:bg-slate-800 border border-white/5 text-[10px] font-semibold rounded text-blue-400 transition-colors"
+                        onClick={() => handleOpenEdit(art)}
+                        className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-[11px] transition-colors"
                       >
                         Sửa
                       </button>
-                      {art.isActive !== false ? (
-                        <button
-                          onClick={() => handleDelete(art.id)}
-                          className="px-2.5 py-1.5 bg-slate-850 hover:bg-slate-800 border border-white/5 text-[10px] font-semibold rounded text-red-400 transition-colors"
-                          title="Ẩn bài viết"
-                        >
-                          Ẩn
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleDelete(art.id)}
-                          className="px-2.5 py-1.5 bg-slate-850 hover:bg-slate-800 border border-white/5 text-[10px] font-semibold rounded text-green-400 transition-colors"
-                          title="Hiện bài viết"
-                        >
-                          Hiện
-                        </button>
-                      )}
+                      <button
+                        onClick={() => handleToggleStatus(art.id, art.isActive !== false)}
+                        className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-colors ${
+                          art.isActive !== false
+                            ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+                            : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200'
+                        }`}
+                      >
+                        {art.isActive !== false ? "Ẩn" : "Hiện"}
+                      </button>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            {totalPages > 1 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 border-t border-white/5 text-slate-400 text-xs">
-                <div>Trang {currentPage}/{totalPages} — {articles.length} bài viết</div>
-                <div className="flex gap-2">
-                  <button type="button" disabled={currentPage === 1} onClick={() => setCurrentPage(1)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Đầu</button>
-                  <button type="button" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Trước</button>
-                  <button type="button" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Sau</button>
-                  <button type="button" disabled={currentPage === totalPages} onClick={() => setCurrentPage(totalPages)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Cuối</button>
-                </div>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {totalPages > 1 && (
+          <div className="p-4 border-t border-slate-100 flex items-center justify-between">
+            <span className="text-xs text-slate-500">
+              Trang {currentPage} / {totalPages} ({articles.length} bài viết)
+            </span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                className="px-3 py-1 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-xs font-bold rounded-lg"
+              >
+                Trước
+              </button>
+              <button
+                type="button"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+                className="px-3 py-1 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-xs font-bold rounded-lg"
+              >
+                Sau
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Modal Soạn Thảo */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="w-full max-w-2xl bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-slate-900 mb-1">
+              {editingArticle ? "Chỉnh Sửa Bài Viết" : "Soạn Thảo Bài Viết Mới"}
+            </h3>
+            <p className="text-xs text-slate-500 mb-4">Nhập đầy đủ tiêu đề, tóm tắt và nội dung chi tiết bài viết.</p>
+
+            {formError && (
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium mb-4">
+                ⚠️ {formError}
               </div>
             )}
-          </div>
-        </div>
-      )}
 
-      {/* Editor Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 border border-white/10 rounded-2xl max-w-2xl w-full p-6 relative flex flex-col max-h-[90vh]">
-            <button
-              onClick={() => setShowModal(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white text-lg"
-            >
-              ✕
-            </button>
-            
-            <h2 className="text-base font-bold text-white mb-6">
-              {editingArticle ? "Sửa Bài Viết" : "Viết Bài Mới"}
-            </h2>
-
-            <form onSubmit={handleSave} className="space-y-4 overflow-y-auto flex-1 pr-2">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase">Tiêu đề bài viết *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Nhập tiêu đề hấp dẫn..."
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-4 py-2 bg-slate-950 border border-white/10 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="col-span-2">
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Tiêu Đề Bài Viết *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="VD: Thông báo nâng cấp hệ thống hạ tầng máy chủ..."
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+                  />
+                </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase">Danh mục bài viết</label>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Chuyên Mục *</label>
                   <select
                     value={categoryName}
                     onChange={(e) => setCategoryName(e.target.value)}
-                    className="w-full px-4 py-2 bg-slate-950 border border-white/10 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
+                    className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
                   >
-                    {PRESET_CATEGORIES.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
+                    {PRESET_CATEGORIES.map(c => (
+                      <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase">Tóm tắt bài viết (Summary) *</label>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Tóm Tắt Ngắn</label>
                 <textarea
                   rows={2}
-                  required
-                  placeholder="Tóm tắt ngắn gọn hiển thị trên trang tin tức..."
+                  placeholder="Mô tả tóm tắt hiển thị ngoài danh sách tin tức..."
                   value={summary}
                   onChange={(e) => setSummary(e.target.value)}
-                  className="w-full px-4 py-2 bg-slate-950 border border-white/10 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 resize-none"
-                />
+                  className="w-full p-3 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+                ></textarea>
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase">Nội dung chi tiết (Hỗ trợ Markdown) *</label>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Nội Dung Chi Tiết (Hỗ trợ Markdown) *</label>
                 <textarea
-                  rows={8}
+                  rows={6}
                   required
-                  placeholder="Nội dung chi tiết viết tại đây..."
+                  placeholder="Nhập nội dung bài viết chi tiết..."
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  className="w-full px-4 py-2 bg-slate-950 border border-white/10 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
-                />
+                  className="w-full p-3 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white font-mono"
+                ></textarea>
               </div>
 
-              {editingArticle && (
-                <div className="flex items-center gap-2 mt-4">
-                  <input
-                    type="checkbox"
-                    id="newsIsActive"
-                    checked={isActive}
-                    onChange={(e) => setIsActive(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 bg-slate-950 border-white/10 rounded focus:ring-blue-500 focus:ring-2"
-                  />
-                  <label htmlFor="newsIsActive" className="text-xs font-semibold text-slate-300">Hiển thị bài viết</label>
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="isActive"
+                  checked={isActive}
+                  onChange={(e) => setIsActive(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 rounded"
+                />
+                <label htmlFor="isActive" className="text-xs font-semibold text-slate-700 cursor-pointer">
+                  Xuất bản bài viết ngay sau khi lưu
+                </label>
+              </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 rounded-lg transition-colors"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700"
                 >
-                  Hủy bỏ
+                  Hủy Bỏ
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white rounded-lg transition-colors"
+                  disabled={submitting}
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-xs font-bold text-white shadow-md shadow-blue-500/20"
                 >
-                  Lưu Bài Viết
+                  {submitting ? "Đang lưu..." : "Lưu Bài Viết"}
                 </button>
               </div>
             </form>
-
           </div>
         </div>
       )}

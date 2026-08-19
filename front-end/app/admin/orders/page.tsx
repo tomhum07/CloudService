@@ -2,25 +2,11 @@
 import React, { useState, useEffect } from "react";
 import { apiFetch } from "@/utils/api";
 
-const INITIAL_ORDERS = [
-  { id: 1, code: "ORD-94812", client: "Nguyễn Văn Hùng", plan: "VPS Pro", amount: 150000, status: "Hoàn tất", date: "2026-08-16 14:32" },
-  { id: 2, code: "ORD-20491", client: "Lê Văn Tám", plan: "Hosting Business", amount: 85000, status: "Chờ duyệt", date: "2026-08-16 11:15" },
-  { id: 3, code: "ORD-30194", client: "Phạm Minh Đức", plan: "VPS Starter", amount: 90000, status: "Hoàn tất", date: "2026-08-15 18:40" },
-  { id: 4, code: "ORD-58102", client: "Trần Thị Lan", plan: "VPS Enterprise", amount: 320000, status: "Đã hủy", date: "2026-08-15 09:20" },
-  { id: 5, code: "ORD-11942", client: "Đoàn Minh Anh", plan: "Hosting Basic", amount: 35000, status: "Chờ duyệt", date: "2026-08-14 16:45" }
-];
-
-const INITIAL_PARTNERS = [
-  { id: 1, name: "Nguyễn Công Phượng", email: "phuongnc@gmail.com", channel: "youtube.com/c/techreview", bank: "MB Bank - 190038291038", status: "Chờ duyệt", date: "2026-08-16" },
-  { id: 2, name: "Vũ Văn Thanh", email: "thanhvv@techblog.vn", channel: "techblog.vn", bank: "Vietcombank - 00110048291", status: "Đã duyệt", date: "2026-08-15" },
-  { id: 3, name: "Quế Ngọc Hải", email: "haiqn@outlook.com", channel: "facebook.com/haiqn.dev", bank: "Techcombank - 190338291830", status: "Đã từ chối", date: "2026-08-12" }
-];
-
 export default function AdminOrdersPage() {
   const [activeTab, setActiveTab] = useState<"orders" | "partners">("orders");
-  const [orders, setOrders] = useState(INITIAL_ORDERS);
-  const [partners, setPartners] = useState(INITIAL_PARTNERS);
-  const [loading, setLoading] = useState(false);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [partners, setPartners] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [ordersPage, setOrdersPage] = useState(1);
   const [partnersPage, setPartnersPage] = useState(1);
   const ordersPerPage = 8;
@@ -39,12 +25,13 @@ export default function AdminOrdersPage() {
       const orderRes = await apiFetch("/api/order-requests/all");
       if (orderRes.ok) {
         const orderData = await orderRes.json();
-        if (Array.isArray(orderData) && orderData.length > 0) {
-          setOrders(orderData.map((o: any) => ({
+        const rawItems = orderData.items || orderData;
+        if (Array.isArray(rawItems)) {
+          setOrders(rawItems.map((o: any) => ({
             id: o.id,
             code: o.orderCode || `ORD-${o.id}`,
-            client: o.customerName,
-            plan: o.planName,
+            client: o.customerName || "Khách vãng lai",
+            plan: o.planName || "Gói dịch vụ",
             amount: o.price || 0,
             status: o.statusName || (o.status === 2 ? "Hoàn tất" : o.status === 3 ? "Đã hủy" : "Chờ duyệt"),
             date: new Date(o.createdAt).toLocaleString("vi-VN")
@@ -56,10 +43,11 @@ export default function AdminOrdersPage() {
       const partnerRes = await apiFetch("/api/affiliates/all");
       if (partnerRes.ok) {
         const partnerData = await partnerRes.json();
-        if (Array.isArray(partnerData) && partnerData.length > 0) {
-          setPartners(partnerData.map((p: any) => ({
+        const rawItems = partnerData.items || partnerData;
+        if (Array.isArray(rawItems)) {
+          setPartners(rawItems.map((p: any) => ({
             id: p.id,
-            name: p.fullName,
+            name: p.fullName || "Chưa cập nhật",
             email: p.email,
             channel: p.websiteUrl || "Không có",
             bank: p.motivation || "Chưa cập nhật",
@@ -69,13 +57,12 @@ export default function AdminOrdersPage() {
         }
       }
     } catch (err) {
-      console.warn("Failed to fetch orders/partners, using initial dataset:", err);
+      console.warn("Lỗi lấy dữ liệu từ Backend:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Tab 1: Orders Approval Actions
   const handleOrderStatus = async (id: number, newStatus: "Hoàn tất" | "Đã hủy") => {
     const statusCode = newStatus === "Hoàn tất" ? 2 : 3;
     try {
@@ -83,16 +70,12 @@ export default function AdminOrdersPage() {
         method: "PATCH",
         body: JSON.stringify({ status: statusCode, notes: `Admin cập nhật: ${newStatus}` })
       });
+      fetchOrdersAndPartners();
     } catch (err) {
-      console.warn("API status update error:", err);
+      console.warn("Lỗi API status:", err);
     }
-
-    setOrders(prev =>
-      prev.map(ord => (ord.id === id ? { ...ord, status: newStatus } : ord))
-    );
   };
 
-  // Tab 2: Partner Approval Actions
   const handlePartnerStatus = async (id: number, newStatus: "Đã duyệt" | "Đã từ chối") => {
     const statusCode = newStatus === "Đã duyệt" ? 2 : 3;
     try {
@@ -100,16 +83,12 @@ export default function AdminOrdersPage() {
         method: "PATCH",
         body: JSON.stringify({ status: statusCode })
       });
+      fetchOrdersAndPartners();
     } catch (err) {
-      console.warn("API affiliate status update error:", err);
+      console.warn("Lỗi API affiliate status:", err);
     }
-
-    setPartners(prev =>
-      prev.map(part => (part.id === id ? { ...part, status: newStatus } : part))
-    );
   };
 
-  // Excel (.xlsx) Export Handler
   const handleExportExcel = async () => {
     if (activeTab === "orders") {
       try {
@@ -127,11 +106,10 @@ export default function AdminOrdersPage() {
           return;
         }
       } catch (err) {
-        console.warn("Backend Excel export error, falling back to CSV:", err);
+        console.warn("Fallback to CSV:", err);
       }
     }
 
-    // Client fallback export
     let headers = "";
     let rows = "";
     let filename = "";
@@ -139,19 +117,13 @@ export default function AdminOrdersPage() {
     if (activeTab === "orders") {
       headers = "Ma Don Hang,Khach Hang,Goi Dich Vu,Tong Tien,Trang Thai,Ngay Dat\n";
       rows = orders
-        .map(
-          o =>
-            `${o.code},${o.client},${o.plan},${o.amount},${o.status},${o.date}`
-        )
+        .map(o => `${o.code},${o.client},${o.plan},${o.amount},${o.status},${o.date}`)
         .join("\n");
       filename = `danh_sach_don_hang_${new Date().toISOString().slice(0, 10)}.csv`;
     } else {
       headers = "Ten Doi Tac,Email,Kenh Quang Ba,Ngan Hang,Trang Thai,Ngay Dang Ky\n";
       rows = partners
-        .map(
-          p =>
-            `${p.name},${p.email},${p.channel},${p.bank.replace(/,/g, " ")},${p.status},${p.date}`
-        )
+        .map(p => `${p.name},${p.email},${p.channel},${p.bank.replace(/,/g, " ")},${p.status},${p.date}`)
         .join("\n");
       filename = `danh_sach_ctv_${new Date().toISOString().slice(0, 10)}.csv`;
     }
@@ -165,202 +137,257 @@ export default function AdminOrdersPage() {
     document.body.removeChild(link);
   };
 
-  const formatPrice = (val: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND"
-    }).format(val);
-  };
+  const displayedOrders = orders.slice((ordersPage - 1) * ordersPerPage, ordersPage * ordersPerPage);
+  const displayedPartners = partners.slice((partnersPage - 1) * partnersPerPage, partnersPage * partnersPerPage);
 
   return (
     <div className="space-y-6">
       
-      {/* Header & Export Button */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-xl font-bold text-white">Quản Lý Đơn Hàng & Đối Tác CTV</h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Phê duyệt thanh toán hóa đơn và quản lý đối tác tiếp thị liên kết.
-          </p>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900">Quản Lý Đơn Hàng & Đối Tác CTV</h1>
+          <p className="text-xs text-slate-500 mt-1">Dữ liệu đơn hàng thực tế đồng bộ trực tiếp từ cơ sở dữ liệu</p>
         </div>
-        <button
-          onClick={handleExportExcel}
-          className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-white/5 text-xs font-bold text-white rounded-lg transition-colors flex items-center gap-2"
-        >
-          📥 Xuất Báo Cáo Excel
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={fetchOrdersAndPartners}
+            disabled={loading}
+            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 rounded-xl transition-colors"
+          >
+            🔄 {loading ? "Đang tải..." : "Làm mới"}
+          </button>
+          <button
+            onClick={handleExportExcel}
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-xs font-bold text-white rounded-xl transition-colors flex items-center gap-2 shadow-sm shadow-emerald-500/20"
+          >
+            <span>📥</span>
+            <span>Xuất Excel (.xlsx)</span>
+          </button>
+        </div>
       </div>
 
-      {/* Tabs Switcher */}
-      <div className="flex gap-2 border-b border-white/10 pb-4">
+      {/* Tabs */}
+      <div className="flex items-center gap-3 border-b border-slate-200 pb-2">
         <button
           onClick={() => setActiveTab("orders")}
-          className={`px-5 py-2 rounded-lg text-xs font-semibold transition-colors ${
+          className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === "orders"
-              ? "bg-blue-600 text-white"
-              : "bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-white/5"
+              ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
+              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
           }`}
         >
-          📦 Duyệt Đơn Hàng ({orders.filter(o => o.status === "Chờ duyệt" || o.status === "Đang xử lý").length})
+          🛒 Đơn Đặt Dịch Vụ ({orders.length})
         </button>
         <button
           onClick={() => setActiveTab("partners")}
-          className={`px-5 py-2 rounded-lg text-xs font-semibold transition-colors ${
+          className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === "partners"
-              ? "bg-blue-600 text-white"
-              : "bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-white/5"
+              ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
+              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
           }`}
         >
-          👥 Đối Tác CTV ({partners.filter(p => p.status === "Chờ duyệt").length})
+          👥 Đơn Đăng Ký CTV ({partners.length})
         </button>
       </div>
 
-      {/* Tab 1: Orders Table */}
+      {/* TAB 1: ORDERS TABLE */}
       {activeTab === "orders" && (
-        <div className="bg-slate-900 border border-white/5 rounded-2xl p-6">
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-white/10 text-slate-400 font-semibold">
-                  <th className="pb-3">Mã đơn</th>
-                  <th className="pb-3">Họ tên khách</th>
-                  <th className="pb-3">Gói cước</th>
-                  <th className="pb-3">Tổng cộng</th>
-                  <th className="pb-3">Trạng thái</th>
-                  <th className="pb-3">Ngày đặt</th>
-                  <th className="pb-3 text-right">Phê duyệt</th>
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 text-slate-700 uppercase font-bold border-b border-slate-200">
+                <tr>
+                  <th className="py-3.5 px-4">Mã Đơn</th>
+                  <th className="py-3.5 px-4">Khách Hàng</th>
+                  <th className="py-3.5 px-4">Gói Dịch Vụ</th>
+                  <th className="py-3.5 px-4">Tổng Tiền</th>
+                  <th className="py-3.5 px-4">Thời Gian</th>
+                  <th className="py-3.5 px-4">Trạng Thái</th>
+                  <th className="py-3.5 px-4 text-right">Thao Tác Duyệt</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 text-slate-300">
-                {orders.slice((ordersPage - 1) * ordersPerPage, ordersPage * ordersPerPage).map((ord) => (
-                  <tr key={ord.id} className="hover:bg-white/5 transition-colors">
-                    <td className="py-3.5 font-mono font-bold text-slate-200">{ord.code}</td>
-                    <td className="py-3.5">{ord.client}</td>
-                    <td className="py-3.5">{ord.plan}</td>
-                    <td className="py-3.5 font-mono font-bold text-slate-100">{formatPrice(ord.amount)}</td>
-                    <td className="py-3.5">
-                      <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold ${
-                        ord.status === "Hoàn tất"
-                          ? "bg-green-950 text-green-400"
-                          : ord.status === "Chờ duyệt" || ord.status === "Đang xử lý"
-                          ? "bg-yellow-950 text-yellow-400"
-                          : "bg-red-950 text-red-400"
-                      }`}>
-                        {ord.status}
-                      </span>
-                    </td>
-                    <td className="py-3.5 text-slate-500">{ord.date}</td>
-                    <td className="py-3.5 text-right space-x-2">
-                      {ord.status === "Chờ duyệt" || ord.status === "Đang xử lý" ? (
-                        <>
-                          <button
-                            onClick={() => handleOrderStatus(ord.id, "Hoàn tất")}
-                            className="px-2 py-1 bg-green-900/40 hover:bg-green-800/40 border border-green-800 text-[10px] font-bold rounded text-green-400 transition-colors"
-                          >
-                            Duyệt
-                          </button>
-                          <button
-                            onClick={() => handleOrderStatus(ord.id, "Đã hủy")}
-                            className="px-2 py-1 bg-red-900/40 hover:bg-red-800/40 border border-red-800 text-[10px] font-bold rounded text-red-400 transition-colors"
-                          >
-                            Hủy
-                          </button>
-                        </>
-                      ) : (
-                        <span className="text-[10px] text-slate-500 italic">Đã xử lý</span>
-                      )}
-                    </td>
+              <tbody className="divide-y divide-slate-100">
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-slate-400">Đang tải danh sách đơn hàng...</td>
                   </tr>
-                ))}
+                ) : displayedOrders.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-slate-400">Chưa có đơn hàng nào trong cơ sở dữ liệu.</td>
+                  </tr>
+                ) : (
+                  displayedOrders.map((ord) => (
+                    <tr key={ord.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-3.5 px-4 font-mono font-bold text-blue-600">{ord.code}</td>
+                      <td className="py-3.5 px-4 font-semibold text-slate-900">{ord.client}</td>
+                      <td className="py-3.5 px-4 text-slate-700">{ord.plan}</td>
+                      <td className="py-3.5 px-4 font-bold text-slate-900">
+                        {typeof ord.amount === "number" ? `${ord.amount.toLocaleString("vi-VN")}đ` : ord.amount}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-500">{ord.date}</td>
+                      <td className="py-3.5 px-4">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                          ord.status === "Hoàn tất"
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            : ord.status === "Đã hủy"
+                            ? "bg-rose-50 text-rose-700 border border-rose-200"
+                            : "bg-amber-50 text-amber-700 border border-amber-200"
+                        }`}>
+                          {ord.status}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-right space-x-2">
+                        {ord.status === "Chờ duyệt" && (
+                          <>
+                            <button
+                              onClick={() => handleOrderStatus(ord.id, "Hoàn tất")}
+                              className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-[11px] transition-colors shadow-xs"
+                            >
+                              Kích Hoạt
+                            </button>
+                            <button
+                              onClick={() => handleOrderStatus(ord.id, "Đã hủy")}
+                              className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-[11px] transition-colors shadow-xs"
+                            >
+                              Hủy
+                            </button>
+                          </>
+                        )}
+                        {ord.status !== "Chờ duyệt" && (
+                          <span className="text-slate-400 font-medium text-[11px]">Đã xử lý</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
-            {totalOrderPages > 1 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 border-t border-white/5 text-slate-400 text-xs">
-                <div>Trang {ordersPage}/{totalOrderPages} — {orders.length} đơn hàng</div>
-                <div className="flex gap-2">
-                  <button type="button" disabled={ordersPage === 1} onClick={() => setOrdersPage(1)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Đầu</button>
-                  <button type="button" disabled={ordersPage === 1} onClick={() => setOrdersPage(p => p - 1)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Trước</button>
-                  <button type="button" disabled={ordersPage === totalOrderPages} onClick={() => setOrdersPage(p => p + 1)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Sau</button>
-                  <button type="button" disabled={ordersPage === totalOrderPages} onClick={() => setOrdersPage(totalOrderPages)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Cuối</button>
-                </div>
-              </div>
-            )}
           </div>
+
+          {/* Pagination */}
+          {totalOrderPages > 1 && (
+            <div className="p-4 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-xs text-slate-500">
+                Trang {ordersPage} / {totalOrderPages} ({orders.length} đơn)
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setOrdersPage(p => Math.max(p - 1, 1))}
+                  disabled={ordersPage === 1}
+                  className="px-3 py-1 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-xs font-bold rounded-lg"
+                >
+                  Trước
+                </button>
+                <button
+                  onClick={() => setOrdersPage(p => Math.min(p + 1, totalOrderPages))}
+                  disabled={ordersPage === totalOrderPages}
+                  className="px-3 py-1 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-xs font-bold rounded-lg"
+                >
+                  Sau
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Tab 2: Affiliate CTV applications */}
+      {/* TAB 2: PARTNERS TABLE */}
       {activeTab === "partners" && (
-        <div className="bg-slate-900 border border-white/5 rounded-2xl p-6">
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-white/10 text-slate-400 font-semibold">
-                  <th className="pb-3">Họ tên CTV</th>
-                  <th className="pb-3">Kênh truyền thông</th>
-                  <th className="pb-3">Tài khoản ngân hàng</th>
-                  <th className="pb-3">Trạng thái</th>
-                  <th className="pb-3">Ngày gửi</th>
-                  <th className="pb-3 text-right">Phê duyệt</th>
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 text-slate-700 uppercase font-bold border-b border-slate-200">
+                <tr>
+                  <th className="py-3.5 px-4">Tên Đối Tác</th>
+                  <th className="py-3.5 px-4">Email</th>
+                  <th className="py-3.5 px-4">Kênh Quảng Bá</th>
+                  <th className="py-3.5 px-4">Thông Tin Nhận Hoa Hồng</th>
+                  <th className="py-3.5 px-4">Ngày Đăng Ký</th>
+                  <th className="py-3.5 px-4">Trạng Thái</th>
+                  <th className="py-3.5 px-4 text-right">Phê Duyệt</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 text-slate-300">
-                {partners.slice((partnersPage - 1) * partnersPerPage, partnersPage * partnersPerPage).map((part) => (
-                  <tr key={part.id} className="hover:bg-white/5 transition-colors">
-                    <td className="py-3.5 font-bold text-slate-200">
-                      {part.name}
-                      <span className="block text-[10px] text-slate-500 font-normal mt-0.5">{part.email}</span>
-                    </td>
-                    <td className="py-3.5 font-mono text-[10px] text-slate-400 max-w-xs truncate">{part.channel}</td>
-                    <td className="py-3.5 font-mono text-[10px] text-slate-400">{part.bank}</td>
-                    <td className="py-3.5">
-                      <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold ${
-                        part.status === "Đã duyệt"
-                          ? "bg-green-950 text-green-400"
-                          : part.status === "Chờ duyệt"
-                          ? "bg-yellow-950 text-yellow-400"
-                          : "bg-red-950 text-red-400"
-                      }`}>
-                        {part.status}
-                      </span>
-                    </td>
-                    <td className="py-3.5 text-slate-500">{part.date}</td>
-                    <td className="py-3.5 text-right space-x-2">
-                      {part.status === "Chờ duyệt" ? (
-                        <>
-                          <button
-                            onClick={() => handlePartnerStatus(part.id, "Đã duyệt")}
-                            className="px-2 py-1 bg-green-900/40 hover:bg-green-800/40 border border-green-800 text-[10px] font-bold rounded text-green-400 transition-colors"
-                          >
-                            Duyệt
-                          </button>
-                          <button
-                            onClick={() => handlePartnerStatus(part.id, "Đã từ chối")}
-                            className="px-2 py-1 bg-red-900/40 hover:bg-red-800/40 border border-red-800 text-[10px] font-bold rounded text-red-400 transition-colors"
-                          >
-                            Từ chối
-                          </button>
-                        </>
-                      ) : (
-                        <span className="text-[10px] text-slate-500 italic">Đã xử lý</span>
-                      )}
-                    </td>
+              <tbody className="divide-y divide-slate-100">
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-slate-400">Đang tải danh sách CTV...</td>
                   </tr>
-                ))}
+                ) : displayedPartners.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-slate-400">Chưa có đơn đăng ký CTV nào.</td>
+                  </tr>
+                ) : (
+                  displayedPartners.map((part) => (
+                    <tr key={part.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-3.5 px-4 font-bold text-slate-900">{part.name}</td>
+                      <td className="py-3.5 px-4 text-slate-600">{part.email}</td>
+                      <td className="py-3.5 px-4 text-blue-600">{part.channel}</td>
+                      <td className="py-3.5 px-4 text-slate-700 font-mono text-[11px]">{part.bank}</td>
+                      <td className="py-3.5 px-4 text-slate-500">{part.date}</td>
+                      <td className="py-3.5 px-4">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                          part.status === "Đã duyệt"
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            : part.status === "Đã từ chối"
+                            ? "bg-rose-50 text-rose-700 border border-rose-200"
+                            : "bg-amber-50 text-amber-700 border border-amber-200"
+                        }`}>
+                          {part.status}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-right space-x-2">
+                        {part.status === "Chờ duyệt" && (
+                          <>
+                            <button
+                              onClick={() => handlePartnerStatus(part.id, "Đã duyệt")}
+                              className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-[11px] transition-colors shadow-xs"
+                            >
+                              Duyệt
+                            </button>
+                            <button
+                              onClick={() => handlePartnerStatus(part.id, "Đã từ chối")}
+                              className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-[11px] transition-colors shadow-xs"
+                            >
+                              Từ Chối
+                            </button>
+                          </>
+                        )}
+                        {part.status !== "Chờ duyệt" && (
+                          <span className="text-slate-400 font-medium text-[11px]">Đã xử lý</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
-            {totalPartnerPages > 1 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 border-t border-white/5 text-slate-400 text-xs">
-                <div>Trang {partnersPage}/{totalPartnerPages} — {partners.length} CTV</div>
-                <div className="flex gap-2">
-                  <button type="button" disabled={partnersPage === 1} onClick={() => setPartnersPage(1)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Đầu</button>
-                  <button type="button" disabled={partnersPage === 1} onClick={() => setPartnersPage(p => p - 1)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Trước</button>
-                  <button type="button" disabled={partnersPage === totalPartnerPages} onClick={() => setPartnersPage(p => p + 1)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Sau</button>
-                  <button type="button" disabled={partnersPage === totalPartnerPages} onClick={() => setPartnersPage(totalPartnerPages)} className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-medium transition-colors">Cuối</button>
-                </div>
-              </div>
-            )}
           </div>
+
+          {/* Pagination */}
+          {totalPartnerPages > 1 && (
+            <div className="p-4 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-xs text-slate-500">
+                Trang {partnersPage} / {totalPartnerPages} ({partners.length} đối tác)
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPartnersPage(p => Math.max(p - 1, 1))}
+                  disabled={partnersPage === 1}
+                  className="px-3 py-1 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-xs font-bold rounded-lg"
+                >
+                  Trước
+                </button>
+                <button
+                  onClick={() => setPartnersPage(p => Math.min(p + 1, totalPartnerPages))}
+                  disabled={partnersPage === totalPartnerPages}
+                  className="px-3 py-1 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-xs font-bold rounded-lg"
+                >
+                  Sau
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

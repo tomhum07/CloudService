@@ -11,10 +11,189 @@ interface UserProfile {
   role: string;
 }
 
+// Cấu trúc danh mục Dịch Vụ gom chung vào 1 tab Mega Menu
+const SERVICE_CATEGORIES = [
+  {
+    id: "vps",
+    title: "Cloud VPS",
+    badge: "Bán chạy",
+    icon: "⚡",
+    tagline: "Máy chủ ảo đám mây hiệu năng cao KVM, CPU AMD EPYC / Intel Xeon, ổ cứng NVMe Gen4",
+    items: [
+      {
+        slug: "vps-nvme",
+        title: "Cloud VPS NVMe Pro",
+        desc: "2 vCPUs - 4 GB RAM - 60 GB NVMe - AMD EPYC",
+        price: "150.000đ/th",
+        highlight: "Tối ưu database & app"
+      },
+      {
+        slug: "vps-nvme",
+        title: "Cloud VPS NVMe Enterprise",
+        desc: "4 vCPUs - 8 GB RAM - 120 GB NVMe - AMD EPYC",
+        price: "320.000đ/th",
+        highlight: "Chịu tải lớn"
+      },
+      {
+        slug: "vps-nvme",
+        title: "Cloud VPS NVMe Extreme",
+        desc: "8 vCPUs - 16 GB RAM - 200 GB NVMe Gen4",
+        price: "650.000đ/th",
+        highlight: "Cấu hình cực khủng"
+      },
+      {
+        slug: "vps-ssd",
+        title: "Cloud VPS SSD Tiết Kiệm",
+        desc: "1 vCPU - 2 GB RAM - 40 GB SSD Enterprise",
+        price: "90.000đ/th",
+        highlight: "Cân bằng chi phí"
+      }
+    ]
+  },
+  {
+    id: "hosting",
+    title: "Web Hosting",
+    badge: "Tối ưu WP",
+    icon: "🌐",
+    tagline: "Lưu trữ web tốc độ cao sử dụng LiteSpeed Web Server, LSCache và bảo mật Imunify360 AI",
+    items: [
+      {
+        slug: "maxspeed-hosting",
+        title: "MaxSpeed Hosting NVMe",
+        desc: "LiteSpeed Enterprise, tối ưu điểm PageSpeed 95+",
+        price: "45.000đ/th",
+        highlight: "Tải nhanh < 0.5s"
+      },
+      {
+        slug: "business-hosting",
+        title: "Business Hosting Doanh Nghiệp",
+        desc: "CPU AMD EPYC riêng biệt, backup 2 lần/ngày",
+        price: "120.000đ/th",
+        highlight: "Tài nguyên độc lập"
+      },
+      {
+        slug: "wordpress-hosting",
+        title: "WordPress Hosting Chuyên Sâu",
+        desc: "Tích hợp WP Toolkit, tự động vá lỗi bảo mật",
+        price: "39.000đ/th",
+        highlight: "1-Click cài đặt WP"
+      },
+      {
+        slug: "seo-hosting",
+        title: "SEO Hosting Multi IP",
+        desc: "Nhiều dải IP Class C khác nhau xây dựng web vệ tinh",
+        price: "150.000đ/th",
+        highlight: "Tối ưu hóa SEO"
+      }
+    ]
+  },
+  {
+    id: "domain",
+    title: "Tên Miền (Domain)",
+    badge: "VNNIC",
+    icon: "🏷️",
+    tagline: "Đăng ký tên miền Việt Nam (.vn) & Quốc tế (.com, .net), kích hoạt DNS Anycast tức thì",
+    items: [
+      {
+        slug: "domain-register",
+        title: "Đăng Ký Tên Miền Quốc Tế (.com, .net)",
+        desc: "Quản lý DNS Anycast toàn cầu, miễn phí Whois Privacy",
+        price: "249.000đ/năm",
+        highlight: "Kích hoạt tức thì"
+      },
+      {
+        slug: "domain-vn",
+        title: "Tên Miền Quốc Gia .VN",
+        desc: "Khẳng định thương hiệu, được pháp luật Việt Nam bảo hộ",
+        price: "450.000đ/năm",
+        highlight: "Ưu tiên SEO VN"
+      },
+      {
+        slug: "domain-transfer",
+        title: "Chuyển Tên Miền Về CloudService",
+        desc: "Không gián đoạn website, tặng thêm 1 năm duy trì",
+        price: "Miễn phí thủ tục",
+        highlight: "Giữ nguyên DNS"
+      }
+    ]
+  },
+  {
+    id: "email",
+    title: "Email Doanh Nghiệp",
+    badge: "Inbox 99.9%",
+    icon: "✉️",
+    tagline: "Hệ thống email theo tên miền riêng (@tenmien.vn), bảo mật chống spam và virus kép",
+    items: [
+      {
+        slug: "email-doanh-nghiep",
+        title: "Email Doanh Nghiệp Pro",
+        desc: "Cấu hình SPF, DKIM, DMARC, tỷ lệ vào Inbox 99.9%",
+        price: "99.000đ/th",
+        highlight: "Tên miền riêng"
+      },
+      {
+        slug: "email-doanh-nghiep",
+        title: "Email Server Riêng (Mail Cluster)",
+        desc: "Hạ tầng gửi nhận email độc lập, dedicated IP sạch",
+        price: "550.000đ/th",
+        highlight: "Gửi nhận số lượng lớn"
+      }
+    ]
+  },
+  {
+    id: "ssl",
+    title: "Chứng Chỉ Số SSL",
+    badge: "Bảo hiểm lớn",
+    icon: "🔒",
+    tagline: "Mã hóa đường truyền dữ liệu an toàn 256-bit chuẩn quốc tế từ Sectigo, GeoTrust",
+    items: [
+      {
+        slug: "ssl",
+        title: "Sectigo PositiveSSL (DV)",
+        desc: "Xác thực tên miền nhanh chóng, hiển thị ổ khóa xanh an toàn",
+        price: "199.000đ/năm",
+        highlight: "Kích hoạt trong 5 phút"
+      },
+      {
+        slug: "ssl",
+        title: "Sectigo Wildcard SSL (*.domain)",
+        desc: "Bảo vệ không giới hạn tất cả các tên miền con subdomain",
+        price: "1.450.000đ/năm",
+        highlight: "Không giới hạn Subdomain"
+      }
+    ]
+  },
+  {
+    id: "firewall",
+    title: "Firewall Chống DDoS",
+    badge: "Độc quyền",
+    icon: "🛡️",
+    tagline: "Tường lửa lọc sạch tấn công từ chối dịch vụ Layer 3/4/7 thời gian thực với dung lượng 100Gbps+",
+    items: [
+      {
+        slug: "firewall-anti-ddos",
+        title: "Tường Lửa Anti-DDoS Đa Tầng",
+        desc: "Ngăn chặn SYN/UDP Flood, HTTP Request Flood bằng AI",
+        price: "350.000đ/th",
+        highlight: "Độ trễ < 2ms"
+      },
+      {
+        slug: "firewall-anti-ddos",
+        title: "WAF Bảo Vệ Ứng Dụng Web Layer 7",
+        desc: "Chống cào dữ liệu, chống brute-force và spam request",
+        price: "650.000đ/th",
+        highlight: "AI Smart Filter"
+      }
+    ]
+  }
+];
+
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [isServicesOpen, setIsServicesOpen] = useState(false);
+  const [activeCategoryTab, setActiveCategoryTab] = useState("vps");
   
   // Modals state
   const [showEditModal, setShowEditModal] = useState(false);
@@ -57,7 +236,6 @@ export default function Header() {
           const username = payload["sub"] || payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || payload["name"] || "";
           const role = payload["role"] || payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || "Customer";
           
-          // Lấy profile chi tiết từ API
           try {
             const res = await apiFetch("/api/auth/profile");
             if (res.ok) {
@@ -72,9 +250,7 @@ export default function Header() {
               setEditEmail(prof.email || "");
               return;
             }
-          } catch {
-            // fallback to token payload
-          }
+          } catch {}
 
           setUser({
             username: username || "User",
@@ -101,8 +277,7 @@ export default function Header() {
       setAccessToken("");
       setUser(null);
       setShowProfileMenu(false);
-      router.push("/");
-      router.refresh();
+      router.push("/login");
     }
   };
 
@@ -111,32 +286,38 @@ export default function Header() {
     setEditLoading(true);
     setEditMsg(null);
 
-    // Validation
-    if (!editFullName.trim() || editFullName.trim().length < 2) {
-      setEditMsg({ text: "Họ và tên phải có tối thiểu 2 ký tự.", type: "error" });
+    const trimmedFullName = editFullName.trim();
+    const trimmedEmail = editEmail.trim();
+
+    if (!trimmedFullName) {
+      setEditMsg({ text: "Họ và tên không được để trống.", type: "error" });
       setEditLoading(false);
       return;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(editEmail.trim())) {
-      setEditMsg({ text: "Địa chỉ email không đúng định dạng hợp lệ.", type: "error" });
-      setEditLoading(false);
-      return;
+    if (trimmedEmail) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(trimmedEmail)) {
+        setEditMsg({ text: "Email không đúng định dạng.", type: "error" });
+        setEditLoading(false);
+        return;
+      }
     }
 
     try {
       const res = await apiFetch("/api/auth/profile", {
         method: "PUT",
         body: JSON.stringify({
-          fullName: editFullName.trim(),
-          email: editEmail.trim()
+          fullName: trimmedFullName,
+          email: trimmedEmail
         })
       });
 
       if (res.ok) {
         setEditMsg({ text: "Cập nhật thông tin thành công!", type: "success" });
-        setUser(prev => prev ? { ...prev, fullName: editFullName.trim(), email: editEmail.trim() } : null);
+        if (user) {
+          setUser({ ...user, fullName: trimmedFullName, email: trimmedEmail });
+        }
         setTimeout(() => {
           setShowEditModal(false);
           setEditMsg(null);
@@ -146,7 +327,7 @@ export default function Header() {
         setEditMsg({ text: data.message || "Cập nhật thất bại.", type: "error" });
       }
     } catch {
-      setEditMsg({ text: "Không thể kết nối đến máy chủ.", type: "error" });
+      setEditMsg({ text: "Không thể kết nối đến máy chủ Backend.", type: "error" });
     } finally {
       setEditLoading(false);
     }
@@ -157,7 +338,6 @@ export default function Header() {
     setPwdLoading(true);
     setPwdMsg(null);
 
-    // Validation
     if (!oldPassword) {
       setPwdMsg({ text: "Vui lòng nhập mật khẩu hiện tại.", type: "error" });
       setPwdLoading(false);
@@ -209,64 +389,210 @@ export default function Header() {
     return null;
   }
 
-  const navLinks = [
-    { name: "Trang Chủ", href: "/" },
-    { name: "Giới Thiệu", href: "/about" },
-    { name: "Dịch Vụ", href: "/services" },
-    { name: "Bảng Giá", href: "/pricing" },
-    { name: "Tin Tức", href: "/news" },
-    { name: "Đối Tác", href: "/affiliate" },
-  ];
+  const selectedCategory = SERVICE_CATEGORIES.find((c) => c.id === activeCategoryTab) || SERVICE_CATEGORIES[0];
 
   return (
     <>
-      <header className="fixed top-0 left-0 w-full z-50 glassmorphism border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-white shadow-md shadow-blue-900/30 transition-colors group-hover:bg-blue-500">
+      <header
+        className="fixed top-0 left-0 w-full z-50 bg-white border-b border-slate-200 shadow-sm transition-all text-slate-800"
+        onMouseLeave={() => setIsServicesOpen(false)}
+      >
+        <div className="max-w-7xl mx-auto px-6 h-18 flex items-center justify-between">
+          
+          {/* Logo Brand */}
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-black text-white shadow-md shadow-blue-500/30 transition-transform group-hover:scale-105">
               C
             </div>
-            <span className="text-xl font-bold tracking-tight text-slate-100 transition-colors group-hover:text-white">
+            <span className="text-xl font-black tracking-tight text-blue-900 group-hover:text-blue-600 transition-colors">
               CloudService
             </span>
           </Link>
 
-          {/* Desktop Menu */}
-          <nav className="hidden md:flex items-center gap-6">
-            {navLinks.map((link) => {
-              const isActive = pathname === link.href;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`text-sm font-medium transition-colors ${
-                    isActive ? "text-blue-400" : "text-slate-300 hover:text-white"
-                  }`}
-                >
-                  {link.name}
-                </Link>
-              );
-            })}
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center gap-2 h-full">
+            
+            <Link
+              href="/"
+              className={`px-3.5 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                pathname === "/" ? "text-blue-600 bg-blue-50" : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
+              }`}
+            >
+              Trang Chủ
+            </Link>
+
+            {/* TAB DỊCH VỤ - RÊ CHUỘT HIỆN TẤT CẢ DANH MỤC (VPS, Hosting, Domain, Email, SSL, Firewall) */}
+            <div
+              className="relative h-full flex items-center"
+              onMouseEnter={() => setIsServicesOpen(true)}
+            >
+              <button
+                type="button"
+                className={`flex items-center gap-1 px-4 py-2 text-sm font-bold rounded-lg transition-colors ${
+                  isServicesOpen || pathname?.startsWith("/services") ? "text-blue-600 bg-blue-50" : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
+                }`}
+              >
+                <span>Dịch Vụ</span>
+                <span className="text-[10px] font-black bg-blue-600 text-white px-1.5 py-0.2 rounded-full ml-0.5">
+                  6+
+                </span>
+                <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${isServicesOpen ? "rotate-180 text-blue-600" : "text-slate-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {/* MEGA MENU CONTAINER GIAO DIỆN SÁNG - TONE XANH BIỂN */}
+              {isServicesOpen && (
+                <div className="absolute top-[calc(100%-4px)] left-1/2 -translate-x-1/2 w-[920px] bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 z-50 text-slate-800 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="grid grid-cols-12 gap-6">
+                    
+                    {/* Cột trái: 6 Danh mục Dịch vụ */}
+                    <div className="col-span-4 border-r border-slate-100 pr-4 space-y-1.5">
+                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2 px-2">
+                        Danh Mục Dịch Vụ
+                      </span>
+                      {SERVICE_CATEGORIES.map((cat) => (
+                        <div
+                          key={cat.id}
+                          onMouseEnter={() => setActiveCategoryTab(cat.id)}
+                          className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${
+                            activeCategoryTab === cat.id
+                              ? "bg-blue-50 text-blue-700 font-bold border border-blue-200 shadow-sm"
+                              : "hover:bg-slate-50 text-slate-700 font-medium"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-xl">{cat.icon}</span>
+                            <span className="text-xs">{cat.title}</span>
+                          </div>
+                          {cat.badge && (
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                              activeCategoryTab === cat.id ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"
+                            }`}>
+                              {cat.badge}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Cột phải: Các sản phẩm & cấu hình chi tiết của danh mục đang chọn */}
+                    <div className="col-span-8 flex flex-col justify-between pl-2">
+                      <div>
+                        {/* Category Header */}
+                        <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
+                          <div>
+                            <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                              <span>{selectedCategory.icon}</span>
+                              <span>{selectedCategory.title}</span>
+                            </h3>
+                            <p className="text-[11px] text-slate-500 mt-0.5">
+                              {selectedCategory.tagline}
+                            </p>
+                          </div>
+                          <Link
+                            href="/pricing"
+                            onClick={() => setIsServicesOpen(false)}
+                            className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline shrink-0"
+                          >
+                            Bảng giá →
+                          </Link>
+                        </div>
+
+                        {/* Items Grid */}
+                        <div className="grid grid-cols-2 gap-3.5">
+                          {selectedCategory.items.map((item, idx) => (
+                            <Link
+                              key={idx}
+                              href={`/services/${item.slug}`}
+                              onClick={() => setIsServicesOpen(false)}
+                              className="p-3.5 rounded-xl border border-slate-100 hover:border-blue-300 hover:bg-blue-50/40 transition-all group block shadow-xs"
+                            >
+                              <div className="flex items-center justify-between mb-1">
+                                <h4 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                                  {item.title}
+                                </h4>
+                                <span className="text-xs font-black text-blue-600">{item.price}</span>
+                              </div>
+                              <p className="text-[11px] text-slate-500 line-clamp-1 mb-2">
+                                {item.desc}
+                              </p>
+                              <div className="flex items-center gap-1.5 text-[10px] text-emerald-600 font-bold">
+                                <span>✓</span>
+                                <span>{item.highlight}</span>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Bottom Banner */}
+                      <div className="mt-5 p-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-between">
+                        <div className="text-xs">
+                          <strong className="block font-bold">🚀 Miễn Phí Chuyển Đổi Dữ Liệu & Hỗ Trợ 24/7</strong>
+                          <span className="text-[10px] text-blue-100">Cam kết Uptime 99.99% tại Datacenter chuẩn Tier 3.</span>
+                        </div>
+                        <Link
+                          href="/order"
+                          onClick={() => setIsServicesOpen(false)}
+                          className="px-4 py-1.5 rounded-lg bg-white text-blue-700 hover:bg-blue-50 text-xs font-bold transition-colors shadow-sm shrink-0"
+                        >
+                          Khởi Tạo Ngay
+                        </Link>
+                      </div>
+
+                    </div>
+
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <Link
+              href="/pricing"
+              className={`px-3.5 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                pathname === "/pricing" ? "text-blue-600 bg-blue-50" : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
+              }`}
+            >
+              Bảng Giá
+            </Link>
+
+            <Link
+              href="/news"
+              className={`px-3.5 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                pathname === "/news" ? "text-blue-600 bg-blue-50" : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
+              }`}
+            >
+              Tin Tức
+            </Link>
+
+            <Link
+              href="/about"
+              className={`px-3.5 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                pathname === "/about" ? "text-blue-600 bg-blue-50" : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
+              }`}
+            >
+              Giới Thiệu
+            </Link>
           </nav>
 
-          {/* Buttons & User Info */}
-          <div className="hidden md:flex items-center gap-4">
+          {/* Right Action: User Menu / Login Button */}
+          <div className="flex items-center gap-4">
             {user ? (
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
-                  className="flex items-center gap-3 px-3.5 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-white/10 text-left transition-all"
+                  className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left transition-all"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-bold text-white text-xs shadow-sm">
+                  <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white text-xs shadow-sm">
                     {user.fullName ? user.fullName.charAt(0).toUpperCase() : "U"}
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold text-white leading-tight truncate max-w-[120px]">
+                  <div className="hidden sm:flex flex-col">
+                    <span className="text-xs font-bold text-slate-800 leading-tight truncate max-w-[120px]">
                       {user.fullName || user.username}
                     </span>
-                    <span className="text-[10px] text-blue-400 font-medium leading-tight">
+                    <span className="text-[10px] text-blue-600 font-semibold leading-tight">
                       {user.role}
                     </span>
                   </div>
@@ -275,20 +601,19 @@ export default function Header() {
                   </svg>
                 </button>
 
-                {/* Dropdown Menu */}
+                {/* Dropdown Menu User */}
                 {showProfileMenu && (
-                  <div className="absolute right-0 mt-2 w-60 bg-slate-900 border border-white/10 rounded-xl shadow-2xl p-2 z-50 text-xs animate-in fade-in slide-in-from-top-2">
-                    <div className="px-3 py-2 border-b border-white/5 mb-1">
-                      <p className="font-bold text-white truncate">{user.fullName}</p>
-                      <p className="text-[11px] text-slate-400 truncate">@{user.username}</p>
-                      {user.email && <p className="text-[10px] text-slate-500 truncate">{user.email}</p>}
+                  <div className="absolute right-0 mt-2 w-60 bg-white border border-slate-200 rounded-2xl shadow-2xl p-2 z-50 text-xs animate-in fade-in slide-in-from-top-2">
+                    <div className="px-3 py-2 border-b border-slate-100 mb-1">
+                      <p className="font-bold text-slate-900 truncate">{user.fullName}</p>
+                      <p className="text-[11px] text-slate-500 truncate">@{user.username}</p>
                     </div>
 
                     {(user.role === "Admin" || user.role === "Editor") && (
                       <Link
                         href="/admin/dashboard"
                         onClick={() => setShowProfileMenu(false)}
-                        className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-blue-400 hover:bg-blue-500/10 font-medium transition-colors"
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-blue-600 hover:bg-blue-50 font-semibold transition-colors"
                       >
                         <span>📊</span>
                         <span>Trang Quản Trị Admin</span>
@@ -298,7 +623,7 @@ export default function Header() {
                     <Link
                       href="/my-plans"
                       onClick={() => setShowProfileMenu(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 font-medium transition-colors"
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-50 font-medium transition-colors"
                     >
                       <span>📦</span>
                       <span>Quản lý gói cước của tôi</span>
@@ -310,7 +635,7 @@ export default function Header() {
                         setShowProfileMenu(false);
                         setShowEditModal(true);
                       }}
-                      className="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 font-medium transition-colors"
+                      className="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-50 font-medium transition-colors"
                     >
                       <span>✏️</span>
                       <span>Đổi thông tin cá nhân</span>
@@ -322,16 +647,18 @@ export default function Header() {
                         setShowProfileMenu(false);
                         setShowPasswordModal(true);
                       }}
-                      className="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 font-medium transition-colors"
+                      className="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-50 font-medium transition-colors"
                     >
                       <span>🔑</span>
                       <span>Đổi mật khẩu</span>
                     </button>
 
+                    <div className="my-1 border-t border-slate-100"></div>
+
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 font-medium transition-colors mt-1 border-t border-white/5 pt-2"
+                      className="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-rose-600 hover:bg-rose-50 font-bold transition-colors"
                     >
                       <span>🚪</span>
                       <span>Đăng xuất</span>
@@ -340,173 +667,84 @@ export default function Header() {
                 )}
               </div>
             ) : (
-              <>
+              <div className="flex items-center gap-3">
                 <Link
                   href="/login"
-                  className="text-sm font-medium text-slate-400 hover:text-white transition-colors"
+                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition-all"
                 >
-                  Đăng Nhập
+                  Đăng nhập
                 </Link>
-                <Link
-                  href="/register"
-                  className="text-sm font-medium text-slate-400 hover:text-white transition-colors"
-                >
-                  Đăng Ký
-                </Link>
-              </>
-            )}
-
-            <Link
-              href="/order"
-              className="px-5 h-10 rounded-lg bg-blue-600 hover:bg-blue-500 text-sm font-semibold text-white flex items-center justify-center transition-all duration-200 shadow-sm shadow-blue-950"
-            >
-              Đặt Hàng Ngay
-            </Link>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden text-slate-300 hover:text-white focus:outline-none"
-            aria-label="Toggle Menu"
-            aria-expanded={isOpen}
-          >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              {isOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
-          </button>
-        </div>
-
-        {/* Mobile Menu */}
-        {isOpen && (
-          <div className="md:hidden glassmorphism border-b border-white/10 py-6 px-6 flex flex-col gap-4">
-            {user && (
-              <div className="p-3 rounded-xl bg-slate-900 border border-white/5 mb-2">
-                <p className="text-xs font-bold text-white">{user.fullName || user.username}</p>
-                <p className="text-[10px] text-blue-400 font-medium">Vai trò: {user.role}</p>
               </div>
             )}
 
-            {navLinks.map((link) => {
-              const isActive = pathname === link.href;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`text-sm font-medium ${
-                    isActive ? "text-blue-400" : "text-slate-300 hover:text-white"
-                  }`}
-                  onClick={() => setIsOpen(false)}
-                >
-                  {link.name}
-                </Link>
-              );
-            })}
-            <hr className="border-white/10 my-2" />
-            <div className="flex flex-col gap-3">
-              {user ? (
-                <>
-                  {(user.role === "Admin" || user.role === "Editor") && (
+            {/* Mobile Menu Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setIsOpen(!isOpen)}
+              className="lg:hidden p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700"
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {isOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+          </div>
+
+        </div>
+
+        {/* Mobile Navigation Drawer */}
+        {isOpen && (
+          <div className="lg:hidden bg-white border-t border-slate-200 p-6 space-y-4 shadow-xl max-h-[80vh] overflow-y-auto">
+            <Link
+              href="/"
+              onClick={() => setIsOpen(false)}
+              className="block text-sm font-bold text-slate-800 hover:text-blue-600"
+            >
+              Trang Chủ
+            </Link>
+
+            {SERVICE_CATEGORIES.map((cat) => (
+              <div key={cat.id} className="border-t border-slate-100 pt-3">
+                <span className="text-xs font-bold text-blue-600 uppercase tracking-wider block mb-2">
+                  {cat.icon} {cat.title}
+                </span>
+                <div className="space-y-2 pl-3">
+                  {cat.items.map((it, idx) => (
                     <Link
-                      href="/admin/dashboard"
-                      className="text-sm font-semibold text-blue-400 text-center py-2 bg-blue-500/10 rounded-lg"
+                      key={idx}
+                      href={`/services/${it.slug}`}
                       onClick={() => setIsOpen(false)}
+                      className="block text-xs font-semibold text-slate-700 hover:text-blue-600"
                     >
-                      Trang Quản Trị Admin
+                      {it.title} - <span className="text-blue-600">{it.price}</span>
                     </Link>
-                  )}
-                  <Link
-                    href="/my-plans"
-                    className="text-sm font-medium text-slate-300 hover:text-white text-center py-2"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    📦 Quản lý gói cước của tôi
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsOpen(false);
-                      setShowEditModal(true);
-                    }}
-                    className="text-sm font-medium text-slate-300 hover:text-white text-center py-2"
-                  >
-                    ✏️ Đổi thông tin cá nhân
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsOpen(false);
-                      setShowPasswordModal(true);
-                    }}
-                    className="text-sm font-medium text-slate-300 hover:text-white text-center py-2"
-                  >
-                    🔑 Đổi mật khẩu
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsOpen(false);
-                      handleLogout();
-                    }}
-                    className="text-sm font-medium text-red-400 hover:text-red-300 text-center py-2"
-                  >
-                    🚪 Đăng xuất
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link
-                    href="/login"
-                    className="text-sm font-medium text-slate-300 hover:text-white text-center py-2"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Đăng Nhập
-                  </Link>
-                  <Link
-                    href="/register"
-                    className="text-sm font-medium text-slate-300 hover:text-white text-center py-2"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Đăng Ký
-                  </Link>
-                </>
-              )}
-              <Link
-                href="/order"
-                className="w-full py-2.5 rounded-lg bg-blue-600 text-sm font-semibold text-white text-center block hover:bg-blue-500 transition-colors"
-                onClick={() => setIsOpen(false)}
-              >
-                Đặt Hàng Ngay
-              </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            <div className="border-t border-slate-100 pt-3 space-y-2">
+              <Link href="/pricing" onClick={() => setIsOpen(false)} className="block text-xs font-bold text-slate-800 hover:text-blue-600">Bảng Giá</Link>
+              <Link href="/news" onClick={() => setIsOpen(false)} className="block text-xs font-bold text-slate-800 hover:text-blue-600">Tin Tức</Link>
+              <Link href="/about" onClick={() => setIsOpen(false)} className="block text-xs font-bold text-slate-800 hover:text-blue-600">Giới Thiệu</Link>
             </div>
           </div>
         )}
       </header>
 
-      {/* Modal: Đổi Thông Tin Cá Nhân */}
+      {/* Profile Edit Modal */}
       {showEditModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-base font-bold text-white">Đổi Thông Tin Cá Nhân</h3>
-              <button
-                onClick={() => {
-                  setShowEditModal(false);
-                  setEditMsg(null);
-                }}
-                className="text-slate-400 hover:text-white text-lg font-bold"
-              >
-                ✕
-              </button>
-            </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-6 shadow-2xl text-slate-800">
+            <h3 className="text-lg font-bold text-slate-900 mb-1">Cập Nhật Thông Tin Cá Nhân</h3>
+            <p className="text-xs text-slate-500 mb-6">Thay đổi Họ tên và Email liên hệ nhận thông báo đơn hàng.</p>
 
             {editMsg && (
               <div className={`p-3 rounded-xl mb-4 text-xs font-medium ${
-                editMsg.type === "success" ? "bg-green-500/10 border border-green-500/20 text-green-400" : "bg-red-500/10 border border-red-500/20 text-red-400"
+                editMsg.type === "success" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-rose-50 text-rose-700 border border-rose-200"
               }`}>
                 {editMsg.text}
               </div>
@@ -514,51 +752,39 @@ export default function Header() {
 
             <form onSubmit={handleUpdateProfile} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Tên Đăng Nhập</label>
-                <input
-                  type="text"
-                  disabled
-                  value={user?.username || ""}
-                  className="w-full h-10 px-3.5 rounded-xl bg-slate-950/70 border border-white/5 text-xs text-slate-400 cursor-not-allowed"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Họ Và Tên <span className="text-red-400">*</span></label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1.5">Họ và Tên *</label>
                 <input
                   type="text"
                   required
                   value={editFullName}
                   onChange={(e) => setEditFullName(e.target.value)}
-                  placeholder="Nhập họ và tên..."
-                  className="w-full h-10 px-3.5 rounded-xl bg-slate-950 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Địa Chỉ Email <span className="text-red-400">*</span></label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1.5">Địa Chỉ Email *</label>
                 <input
                   type="email"
                   required
                   value={editEmail}
                   onChange={(e) => setEditEmail(e.target.value)}
-                  placeholder="Nhập email của bạn..."
-                  className="w-full h-10 px-3.5 rounded-xl bg-slate-950 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-500"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition-colors"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
                 >
-                  Hủy
+                  Hủy Bỏ
                 </button>
                 <button
                   type="submit"
                   disabled={editLoading}
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white transition-colors disabled:opacity-50"
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold transition-colors shadow-md shadow-blue-500/20"
                 >
                   {editLoading ? "Đang lưu..." : "Lưu Thay Đổi"}
                 </button>
@@ -568,26 +794,16 @@ export default function Header() {
         </div>
       )}
 
-      {/* Modal: Đổi Mật Khẩu Khách Hàng */}
+      {/* Password Change Modal */}
       {showPasswordModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-base font-bold text-white">Đổi Mật Khẩu Cá Nhân</h3>
-              <button
-                onClick={() => {
-                  setShowPasswordModal(false);
-                  setPwdMsg(null);
-                }}
-                className="text-slate-400 hover:text-white text-lg font-bold"
-              >
-                ✕
-              </button>
-            </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-6 shadow-2xl text-slate-800">
+            <h3 className="text-lg font-bold text-slate-900 mb-1">Đổi Mật Khẩu Tài Khoản</h3>
+            <p className="text-xs text-slate-500 mb-6">Mật khẩu mới phải có tối thiểu 6 ký tự.</p>
 
             {pwdMsg && (
               <div className={`p-3 rounded-xl mb-4 text-xs font-medium ${
-                pwdMsg.type === "success" ? "bg-green-500/10 border border-green-500/20 text-green-400" : "bg-red-500/10 border border-red-500/20 text-red-400"
+                pwdMsg.type === "success" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-rose-50 text-rose-700 border border-rose-200"
               }`}>
                 {pwdMsg.text}
               </div>
@@ -595,57 +811,52 @@ export default function Header() {
 
             <form onSubmit={handleChangePassword} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Mật Khẩu Hiện Tại <span className="text-red-400">*</span></label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1.5">Mật Khẩu Hiện Tại *</label>
                 <input
                   type="password"
                   required
                   value={oldPassword}
                   onChange={(e) => setOldPassword(e.target.value)}
-                  placeholder="Nhập mật khẩu hiện tại..."
-                  className="w-full h-10 px-3.5 rounded-xl bg-slate-950 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Mật Khẩu Mới (Tối thiểu 6 ký tự) <span className="text-red-400">*</span></label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1.5">Mật Khẩu Mới *</label>
                 <input
                   type="password"
                   required
-                  minLength={6}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Nhập mật khẩu mới..."
-                  className="w-full h-10 px-3.5 rounded-xl bg-slate-950 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Xác Nhận Mật Khẩu Mới <span className="text-red-400">*</span></label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1.5">Xác Nhận Mật Khẩu Mới *</label>
                 <input
                   type="password"
                   required
-                  minLength={6}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Nhập lại mật khẩu mới..."
-                  className="w-full h-10 px-3.5 rounded-xl bg-slate-950 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-500"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowPasswordModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition-colors"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
                 >
-                  Hủy
+                  Hủy Bỏ
                 </button>
                 <button
                   type="submit"
                   disabled={pwdLoading}
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white transition-colors disabled:opacity-50"
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold transition-colors shadow-md shadow-blue-500/20"
                 >
-                  {pwdLoading ? "Đang xử lý..." : "Cập Nhật Mật Khẩu"}
+                  {pwdLoading ? "Đang cập nhật..." : "Đổi Mật Khẩu"}
                 </button>
               </div>
             </form>

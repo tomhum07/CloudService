@@ -44,11 +44,11 @@ export default function UsersPage() {
     setError(null);
     try {
       const res = await apiFetch("/api/admin/users");
-      if (!res.ok) throw new Error("Failed to fetch users");
+      if (!res.ok) throw new Error("Không thể tải danh sách tài khoản.");
       const data = await res.json();
       setUsers(data);
     } catch (err: any) {
-      setError(err.message || "An error occurred while fetching users.");
+      setError(err.message || "Đã xảy ra lỗi khi lấy danh sách người dùng.");
     } finally {
       setIsLoading(false);
     }
@@ -82,41 +82,25 @@ export default function UsersPage() {
 
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (addForm.password.length < 6) {
-      setFormError("Mật khẩu phải dài ít nhất 6 ký tự.");
-      return;
-    }
     setIsSubmitting(true);
     setFormError(null);
     try {
-      const roleId = addForm.role === "Admin" ? 1 : 2;
       const res = await apiFetch("/api/admin/users", {
         method: "POST",
-        body: JSON.stringify({
-          username: addForm.username,
-          password: addForm.password,
-          fullName: addForm.fullName,
-          email: addForm.email,
-          roleId: roleId
-        }),
+        body: JSON.stringify(addForm),
       });
       if (!res.ok) {
-        let errMsg = "Đã xảy ra lỗi khi tạo tài khoản.";
+        let errMsg = "Thêm tài khoản thất bại.";
         try {
           const errData = await res.json();
-          errMsg = errData.message || errData.error || (errData.errors ? Object.values(errData.errors).flat().join(", ") : "") || errMsg;
-        } catch {
-          try {
-            const txt = await res.text();
-            if (txt) errMsg = txt;
-          } catch {}
-        }
+          errMsg = errData.message || errData.error || errMsg;
+        } catch {}
         throw new Error(errMsg);
       }
       setIsAddModalOpen(false);
       fetchUsers();
     } catch (err: any) {
-      setFormError(err.message || "Failed to create user.");
+      setFormError(err.message || "Không thể tạo tài khoản.");
     } finally {
       setIsSubmitting(false);
     }
@@ -133,22 +117,17 @@ export default function UsersPage() {
         body: JSON.stringify(editForm),
       });
       if (!res.ok) {
-        let errMsg = "Đã xảy ra lỗi khi cập nhật tài khoản.";
+        let errMsg = "Cập nhật tài khoản thất bại.";
         try {
           const errData = await res.json();
-          errMsg = errData.message || errData.error || (errData.errors ? Object.values(errData.errors).flat().join(", ") : "") || errMsg;
-        } catch {
-          try {
-            const txt = await res.text();
-            if (txt) errMsg = txt;
-          } catch {}
-        }
+          errMsg = errData.message || errData.error || errMsg;
+        } catch {}
         throw new Error(errMsg);
       }
       setIsEditModalOpen(false);
       fetchUsers();
     } catch (err: any) {
-      setFormError(err.message || "Failed to update user.");
+      setFormError(err.message || "Không thể cập nhật người dùng.");
     } finally {
       setIsSubmitting(false);
     }
@@ -161,12 +140,10 @@ export default function UsersPage() {
     try {
       let res;
       if (currentUser.isActive) {
-        // Khóa tài khoản
         res = await apiFetch(`/api/admin/users/${currentUser.id}`, {
           method: "DELETE",
         });
       } else {
-        // Mở khóa tài khoản (bằng cách gọi PUT để đặt isActive = true)
         res = await apiFetch(`/api/admin/users/${currentUser.id}`, {
           method: "PUT",
           body: JSON.stringify({
@@ -177,23 +154,11 @@ export default function UsersPage() {
           }),
         });
       }
-      if (!res.ok) {
-        let errMsg = currentUser.isActive ? "Khóa tài khoản thất bại." : "Mở khóa tài khoản thất bại.";
-        try {
-          const errData = await res.json();
-          errMsg = errData.message || errData.error || (errData.errors ? Object.values(errData.errors).flat().join(", ") : "") || errMsg;
-        } catch {
-          try {
-            const txt = await res.text();
-            if (txt) errMsg = txt;
-          } catch {}
-        }
-        throw new Error(errMsg);
-      }
+      if (!res.ok) throw new Error(currentUser.isActive ? "Khóa tài khoản thất bại." : "Mở khóa thất bại.");
       setIsDeleteModalOpen(false);
       fetchUsers();
     } catch (err: any) {
-      setFormError(err.message || "Failed to toggle user lock status.");
+      setFormError(err.message || "Lỗi thay đổi trạng thái tài khoản.");
     } finally {
       setIsSubmitting(false);
     }
@@ -203,7 +168,7 @@ export default function UsersPage() {
     e.preventDefault();
     if (!currentUser) return;
     if (resetForm.newPassword.length < 6) {
-      setFormError("Mật khẩu mới phải dài ít nhất 6 ký tự.");
+      setFormError("Mật khẩu mới phải có tối thiểu 6 ký tự.");
       return;
     }
     setIsSubmitting(true);
@@ -213,203 +178,234 @@ export default function UsersPage() {
         method: "POST",
         body: JSON.stringify({ newPassword: resetForm.newPassword }),
       });
-      if (!res.ok) {
-        let errMsg = "Đã xảy ra lỗi khi đặt lại mật khẩu.";
-        try {
-          const errData = await res.json();
-          errMsg = errData.message || errData.error || (errData.errors ? Object.values(errData.errors).flat().join(", ") : "") || errMsg;
-        } catch {
-          try {
-            const txt = await res.text();
-            if (txt) errMsg = txt;
-          } catch {}
-        }
-        throw new Error(errMsg);
-      }
+      if (!res.ok) throw new Error("Đặt lại mật khẩu thất bại.");
       setIsResetModalOpen(false);
-      alert("Đặt lại mật khẩu thành công!");
+      alert("Đặt lại mật khẩu cho tài khoản thành công!");
     } catch (err: any) {
-      setFormError(err.message || "Failed to reset password.");
+      setFormError(err.message || "Lỗi khi cấp lại mật khẩu.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="p-8 min-h-screen">
-      <div className="flex justify-between items-center mb-8">
+    <div className="space-y-6">
+      
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 mb-2">User Management</h1>
-          <p className="text-gray-400">Manage administrator and editor accounts</p>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900">Quản Lý Tài Khoản & Nhân Sự</h1>
+          <p className="text-xs text-slate-500 mt-1">Phân quyền vai trò Quản trị viên (Admin), Biên tập viên (Editor) và Khách hàng</p>
         </div>
         <button 
           onClick={handleOpenAdd}
-          className="px-6 py-3 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-medium transition-all shadow-[0_0_15px_rgba(37,99,235,0.4)] flex items-center gap-2"
+          className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-all shadow-md shadow-blue-500/20 flex items-center gap-2"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-          Add User
+          <span>➕</span>
+          <span>Thêm Tài Khoản Mới</span>
         </button>
       </div>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl mb-6 flex items-center gap-3">
-           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          {error}
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
+          ⚠️ {error}
         </div>
       )}
 
-      <div className="glassmorphism rounded-2xl overflow-hidden border border-gray-800 shadow-2xl">
+      {/* Table */}
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-900/50 border-b border-gray-800 text-gray-300">
-                <th className="p-5 font-semibold text-sm uppercase tracking-wider">Username</th>
-                <th className="p-5 font-semibold text-sm uppercase tracking-wider">Full Name</th>
-                <th className="p-5 font-semibold text-sm uppercase tracking-wider">Email</th>
-                <th className="p-5 font-semibold text-sm uppercase tracking-wider">Role</th>
-                <th className="p-5 font-semibold text-sm uppercase tracking-wider">Status</th>
-                <th className="p-5 font-semibold text-sm uppercase tracking-wider text-right">Actions</th>
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50 text-slate-700 uppercase font-bold border-b border-slate-200">
+              <tr>
+                <th className="py-3.5 px-4">Tên Đăng Nhập</th>
+                <th className="py-3.5 px-4">Họ Và Tên</th>
+                <th className="py-3.5 px-4">Địa Chỉ Email</th>
+                <th className="py-3.5 px-4">Vai Trò</th>
+                <th className="py-3.5 px-4">Trạng Thái</th>
+                <th className="py-3.5 px-4 text-right">Thao Tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-800/50">
+            <tbody className="divide-y divide-slate-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-gray-500">
-                    <div className="flex justify-center items-center space-x-2">
-                      <div className="w-4 h-4 rounded-full bg-blue-500 animate-bounce"></div>
-                      <div className="w-4 h-4 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                      <div className="w-4 h-4 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                    </div>
-                  </td>
+                  <td colSpan={6} className="p-8 text-center text-slate-400">Đang tải danh sách người dùng...</td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-gray-500">No users found. Create one to get started.</td>
+                  <td colSpan={6} className="p-8 text-center text-slate-400">Chưa có tài khoản nào trên hệ thống.</td>
                 </tr>
               ) : (
-                users.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-800/30 transition-colors group">
-                    <td className="p-5 text-gray-200 font-medium">
-                      {user.username}
-                    </td>
-                    <td className="p-5 text-gray-300">
-                      {user.fullName}
-                    </td>
-                    <td className="p-5 text-gray-400">
-                      {user.email}
-                    </td>
-                    <td className="p-5">
-                      <span className={`px-3 py-1 rounded-md text-sm font-mono border ${
-                        user.role === 'Admin' ? 'bg-purple-900/20 text-purple-400 border-purple-700'
-                        : user.role === 'Customer' ? 'bg-blue-900/20 text-blue-400 border-blue-700'
-                        : 'bg-gray-800 text-gray-400 border-gray-700'
+                users.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((u) => (
+                  <tr key={u.id} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900">{u.username}</td>
+                    <td className="py-3.5 px-4 font-semibold text-slate-900">{u.fullName}</td>
+                    <td className="py-3.5 px-4 text-slate-600">{u.email}</td>
+                    <td className="py-3.5 px-4">
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                        u.role === 'Admin' ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                        : u.role === 'Editor' ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                        : 'bg-slate-100 text-slate-700'
                       }`}>
-                        {user.role}
+                        {u.role}
                       </span>
                     </td>
-                    <td className="p-5">
-                      {user.isActive ? (
-                        <span className="px-3 py-1 bg-green-900/20 text-green-400 rounded-md text-sm font-mono border border-green-700/50">Active</span>
+                    <td className="py-3.5 px-4">
+                      {u.isActive ? (
+                        <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-[10px] font-bold">
+                          Hoạt động
+                        </span>
                       ) : (
-                        <span className="px-3 py-1 bg-red-900/20 text-red-400 rounded-md text-sm font-mono border border-red-700/50 flex items-center gap-1.5 w-fit">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                          Bị khóa
+                        <span className="px-2.5 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-full text-[10px] font-bold">
+                          Đã khóa
                         </span>
                       )}
                     </td>
-                    <td className="p-5 text-right">
-                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button 
-                          onClick={() => handleOpenEdit(user)}
-                          className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded-lg transition-colors"
-                          title="Edit"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                        </button>
-                        <button 
-                          onClick={() => handleOpenReset(user)}
-                          className="p-2 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-400/10 rounded-lg transition-colors"
-                          title="Reset Password"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
-                        </button>
-                        {user.isActive ? (
-                          <button 
-                            onClick={() => handleOpenDelete(user)}
-                            className="p-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors"
-                            title="Khóa tài khoản"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                            </svg>
-                          </button>
-                        ) : (
-                          <button 
-                            onClick={() => handleOpenDelete(user)}
-                            className="p-2 text-green-400 hover:text-green-300 hover:bg-green-400/10 rounded-lg transition-colors"
-                            title="Mở khóa tài khoản"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
-                            </svg>
-                          </button>
-                        )}
-                      </div>
+                    <td className="py-3.5 px-4 text-right space-x-1">
+                      <button 
+                        onClick={() => handleOpenEdit(u)}
+                        className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-[11px] transition-colors"
+                        title="Chỉnh sửa"
+                      >
+                        Sửa
+                      </button>
+                      <button 
+                        onClick={() => handleOpenReset(u)}
+                        className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg font-bold text-[11px] transition-colors"
+                        title="Cấp lại mật khẩu"
+                      >
+                        Đổi Pass
+                      </button>
+                      <button 
+                        onClick={() => handleOpenDelete(u)}
+                        className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-colors ${
+                          u.isActive
+                            ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+                            : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200'
+                        }`}
+                      >
+                        {u.isActive ? "Khóa" : "Mở Khóa"}
+                      </button>
                     </td>
                   </tr>
                 ))
               )}
-              </tbody>
-            </table>
-            {totalPages > 1 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t border-gray-800 text-gray-400 text-xs sm:text-sm bg-gray-900/10">
-                <div>Trang {currentPage}/{totalPages} — Tổng {users.length} tài khoản</div>
-                <div className="flex gap-2">
-                  <button type="button" disabled={currentPage === 1} onClick={() => setCurrentPage(1)} className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-30 text-white font-medium transition-colors">Đầu</button>
-                  <button type="button" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-30 text-white font-medium transition-colors">Trước</button>
-                  <button type="button" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-30 text-white font-medium transition-colors">Sau</button>
-                  <button type="button" disabled={currentPage === totalPages} onClick={() => setCurrentPage(totalPages)} className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-30 text-white font-medium transition-colors">Cuối</button>
-                </div>
-              </div>
-            )}
-          </div>
+            </tbody>
+          </table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="p-4 border-t border-slate-100 flex items-center justify-between">
+            <span className="text-xs text-slate-500">
+              Trang {currentPage} / {totalPages} ({users.length} tài khoản)
+            </span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-xs font-bold rounded-lg"
+              >
+                Trước
+              </button>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-xs font-bold rounded-lg"
+              >
+                Sau
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Add Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="glassmorphism w-full max-w-md rounded-2xl border border-gray-700 shadow-2xl p-6 animate-in fade-in zoom-in duration-200">
-            <h2 className="text-2xl font-bold text-white mb-6">Add New User</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-slate-900 mb-1">Thêm Tài Khoản Mới</h3>
+            <p className="text-xs text-slate-500 mb-4">Cấp quyền truy cập hệ thống cho nhân sự mới.</p>
+
             {formError && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg mb-4 text-sm">{formError}</div>
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium mb-4">
+                ⚠️ {formError}
+              </div>
             )}
+
             <form onSubmit={handleAddSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Username</label>
-                <input required type="text" value={addForm.username} onChange={(e) => setAddForm({...addForm, username: e.target.value})} className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all" />
+                <label className="text-xs font-bold text-slate-700 block mb-1">Tên Đăng Nhập *</label>
+                <input
+                  type="text"
+                  required
+                  value={addForm.username}
+                  onChange={(e) => setAddForm({ ...addForm, username: e.target.value })}
+                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+                />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Password</label>
-                <input required type="password" value={addForm.password} onChange={(e) => setAddForm({...addForm, password: e.target.value})} className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all" />
+                <label className="text-xs font-bold text-slate-700 block mb-1">Họ Và Tên *</label>
+                <input
+                  type="text"
+                  required
+                  value={addForm.fullName}
+                  onChange={(e) => setAddForm({ ...addForm, fullName: e.target.value })}
+                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+                />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Full Name</label>
-                <input required type="text" value={addForm.fullName} onChange={(e) => setAddForm({...addForm, fullName: e.target.value})} className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all" />
+                <label className="text-xs font-bold text-slate-700 block mb-1">Địa Chỉ Email *</label>
+                <input
+                  type="email"
+                  required
+                  value={addForm.email}
+                  onChange={(e) => setAddForm({ ...addForm, email: e.target.value })}
+                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+                />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
-                <input required type="email" value={addForm.email} onChange={(e) => setAddForm({...addForm, email: e.target.value})} className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all" />
+                <label className="text-xs font-bold text-slate-700 block mb-1">Mật Khẩu Khởi Tạo *</label>
+                <input
+                  type="password"
+                  required
+                  value={addForm.password}
+                  onChange={(e) => setAddForm({ ...addForm, password: e.target.value })}
+                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+                />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Role</label>
-                <select value={addForm.role} onChange={(e) => setAddForm({...addForm, role: e.target.value})} className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all appearance-none">
-                  <option value="Editor">Editor</option>
-                  <option value="Admin">Admin</option>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Vai Trò Phân Quyền *</label>
+                <select
+                  value={addForm.role}
+                  onChange={(e) => setAddForm({ ...addForm, role: e.target.value })}
+                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+                >
+                  <option value="Editor">Biên Tập Viên (Editor)</option>
+                  <option value="Admin">Quản Trị Viên (Admin)</option>
+                  <option value="Customer">Khách Hàng (Customer)</option>
                 </select>
               </div>
-              <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setIsAddModalOpen(false)} className="flex-1 px-4 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white font-medium transition-colors border border-gray-700">Cancel</button>
-                <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 disabled:opacity-50 text-white font-medium transition-colors shadow-[0_0_15px_rgba(37,99,235,0.3)]">{isSubmitting ? "Saving..." : "Save"}</button>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700"
+                >
+                  Hủy Bỏ
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-xs font-bold text-white shadow-md shadow-blue-500/20"
+                >
+                  {isSubmitting ? "Đang tạo..." : "Tạo Tài Khoản"}
+                </button>
               </div>
             </form>
           </div>
@@ -417,72 +413,103 @@ export default function UsersPage() {
       )}
 
       {/* Edit Modal */}
-      {isEditModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="glassmorphism w-full max-w-md rounded-2xl border border-gray-700 shadow-2xl p-6 animate-in fade-in zoom-in duration-200">
-            <h2 className="text-2xl font-bold text-white mb-6">Edit User</h2>
+      {isEditModalOpen && currentUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-slate-900 mb-1">Chỉnh Sửa Tài Khoản: @{currentUser.username}</h3>
+            <p className="text-xs text-slate-500 mb-4">Cập nhật thông tin và vai trò của tài khoản.</p>
+
             {formError && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg mb-4 text-sm">{formError}</div>
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium mb-4">
+                ⚠️ {formError}
+              </div>
             )}
+
             <form onSubmit={handleEditSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Full Name</label>
-                <input required type="text" value={editForm.fullName} onChange={(e) => setEditForm({...editForm, fullName: e.target.value})} className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all" />
+                <label className="text-xs font-bold text-slate-700 block mb-1">Họ Và Tên *</label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.fullName}
+                  onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
+                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+                />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
-                <input required type="email" value={editForm.email} onChange={(e) => setEditForm({...editForm, email: e.target.value})} className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all" />
+                <label className="text-xs font-bold text-slate-700 block mb-1">Địa Chỉ Email *</label>
+                <input
+                  type="email"
+                  required
+                  value={editForm.email}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+                />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Role</label>
-                <select value={editForm.role} onChange={(e) => setEditForm({...editForm, role: e.target.value})} className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all appearance-none">
-                  <option value="Editor">Editor</option>
-                  <option value="Admin">Admin</option>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Vai Trò *</label>
+                <select
+                  value={editForm.role}
+                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+                >
+                  <option value="Editor">Biên Tập Viên (Editor)</option>
+                  <option value="Admin">Quản Trị Viên (Admin)</option>
+                  <option value="Customer">Khách Hàng (Customer)</option>
                 </select>
               </div>
-              <div className="flex items-center gap-2 mt-4">
-                <input type="checkbox" id="isActive" checked={editForm.isActive} onChange={(e) => setEditForm({...editForm, isActive: e.target.checked})} className="w-4 h-4 text-blue-600 bg-gray-900 border-gray-700 rounded focus:ring-blue-500 focus:ring-2" />
-                <label htmlFor="isActive" className="text-sm font-medium text-gray-300">Active Account</label>
-              </div>
-              <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setIsEditModalOpen(false)} className="flex-1 px-4 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white font-medium transition-colors border border-gray-700">Cancel</button>
-                <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 disabled:opacity-50 text-white font-medium transition-colors shadow-[0_0_15px_rgba(37,99,235,0.3)]">{isSubmitting ? "Saving..." : "Save Changes"}</button>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-xs font-bold text-white shadow-md shadow-blue-500/20"
+                >
+                  {isSubmitting ? "Đang lưu..." : "Lưu Thay Đổi"}
+                </button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Delete/Deactivate Confirmation Modal */}
-      {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className={`glassmorphism w-full max-w-md rounded-2xl border shadow-2xl p-6 animate-in fade-in zoom-in duration-200 ${currentUser?.isActive ? 'border-red-900/50' : 'border-green-900/50'}`}>
-            <div className={`flex items-center gap-4 mb-4 ${currentUser?.isActive ? 'text-red-400' : 'text-green-400'}`}>
-              <div className={`p-3 rounded-full ${currentUser?.isActive ? 'bg-red-500/10' : 'bg-green-500/10'}`}>
-                {currentUser?.isActive ? (
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                ) : (
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>
-                )}
-              </div>
-              <h2 className="text-2xl font-bold text-white">{currentUser?.isActive ? "Khóa tài khoản?" : "Mở khóa tài khoản?"}</h2>
-            </div>
-            {formError && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg mb-4 text-sm">{formError}</div>
-            )}
-            <div className={`mb-6 p-4 rounded-xl ${currentUser?.isActive ? 'bg-red-900/20 border border-red-800/30' : 'bg-green-900/20 border border-green-800/30'}`}>
-              <p className="text-gray-400 text-sm">
-                {currentUser?.isActive ? (
-                  <>Bạn có chắc chắn muốn khóa tài khoản <span className="text-white font-semibold">{currentUser?.username}</span>? Người dùng này sẽ không thể đăng nhập vào hệ thống.</>
-                ) : (
-                  <>Bạn có chắc chắn muốn mở khóa tài khoản <span className="text-white font-semibold">{currentUser?.username}</span>? Người dùng này sẽ khôi phục lại khả năng đăng nhập hệ thống.</>
-                )}
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <button type="button" onClick={() => setIsDeleteModalOpen(false)} className="flex-1 px-4 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white font-medium transition-colors border border-gray-700">Hủy</button>
-              <button type="button" onClick={handleDeleteSubmit} disabled={isSubmitting} className={`flex-1 px-4 py-3 rounded-xl text-white font-medium transition-colors shadow-lg ${currentUser?.isActive ? 'bg-red-600 hover:bg-red-500 shadow-red-950/30' : 'bg-green-600 hover:bg-green-500 shadow-green-950/30'}`}>
-                {isSubmitting ? (currentUser?.isActive ? "Đang khóa..." : "Đang mở...") : (currentUser?.isActive ? "Đồng ý Khóa" : "Đồng ý Mở khóa")}
+      {/* Delete / Lock Modal */}
+      {isDeleteModalOpen && currentUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="w-full max-w-sm bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl text-center">
+            <div className="text-3xl mb-3">{currentUser.isActive ? "🔒" : "🔓"}</div>
+            <h3 className="text-lg font-bold text-slate-900 mb-1">
+              {currentUser.isActive ? "Khóa Tài Khoản Này?" : "Mở Khóa Tài Khoản?"}
+            </h3>
+            <p className="text-xs text-slate-500 mb-6">
+              Bạn có chắc chắn muốn thay đổi trạng thái hoạt động của tài khoản <strong>@{currentUser.username}</strong>?
+            </p>
+            <div className="flex justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 rounded-xl"
+              >
+                Hủy Bỏ
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteSubmit}
+                disabled={isSubmitting}
+                className={`px-5 py-2 text-xs font-bold text-white rounded-xl shadow-sm ${
+                  currentUser.isActive ? "bg-rose-600 hover:bg-rose-700" : "bg-emerald-600 hover:bg-emerald-700"
+                }`}
+              >
+                {isSubmitting ? "Đang xử lý..." : currentUser.isActive ? "Xác Nhận Khóa" : "Xác Nhận Mở"}
               </button>
             </div>
           </div>
@@ -490,27 +517,52 @@ export default function UsersPage() {
       )}
 
       {/* Reset Password Modal */}
-      {isResetModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="glassmorphism w-full max-w-md rounded-2xl border border-yellow-900/50 shadow-2xl p-6 animate-in fade-in zoom-in duration-200">
-            <h2 className="text-2xl font-bold text-white mb-6">Reset Password</h2>
+      {isResetModalOpen && currentUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-slate-900 mb-1">Cấp Lại Mật Khẩu: @{currentUser.username}</h3>
+            <p className="text-xs text-slate-500 mb-4">Nhập mật khẩu mới trực tiếp cho người dùng này.</p>
+
             {formError && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg mb-4 text-sm">{formError}</div>
-            )}
-            <form onSubmit={handleResetSubmit} className="space-y-4">
-              <p className="text-sm text-gray-400">Set a new password for <span className="text-white font-semibold">{currentUser?.username}</span>.</p>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">New Password</label>
-                <input required type="password" value={resetForm.newPassword} onChange={(e) => setResetForm({...resetForm, newPassword: e.target.value})} className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all" />
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium mb-4">
+                ⚠️ {formError}
               </div>
-              <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setIsResetModalOpen(false)} className="flex-1 px-4 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white font-medium transition-colors border border-gray-700">Cancel</button>
-                <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-3 rounded-xl bg-yellow-600 hover:bg-yellow-500 disabled:bg-yellow-800 disabled:opacity-50 text-white font-medium transition-colors shadow-[0_0_15px_rgba(202,138,4,0.3)]">{isSubmitting ? "Resetting..." : "Reset Password"}</button>
+            )}
+
+            <form onSubmit={handleResetSubmit} className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Mật Khẩu Mới *</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Tối thiểu 6 ký tự"
+                  value={resetForm.newPassword}
+                  onChange={(e) => setResetForm({ newPassword: e.target.value })}
+                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsResetModalOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700"
+                >
+                  Hủy Bỏ
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-xs font-bold text-white shadow-md shadow-blue-500/20"
+                >
+                  {isSubmitting ? "Đang xử lý..." : "Cập Nhật Mật Khẩu"}
+                </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
     </div>
   );
 }

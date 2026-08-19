@@ -1,7 +1,7 @@
 # ☁️ CloudService - Hệ Thống Bán Dịch Vụ Điện Toán Đám Mây
 
 > **Báo cáo Bài Tập Lớn môn Phát Triển Phần Mềm Hướng Đối Tượng (PTPMHDT)**  
-> Trường Đại học Giao Thông Vận Tải (UTC)
+> Trường Đại học Đồng Tháp (Dthu)
 
 [![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16.3-black?logo=next.js&logoColor=white)](https://nextjs.org/)
