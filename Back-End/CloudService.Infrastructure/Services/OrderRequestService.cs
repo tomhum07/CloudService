@@ -272,6 +272,35 @@ namespace CloudService.Infrastructure.Services
 
         private static OrderRequestDto MapToDto(OrderRequest o)
         {
+            decimal price = o.PlanPrice?.Price ?? 0;
+
+            // Nếu trong Notes có ghi nhận số tiền thanh toán thực tế sau khi giảm giá hoặc qua PayOS, ưu tiên hiển thị đúng số tiền đó
+            if (!string.IsNullOrEmpty(o.Notes))
+            {
+                // Tìm pattern [PayOS: Đã thanh toán 2.000đ] hoặc [Số tiền: 2.000đ]
+                var payMatch = System.Text.RegularExpressions.Regex.Match(o.Notes, @"Đã thanh toán\s+([\d\.\,]+)đ");
+                if (payMatch.Success)
+                {
+                    var cleanNum = payMatch.Groups[1].Value.Replace(".", "").Replace(",", "");
+                    if (decimal.TryParse(cleanNum, out decimal parsedPaid))
+                    {
+                        price = parsedPaid;
+                    }
+                }
+                else
+                {
+                    var amountMatch = System.Text.RegularExpressions.Regex.Match(o.Notes, @"Tổng tiền:\s+([\d\.\,]+)đ");
+                    if (amountMatch.Success)
+                    {
+                        var cleanNum = amountMatch.Groups[1].Value.Replace(".", "").Replace(",", "");
+                        if (decimal.TryParse(cleanNum, out decimal parsedAmount))
+                        {
+                            price = parsedAmount;
+                        }
+                    }
+                }
+            }
+
             return new OrderRequestDto
             {
                 Id = o.Id,
@@ -279,7 +308,7 @@ namespace CloudService.Infrastructure.Services
                 PlanName = o.PlanPrice?.Plan?.Name ?? "Dịch vụ Cloud",
                 CategoryName = o.PlanPrice?.Plan?.Category?.Name ?? "Hạ tầng",
                 BillingCycle = o.PlanPrice?.BillingCycle ?? "Monthly",
-                Price = o.PlanPrice?.Price ?? 0,
+                Price = price,
                 CustomerName = o.CustomerName,
                 CustomerEmail = o.CustomerEmail,
                 CustomerPhone = o.CustomerPhone,

@@ -56,6 +56,8 @@ function OrderFormContent() {
   } | null>(null);
 
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [checkingPayment, setCheckingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   // 1. Kiểm tra trạng thái Đăng Nhập & Tự động điền thông tin người dùng
   useEffect(() => {
@@ -127,8 +129,10 @@ function OrderFormContent() {
         const res = await apiFetch(`/api/payment/info/${payosData.orderCode}`);
         if (res.ok) {
           const data = await res.json();
-          if (data.status === "PAID" || data.status === "COMPLETED" || (data.data && data.data.status === "PAID")) {
+          const st = data.status || (data.data && data.data.status);
+          if (st === "PAID" || st === "COMPLETED") {
             setPaymentSuccess(true);
+            setPaymentError(null);
             clearInterval(interval);
           }
         }
@@ -137,6 +141,38 @@ function OrderFormContent() {
 
     return () => clearInterval(interval);
   }, [step, payosData, paymentSuccess]);
+
+  // Hàm thủ công kiểm tra kết quả giao dịch
+  const handleCheckPaymentStatus = async () => {
+    if (!payosData?.orderCode) return;
+
+    setCheckingPayment(true);
+    setPaymentError(null);
+
+    try {
+      const res = await apiFetch(`/api/payment/info/${payosData.orderCode}`);
+      if (res.ok) {
+        const data = await res.json();
+        const st = data.status || (data.data && data.data.status);
+
+        if (st === "PAID" || st === "COMPLETED") {
+          setPaymentSuccess(true);
+          setPaymentError(null);
+        } else if (st === "CANCELLED") {
+          setPaymentError("Giao dịch này đã bị hủy hoặc hết thời gian thanh toán.");
+        } else {
+          setPaymentError("Hệ thống chưa ghi nhận tiền chuyển khoản. Nếu bạn vừa quét mã thành công, vui lòng chờ trong 5 - 10 giây rồi bấm Kiểm Tra Lại!");
+        }
+      } else {
+        setPaymentError("Không thể kết nối đến máy chủ kiểm tra thanh toán. Vui lòng thử lại.");
+      }
+    } catch (err) {
+      console.warn("Lỗi kiểm tra trạng thái thanh toán:", err);
+      setPaymentError("Không thể kết nối đến máy chủ kiểm tra thanh toán. Vui lòng thử lại.");
+    } finally {
+      setCheckingPayment(false);
+    }
+  };
 
   const activeCycle = BILLING_CYCLES.find((c) => c.id === billingCycle) || BILLING_CYCLES[3];
 
@@ -273,7 +309,7 @@ function OrderFormContent() {
       customerPhone: trimmedPhone,
       domainName: domainName.trim() || undefined,
       promoCode,
-      notes: `${notes || ""}${promoCode ? ` [Mã KM: ${promoCode}]` : ""}${domainName ? ` [Tên miền: ${domainName}]` : ""}`.trim(),
+      notes: `${notes || ""}${promoCode ? ` [Mã KM: ${promoCode}]` : ""}${domainName ? ` [Tên miền: ${domainName}]` : ""} [Tổng tiền: ${new Intl.NumberFormat("vi-VN").format(totalAmount)}đ]`.trim(),
       totalAmount,
       createdAt: new Date().toISOString(),
       orderCode,
@@ -812,13 +848,45 @@ function OrderFormContent() {
                   </div>
                 </div>
 
+                {/* Thông báo kết quả kiểm tra thanh toán thủ công */}
+                {paymentError && (
+                  <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-700 font-medium flex items-center justify-between gap-3 text-left">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">⚠️</span>
+                      <span>{paymentError}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Nút Kiểm Tra Kết Quả Giao Dịch */}
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    disabled={checkingPayment}
+                    onClick={handleCheckPaymentStatus}
+                    className="w-full py-3.5 px-6 rounded-2xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2"
+                  >
+                    {checkingPayment ? (
+                      <>
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                        <span>Đang Kiểm Tra Với Hệ Thống Ngân Hàng PayOS...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>🔄</span>
+                        <span>Tôi Đã Chuyển Khoản Thành Công - Kiểm Tra Kết Quả Giao Dịch</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
                 <p className="text-[11px] text-slate-400 italic">
                   * Vui lòng giữ nguyên đúng nội dung chuyển khoản để hệ thống tự động nhận diện và kích hoạt gói ngay lập tức.
                 </p>
               </div>
 
               {/* Nút Điều Hướng */}
-              <div className="pt-4 flex flex-col sm:flex-row gap-3">
+              <div className="pt-2 flex flex-col sm:flex-row gap-3">
                 <button
                   type="button"
                   onClick={() => setStep(1)}
@@ -828,7 +896,7 @@ function OrderFormContent() {
                 </button>
                 <Link
                   href="/my-plans"
-                  className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs text-center transition-colors shadow-md shadow-blue-500/20"
+                  className="flex-1 py-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs text-center transition-colors border border-blue-200"
                 >
                   Xem Gói Dịch Vụ Của Tôi →
                 </Link>

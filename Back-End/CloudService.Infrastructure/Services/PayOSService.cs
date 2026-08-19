@@ -147,6 +147,59 @@ namespace CloudService.Infrastructure.Services
 
             var response = await _httpClient.SendAsync(httpRequest);
             var content = await response.Content.ReadAsStringAsync();
+
+            try
+            {
+                using var doc = JsonDocument.Parse(content);
+                var root = doc.RootElement;
+                if (root.TryGetProperty("data", out var dataElem))
+                {
+                    var status = dataElem.TryGetProperty("status", out var st) ? st.GetString() : "";
+                    var desc = dataElem.TryGetProperty("description", out var ds) ? ds.GetString() ?? "" : "";
+                    var amount = dataElem.TryGetProperty("amount", out var am) ? am.GetInt32() : 0;
+
+                    if (status == "PAID")
+                    {
+                        if (desc.StartsWith("DH "))
+                        {
+                            var parts = desc.Split(' ');
+                            if (parts.Length >= 2 && int.TryParse(parts[1], out int orderId))
+                            {
+                                var order = await _context.OrderRequests
+                                    .Include(o => o.PlanPrice)
+                                        .ThenInclude(p => p!.Plan)
+                                    .FirstOrDefaultAsync(o => o.Id == orderId);
+
+                                if (order != null && order.Status != 2)
+                                {
+                                    order.Status = 2; // Completed / Active
+                                    order.Notes = $"{order.Notes ?? ""} [PayOS: Đã thanh toán {amount:N0}đ]".Trim();
+                                    await _context.SaveChangesAsync();
+                                    _logger.LogInformation("[PayOS Status Check] Tự động kích hoạt Đơn Hàng #{OrderId} thành công khi kiểm tra trạng thái!", order.Id);
+
+                                    // Gửi email xác nhận
+                                    if (!string.IsNullOrWhiteSpace(order.CustomerEmail))
+                                    {
+                                        try
+                                        {
+                                            var planName = order.PlanPrice?.Plan?.Name ?? "Gói Dịch Vụ Cloud";
+                                            var finalPrice = amount > 0 ? (decimal)amount : (order.PlanPrice?.Price ?? 0);
+                                            var code = $"ORD-{order.Id:D5}";
+                                            await _emailService.SendOrderSuccessNotificationAsync(order.CustomerEmail, order.CustomerName, code, planName, finalPrice);
+                                        }
+                                        catch { }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[PayOS] Lỗi khi xử lý dữ liệu kiểm tra đơn hàng {OrderCode}", orderCode);
+            }
+
             return JsonSerializer.Deserialize<object>(content) ?? new { };
         }
 
