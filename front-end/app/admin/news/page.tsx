@@ -31,6 +31,9 @@ export default function AdminNewsPage() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Modal zoom preview ảnh
+  const [showImageZoom, setShowImageZoom] = useState(false);
+
   const fetchNews = async () => {
     setLoading(true);
     try {
@@ -104,7 +107,6 @@ export default function AdminNewsPage() {
     if (result.error) {
       setUploadError(`Tải ảnh lên Supabase thất bại: ${result.error}`);
     } else {
-      // Lưu đường dẫn ảnh vào ThumbnailUrl để lưu DB & hiển thị preview (Không chèn text markdown thừa vào textarea)
       setThumbnailUrl(result.url);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
@@ -219,7 +221,12 @@ export default function AdminNewsPage() {
                           <img
                             src={art.thumbnailUrl}
                             alt={art.title}
-                            className="w-12 h-12 rounded-xl object-cover border border-slate-200 flex-shrink-0"
+                            className="w-12 h-12 rounded-xl object-cover border border-slate-200 flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => {
+                              setThumbnailUrl(art.thumbnailUrl);
+                              setShowImageZoom(true);
+                            }}
+                            title="Bấm để phóng to xem trước"
                           />
                         ) : (
                           <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-lg flex-shrink-0 text-slate-400">
@@ -361,75 +368,93 @@ export default function AdminNewsPage() {
                 ></textarea>
               </div>
 
-              {/* Tải & Xem Trước Ảnh Bài Viết */}
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <label className="text-xs font-bold text-slate-900 block">
-                      ☁️ Ảnh Bài Viết (Lưu trữ trên Supabase Storage)
-                    </label>
-                    <span className="text-[11px] text-slate-500">
-                      Chọn file ảnh từ máy tính để tải trực tiếp lên đám mây Supabase.
-                    </span>
-                  </div>
+              {/* Tải & Xem Ảnh Thumbnail Thu Nhỏ */}
+              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  {thumbnailUrl ? (
+                    <div className="relative group cursor-pointer" onClick={() => setShowImageZoom(true)}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={thumbnailUrl}
+                        alt="Thumbnail"
+                        className="w-14 h-14 rounded-xl object-cover border border-slate-300 group-hover:opacity-80 transition-all shadow-xs"
+                      />
+                      <div className="absolute inset-0 bg-black/30 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-white text-xs">🔍</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-14 h-14 rounded-xl bg-white border border-dashed border-slate-300 flex items-center justify-center text-xl text-slate-400">
+                      📷
+                    </div>
+                  )}
 
                   <div>
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleFileChange}
-                      accept="image/*"
-                      className="hidden"
-                      id="upload-image-input"
-                    />
-                    <label
-                      htmlFor="upload-image-input"
-                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5 ${
-                        isUploading
-                          ? "bg-slate-300 text-slate-500 cursor-not-allowed"
-                          : "bg-emerald-600 hover:bg-emerald-700 text-white"
-                      }`}
-                    >
-                      {isUploading ? (
-                        <>
-                          <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
-                          <span>Đang tải lên Supabase...</span>
-                        </>
+                    <div className="text-xs font-bold text-slate-900">Ảnh Bìa Bài Viết (Supabase)</div>
+                    <div className="text-[11px] text-slate-500">
+                      {thumbnailUrl ? (
+                        <button
+                          type="button"
+                          onClick={() => setShowImageZoom(true)}
+                          className="text-blue-600 font-bold hover:underline"
+                        >
+                          Bấm vào ảnh để xem to (Preview)
+                        </button>
                       ) : (
-                        <>
-                          <span>📁</span>
-                          <span>{thumbnailUrl ? "Thay Đổi Ảnh Khác" : "Chọn Ảnh Từ Máy Tính"}</span>
-                        </>
+                        "Chưa chọn ảnh (Hỗ trợ JPG, PNG, WEBP)"
                       )}
-                    </label>
+                    </div>
                   </div>
                 </div>
 
-                {/* Khung Preview Ảnh To Rõ Ràng & Đẹp Mắt */}
-                {thumbnailUrl && (
-                  <div className="relative group rounded-2xl overflow-hidden border border-slate-200 bg-white max-h-64 flex items-center justify-center p-2">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={thumbnailUrl}
-                      alt="Preview"
-                      className="rounded-xl max-h-56 w-auto object-contain shadow-xs"
-                    />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    accept="image/*"
+                    className="hidden"
+                    id="upload-image-input"
+                  />
+                  <label
+                    htmlFor="upload-image-input"
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5 ${
+                      isUploading
+                        ? "bg-slate-300 text-slate-500 cursor-not-allowed"
+                        : "bg-emerald-600 hover:bg-emerald-700 text-white"
+                    }`}
+                  >
+                    {isUploading ? (
+                      <>
+                        <span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+                        <span>Đang tải...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>📁</span>
+                        <span>{thumbnailUrl ? "Đổi Ảnh" : "Chọn Ảnh"}</span>
+                      </>
+                    )}
+                  </label>
+
+                  {thumbnailUrl && (
                     <button
                       type="button"
                       onClick={handleRemoveThumbnail}
-                      className="absolute top-4 right-4 px-3 py-1.5 bg-rose-600/90 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-md backdrop-blur-sm transition-all"
+                      className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-colors"
+                      title="Gỡ ảnh"
                     >
-                      🗑️ Gỡ Ảnh
+                      Gỡ
                     </button>
-                  </div>
-                )}
-
-                {uploadError && (
-                  <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
-                    ⚠️ {uploadError}
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
+
+              {uploadError && (
+                <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
+                  ⚠️ {uploadError}
+                </div>
+              )}
 
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">Nội Dung Chi Tiết (Hỗ trợ văn bản & đoạn văn) *</label>
@@ -473,6 +498,33 @@ export default function AdminNewsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Phóng To Xem Trước Ảnh (LightBox Zoom Preview) */}
+      {showImageZoom && thumbnailUrl && (
+        <div
+          onClick={() => setShowImageZoom(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in cursor-zoom-out"
+        >
+          <div className="relative max-w-4xl max-h-[90vh] flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={thumbnailUrl}
+              alt="Preview Zoom"
+              className="max-h-[80vh] w-auto max-w-full rounded-2xl shadow-2xl object-contain border border-white/20"
+            />
+            <div className="mt-3 flex items-center gap-3">
+              <span className="text-xs text-white/80 font-medium">Ảnh xem trước từ Supabase Storage</span>
+              <button
+                type="button"
+                onClick={() => setShowImageZoom(false)}
+                className="px-3.5 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-bold backdrop-blur-sm transition-all"
+              >
+                ✕ Đóng Xem Trước
+              </button>
+            </div>
           </div>
         </div>
       )}
