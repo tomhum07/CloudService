@@ -44,7 +44,6 @@ namespace CloudService.WebApi.Controllers
         /// Lấy thông tin thanh toán của đơn hàng theo OrderCode
         /// </summary>
         [HttpGet("info/{orderCode}")]
-        [Authorize]
         public async Task<IActionResult> GetPaymentInfo(long orderCode)
         {
             try

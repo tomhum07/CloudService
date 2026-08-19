@@ -743,165 +743,168 @@ function OrderFormContent() {
         )}
 
         {/* ========================================================= */}
-        {/* STEP 2: BƯỚC THANH TOÁN (HIỂN THỊ MÃ QR TRỰC TIẾP TRÊN TRANG) */}
+        {/* STEP 2: BƯỚC THANH TOÁN (HIỂN THỊ MÃ QR HOẶC KẾT QUẢ THÀNH CÔNG) */}
         {/* ========================================================= */}
         {step === 2 && createdOrder && (
           <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in">
             
-            {/* Banner Thông Báo Khi Thanh Toán Thành Công */}
+            {/* GIAO DIỆN KHI THANH TOÁN THÀNH CÔNG (HÌNH 2) */}
             {paymentSuccess ? (
-              <div className="bg-emerald-50 border border-emerald-300 rounded-3xl p-8 text-center space-y-3 shadow-md animate-in zoom-in-95">
+              <div className="bg-emerald-50 border border-emerald-300 rounded-3xl p-10 text-center space-y-4 shadow-sm animate-in zoom-in-95 my-6">
                 <div className="w-16 h-16 bg-emerald-600 text-white rounded-full flex items-center justify-center text-3xl mx-auto shadow-lg shadow-emerald-600/30">
                   ✓
                 </div>
-                <h2 className="text-2xl font-black text-emerald-900">Thanh Toán Thành Công!</h2>
-                <p className="text-xs text-emerald-700 max-w-md mx-auto">
+                <h2 className="text-2xl font-black text-emerald-950 tracking-tight">Thanh Toán Thành Công!</h2>
+                <p className="text-xs text-emerald-800/90 max-w-md mx-auto leading-relaxed">
                   Hệ thống PayOS đã tự động xác nhận thanh toán cho đơn hàng <strong>{createdOrder.orderCode}</strong>. Dịch vụ của bạn đã được kích hoạt thành công!
                 </p>
                 <div className="pt-4">
                   <Link
                     href="/my-plans"
-                    className="px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-2xl shadow-md transition-all inline-block"
+                    className="px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-2xl shadow-md transition-all inline-block hover:scale-[1.02] active:scale-[0.98]"
                   >
                     Truy Cập Gói Dịch Vụ Của Tôi Ngay →
                   </Link>
                 </div>
               </div>
             ) : (
-              <div className="bg-blue-50 border border-blue-200 rounded-3xl p-5 text-center space-y-1 shadow-xs">
-                <div className="inline-flex items-center gap-2 text-xs font-bold text-blue-700">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping"></span>
-                  ĐANG CHỜ THANH TOÁN QUÉT MÃ QR
-                </div>
-                <p className="text-[11px] text-slate-500">
-                  Mở ứng dụng Ngân hàng bất kỳ để quét mã QR bên dưới, hệ thống sẽ tự động duyệt ngay sau khi chuyển khoản.
-                </p>
-              </div>
-            )}
-
-            {/* Chi Tiết Hóa Đơn & Mã QR Tự Động Trực Tiếp */}
-            <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm space-y-6">
-              <div className="flex justify-between items-start pb-5 border-b border-slate-100">
-                <div>
-                  <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest block">Chi Tiết Đơn Hàng</span>
-                  <h3 className="text-lg font-black text-slate-900 mt-0.5">{createdOrder.planName}</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Khách hàng: {createdOrder.customerName} ({createdOrder.customerPhone})</p>
-                </div>
-                <div className="text-right">
-                  <span className="text-xs text-slate-400 block">Số tiền cần trả</span>
-                  <span className="text-2xl font-black text-blue-600">
-                    {new Intl.NumberFormat("vi-VN").format(createdOrder.totalAmount)} đ
-                  </span>
-                </div>
-              </div>
-
-              {/* KHUNG HIỂN THỊ MÃ QR TRỰC TIẾP TRÊN TRANG */}
-              <div className="p-6 bg-slate-50 rounded-3xl border border-slate-200 text-center space-y-4">
-                
-                {/* Khung chứa ảnh QR Code */}
-                <div className="inline-block p-4 bg-white border border-slate-200 rounded-3xl shadow-sm relative group">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={
-                      payosData?.qrCode
-                        ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(payosData.qrCode)}`
-                        : `https://img.vietqr.io/image/MB-0333336666-compact2.png?amount=${createdOrder.totalAmount}&addInfo=${encodeURIComponent(payosData?.description || createdOrder.orderCode)}&accountName=CONG%20TY%20CLOUDSERVICE`
-                    }
-                    alt="Payment QR Code"
-                    className="w-56 h-56 mx-auto object-contain rounded-xl"
-                  />
-                  <div className="text-[10px] text-slate-400 font-bold uppercase mt-2 tracking-wider">
-                    ⚡ VietQR Chuyển Khoản Tự Động 24/7
+              /* GIAO DIỆN KHI ĐANG CHỜ THANH TOÁN (HÌNH 1) */
+              <>
+                <div className="bg-blue-50 border border-blue-200 rounded-3xl p-5 text-center space-y-1 shadow-xs">
+                  <div className="inline-flex items-center gap-2 text-xs font-bold text-blue-700">
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping"></span>
+                    ĐANG CHỜ THANH TOÁN QUÉT MÃ QR
                   </div>
+                  <p className="text-[11px] text-slate-500">
+                    Mở ứng dụng Ngân hàng bất kỳ để quét mã QR bên dưới, hệ thống sẽ tự động duyệt ngay sau khi chuyển khoản.
+                  </p>
                 </div>
 
-                {/* Bảng Chi Tiết Thông Tin Chuyển Khoản Trực Tiếp */}
-                <div className="max-w-md mx-auto bg-white p-4 rounded-2xl border border-slate-200 text-xs text-left space-y-2.5">
-                  <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-                    <span className="text-slate-500">Chủ tài khoản:</span>
-                    <span className="font-bold text-slate-900 uppercase">
-                      {payosData?.accountName || "CONG TY CLOUDSERVICE"}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-                    <span className="text-slate-500">Số tài khoản:</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-blue-600 text-sm">
-                        {payosData?.accountNumber || "0333336666"}
+                {/* Chi Tiết Hóa Đơn & Mã QR Tự Động Trực Tiếp */}
+                <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm space-y-6">
+                  <div className="flex justify-between items-start pb-5 border-b border-slate-100">
+                    <div>
+                      <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest block">Chi Tiết Đơn Hàng</span>
+                      <h3 className="text-lg font-black text-slate-900 mt-0.5">{createdOrder.planName}</h3>
+                      <p className="text-xs text-slate-500 mt-0.5">Khách hàng: {createdOrder.customerName} ({createdOrder.customerPhone})</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs text-slate-400 block">Số tiền cần trả</span>
+                      <span className="text-2xl font-black text-blue-600">
+                        {new Intl.NumberFormat("vi-VN").format(createdOrder.totalAmount)} đ
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-                    <span className="text-slate-500">Số tiền:</span>
-                    <span className="font-black text-rose-600">
-                      {new Intl.NumberFormat("vi-VN").format(createdOrder.totalAmount)} đ
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-500">Nội dung chuyển khoản:</span>
-                    <span className="font-mono font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">
-                      {payosData?.description || createdOrder.orderCode}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Thông báo kết quả kiểm tra thanh toán thủ công */}
-                {paymentError && (
-                  <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-700 font-medium flex items-center justify-between gap-3 text-left">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base">⚠️</span>
-                      <span>{paymentError}</span>
+                  {/* KHUNG HIỂN THỊ MÃ QR TRỰC TIẾP TRÊN TRANG */}
+                  <div className="p-6 bg-slate-50 rounded-3xl border border-slate-200 text-center space-y-4">
+                    
+                    {/* Khung chứa ảnh QR Code */}
+                    <div className="inline-block p-4 bg-white border border-slate-200 rounded-3xl shadow-sm relative group">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={
+                          payosData?.qrCode
+                            ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(payosData.qrCode)}`
+                            : `https://img.vietqr.io/image/MB-0333336666-compact2.png?amount=${createdOrder.totalAmount}&addInfo=${encodeURIComponent(payosData?.description || createdOrder.orderCode)}&accountName=CONG%20TY%20CLOUDSERVICE`
+                        }
+                        alt="Payment QR Code"
+                        className="w-56 h-56 mx-auto object-contain rounded-xl"
+                      />
+                      <div className="text-[10px] text-slate-400 font-bold uppercase mt-2 tracking-wider">
+                        ⚡ VietQR Chuyển Khoản Tự Động 24/7
+                      </div>
                     </div>
-                  </div>
-                )}
 
-                {/* Nút Kiểm Tra Kết Quả Giao Dịch */}
-                <div className="pt-2">
-                  <button
-                    type="button"
-                    disabled={checkingPayment}
-                    onClick={handleCheckPaymentStatus}
-                    className="w-full py-3.5 px-6 rounded-2xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2"
-                  >
-                    {checkingPayment ? (
-                      <>
-                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                        <span>Đang Kiểm Tra Với Hệ Thống Ngân Hàng PayOS...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>🔄</span>
-                        <span>Tôi Đã Chuyển Khoản Thành Công - Kiểm Tra Kết Quả Giao Dịch</span>
-                      </>
+                    {/* Bảng Chi Tiết Thông Tin Chuyển Khoản Trực Tiếp */}
+                    <div className="max-w-md mx-auto bg-white p-4 rounded-2xl border border-slate-200 text-xs text-left space-y-2.5">
+                      <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                        <span className="text-slate-500">Chủ tài khoản:</span>
+                        <span className="font-bold text-slate-900 uppercase">
+                          {payosData?.accountName || "CONG TY CLOUDSERVICE"}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                        <span className="text-slate-500">Số tài khoản:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold text-blue-600 text-sm">
+                            {payosData?.accountNumber || "0333336666"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                        <span className="text-slate-500">Số tiền:</span>
+                        <span className="font-black text-rose-600">
+                          {new Intl.NumberFormat("vi-VN").format(createdOrder.totalAmount)} đ
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-500">Nội dung chuyển khoản:</span>
+                        <span className="font-mono font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">
+                          {payosData?.description || createdOrder.orderCode}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Thông báo kết quả kiểm tra thanh toán thủ công */}
+                    {paymentError && (
+                      <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-700 font-medium flex items-center justify-between gap-3 text-left">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">⚠️</span>
+                          <span>{paymentError}</span>
+                        </div>
+                      </div>
                     )}
-                  </button>
+
+                    {/* Nút Kiểm Tra Kết Quả Giao Dịch */}
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        disabled={checkingPayment}
+                        onClick={handleCheckPaymentStatus}
+                        className="w-full py-3.5 px-6 rounded-2xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        {checkingPayment ? (
+                          <>
+                            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                            <span>Đang Kiểm Tra Với Hệ Thống Ngân Hàng PayOS...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>🔄</span>
+                            <span>Tôi Đã Chuyển Khoản Thành Công - Kiểm Tra Kết Quả Giao Dịch</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <p className="text-[11px] text-slate-400 italic">
+                      * Vui lòng giữ nguyên đúng nội dung chuyển khoản để hệ thống tự động nhận diện và kích hoạt gói ngay lập tức.
+                    </p>
+                  </div>
+
+                  {/* Nút Điều Hướng */}
+                  <div className="pt-2 flex flex-col sm:flex-row gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setStep(1)}
+                      className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors"
+                    >
+                      ← Chỉnh Sửa Thông Tin
+                    </button>
+                    <Link
+                      href="/my-plans"
+                      className="flex-1 py-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs text-center transition-colors border border-blue-200"
+                    >
+                      Xem Gói Dịch Vụ Của Tôi →
+                    </Link>
+                  </div>
                 </div>
-
-                <p className="text-[11px] text-slate-400 italic">
-                  * Vui lòng giữ nguyên đúng nội dung chuyển khoản để hệ thống tự động nhận diện và kích hoạt gói ngay lập tức.
-                </p>
-              </div>
-
-              {/* Nút Điều Hướng */}
-              <div className="pt-2 flex flex-col sm:flex-row gap-3">
-                <button
-                  type="button"
-                  onClick={() => setStep(1)}
-                  className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors"
-                >
-                  ← Chỉnh Sửa Thông Tin
-                </button>
-                <Link
-                  href="/my-plans"
-                  className="flex-1 py-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs text-center transition-colors border border-blue-200"
-                >
-                  Xem Gói Dịch Vụ Của Tôi →
-                </Link>
-              </div>
-            </div>
+              </>
+            )}
 
           </div>
         )}
