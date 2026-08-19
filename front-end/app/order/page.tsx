@@ -301,13 +301,14 @@ function OrderFormContent() {
         orderData.orderCode = responseData.orderCode || orderData.orderCode;
         setCreatedOrder(orderData);
 
-        // Tạo link thanh toán PayOS trực tiếp cho đơn hàng này
+        // Tạo link thanh toán PayOS trực tiếp cho đơn hàng này với đúng số tiền đã giảm giá
         if (finalOrderId > 0) {
           try {
             const payRes = await apiFetch("/api/payment/create-link", {
               method: "POST",
               body: JSON.stringify({
                 orderId: finalOrderId,
+                amount: Math.round(totalAmount),
                 returnUrl: `${window.location.origin}/my-plans`,
                 cancelUrl: `${window.location.origin}/pricing`
               })

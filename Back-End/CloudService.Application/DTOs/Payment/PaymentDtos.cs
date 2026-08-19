@@ -3,6 +3,7 @@ namespace CloudService.Application.DTOs.Payment
     public class CreatePaymentLinkRequest
     {
         public int OrderId { get; set; }
+        public int? Amount { get; set; }
         public string? ReturnUrl { get; set; }
         public string? CancelUrl { get; set; }
     }

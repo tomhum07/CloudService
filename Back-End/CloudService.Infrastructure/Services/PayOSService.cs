@@ -52,7 +52,10 @@ namespace CloudService.Infrastructure.Services
                 throw new KeyNotFoundException($"Không tìm thấy đơn hàng với ID #{request.OrderId}");
             }
 
-            var amount = (int)(order.PlanPrice?.Price ?? 100000);
+            var amount = (request.Amount.HasValue && request.Amount.Value > 0)
+                ? request.Amount.Value
+                : (int)(order.PlanPrice?.Price ?? 100000);
+
             if (amount <= 0) amount = 10000;
 
             // Mã đơn hàng số nguyên
