@@ -11,13 +11,20 @@ namespace CloudService.Infrastructure.Data
         public static async Task SeedAsync(ApplicationDbContext context)
         {
             // Tự động Migrate database nếu chưa có cấu trúc
-            if (context.Database.IsRelational())
+            try
             {
-                await context.Database.MigrateAsync();
+                if (context.Database.IsRelational())
+                {
+                    await context.Database.MigrateAsync();
+                }
+                else
+                {
+                    await context.Database.EnsureCreatedAsync();
+                }
             }
-            else
+            catch (Exception ex)
             {
-                await context.Database.EnsureCreatedAsync();
+                Console.WriteLine($"[DbInitializer Info] Migration check skipped: {ex.Message}");
             }
 
             // 1. Seed Roles nếu chưa tồn tại
