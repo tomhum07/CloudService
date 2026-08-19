@@ -29,7 +29,6 @@ export default function AdminNewsPage() {
   // File Upload to Supabase Storage states
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchNews = async () => {
@@ -64,7 +63,6 @@ export default function AdminNewsPage() {
     setIsActive(true);
     setFormError(null);
     setUploadError(null);
-    setUploadSuccess(null);
     setShowModal(true);
   };
 
@@ -78,7 +76,6 @@ export default function AdminNewsPage() {
     setIsActive(art.isActive !== false);
     setFormError(null);
     setUploadError(null);
-    setUploadSuccess(null);
     setShowModal(true);
   };
 
@@ -99,31 +96,23 @@ export default function AdminNewsPage() {
 
     setIsUploading(true);
     setUploadError(null);
-    setUploadSuccess(null);
 
     const result = await uploadToSupabaseStorage(file, DEFAULT_BUCKET);
 
     setIsUploading(false);
 
     if (result.error) {
-      setUploadError(`Tải ảnh lên Supabase Storage thất bại: ${result.error}. Hãy kiểm tra NEXT_PUBLIC_SUPABASE_ANON_KEY trong file .env.local.`);
+      setUploadError(`Tải ảnh lên Supabase thất bại: ${result.error}`);
     } else {
-      // 1. Tự động lưu đường dẫn vào trường Ảnh đại diện (ThumbnailUrl) của bài viết
+      // Lưu đường dẫn ảnh vào ThumbnailUrl để lưu DB & hiển thị preview (Không chèn text markdown thừa vào textarea)
       setThumbnailUrl(result.url);
-
-      // 2. Chèn luôn thẻ ảnh vào nội dung Markdown của bài viết
-      const cleanAlt = file.name.replace(/\.[^/.]+$/, "");
-      const markdownTag = `\n\n![${cleanAlt}](${result.url})\n\n`;
-      setContent((prev) => prev + markdownTag);
-
-      setUploadSuccess(`Đã tải ảnh lên Supabase Storage thành công! Ảnh đã được gán làm Ảnh đại diện & chèn vào bài viết.`);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
   const handleRemoveThumbnail = () => {
     setThumbnailUrl("");
-    setUploadSuccess(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -326,7 +315,7 @@ export default function AdminNewsPage() {
             <h3 className="text-lg font-bold text-slate-900 mb-1">
               {editingArticle ? "Chỉnh Sửa Bài Viết" : "Soạn Thảo Bài Viết Mới"}
             </h3>
-            <p className="text-xs text-slate-500 mb-4">Nhập đầy đủ tiêu đề, tải/sửa ảnh lưu trữ trên Supabase và viết nội dung.</p>
+            <p className="text-xs text-slate-500 mb-4">Nhập đầy đủ tiêu đề, chọn ảnh tải lên Supabase và viết nội dung.</p>
 
             {formError && (
               <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium mb-4">
@@ -372,15 +361,15 @@ export default function AdminNewsPage() {
                 ></textarea>
               </div>
 
-              {/* Tải / Sửa Ảnh Đại Diện Lưu Trực Tiếp Lên Supabase */}
+              {/* Tải & Xem Trước Ảnh Bài Viết */}
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <label className="text-xs font-bold text-slate-900 block">
-                      ☁️ Ảnh Bài Viết (Lưu trữ trực tiếp trên Supabase Storage)
+                      ☁️ Ảnh Bài Viết (Lưu trữ trên Supabase Storage)
                     </label>
                     <span className="text-[11px] text-slate-500">
-                      Đường dẫn ảnh trên Supabase sẽ được lưu vào cơ sở dữ liệu.
+                      Chọn file ảnh từ máy tính để tải trực tiếp lên đám mây Supabase.
                     </span>
                   </div>
 
@@ -416,39 +405,22 @@ export default function AdminNewsPage() {
                   </div>
                 </div>
 
-                {/* Preview & Edit Thumbnail Url */}
+                {/* Khung Preview Ảnh To Rõ Ràng & Đẹp Mắt */}
                 {thumbnailUrl && (
-                  <div className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl">
+                  <div className="relative group rounded-2xl overflow-hidden border border-slate-200 bg-white max-h-64 flex items-center justify-center p-2">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={thumbnailUrl}
-                      alt="Thumbnail Preview"
-                      className="w-16 h-16 rounded-lg object-cover border border-slate-200 flex-shrink-0"
+                      alt="Preview"
+                      className="rounded-xl max-h-56 w-auto object-contain shadow-xs"
                     />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[11px] font-bold text-slate-700 mb-1">Đường dẫn ảnh Supabase trong DB:</div>
-                      <input
-                        type="text"
-                        value={thumbnailUrl}
-                        onChange={(e) => setThumbnailUrl(e.target.value)}
-                        placeholder="https://...supabase.co/storage/v1/object/public/news-images/..."
-                        className="w-full text-[11px] font-mono px-2 py-1 bg-slate-50 border border-slate-200 rounded text-slate-600 focus:outline-none focus:bg-white"
-                      />
-                    </div>
                     <button
                       type="button"
                       onClick={handleRemoveThumbnail}
-                      className="px-2.5 py-1 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                      title="Gỡ ảnh đại diện"
+                      className="absolute top-4 right-4 px-3 py-1.5 bg-rose-600/90 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-md backdrop-blur-sm transition-all"
                     >
-                      Gỡ ảnh
+                      🗑️ Gỡ Ảnh
                     </button>
-                  </div>
-                )}
-
-                {uploadSuccess && (
-                  <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium flex items-center gap-1.5">
-                    <span>✓</span> {uploadSuccess}
                   </div>
                 )}
 
@@ -460,14 +432,14 @@ export default function AdminNewsPage() {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Nội Dung Chi Tiết (Hỗ trợ Markdown) *</label>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Nội Dung Chi Tiết (Hỗ trợ văn bản & đoạn văn) *</label>
                 <textarea
                   rows={7}
                   required
-                  placeholder="Nhập nội dung bài viết chi tiết... Khi bạn chọn ảnh từ máy tính, ảnh sẽ tự động hiển thị và được chèn vào nội dung bài viết."
+                  placeholder="Nhập nội dung bài viết chi tiết tại đây..."
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  className="w-full p-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white font-mono leading-relaxed"
+                  className="w-full p-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white font-sans leading-relaxed"
                 ></textarea>
               </div>
 

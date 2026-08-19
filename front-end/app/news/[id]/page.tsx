@@ -122,14 +122,27 @@ export default function NewsDetailPage() {
 
       {/* Article Content */}
       <main className="max-w-4xl mx-auto px-4 py-12">
-        <article className="bg-white border border-slate-200 rounded-3xl p-8 md:p-12 shadow-sm space-y-6">
+        <article className="bg-white border border-slate-200 rounded-3xl p-8 md:p-12 shadow-sm space-y-8">
+          
+          {/* Ảnh Bìa / Ảnh Đại Diện Bài Viết Từ Supabase */}
+          {article.thumbnailUrl && (
+            <div className="overflow-hidden rounded-3xl border border-slate-200 shadow-md">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={article.thumbnailUrl}
+                alt={article.title}
+                className="w-full max-h-[500px] object-cover hover:scale-[1.01] transition-transform duration-500"
+              />
+            </div>
+          )}
+
           {article.summary && (
-            <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 text-sm font-semibold text-slate-700 leading-relaxed italic">
+            <div className="p-5 rounded-2xl bg-blue-50/50 border border-blue-100 text-sm font-semibold text-slate-700 leading-relaxed italic">
               {article.summary}
             </div>
           )}
 
-          <div className="space-y-4">
+          <div className="space-y-4 text-base text-slate-700 leading-relaxed font-normal">
             {renderFormattedContent(article.content)}
           </div>
 
