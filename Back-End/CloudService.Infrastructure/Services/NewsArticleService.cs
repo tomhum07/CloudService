@@ -71,6 +71,7 @@ namespace CloudService.Infrastructure.Services
             Title = x.Title,
             Slug = x.Slug,
             Summary = x.Summary,
+            ThumbnailUrl = x.ThumbnailUrl,
             Content = x.Content,
             AuthorId = x.AuthorId,
             AuthorName = x.Author != null
@@ -103,6 +104,7 @@ namespace CloudService.Infrastructure.Services
                     Title = x.Title,
                     Slug = x.Slug,
                     Summary = x.Summary,
+                    ThumbnailUrl = x.ThumbnailUrl,
                     Content = x.Content,
                     AuthorId = x.AuthorId,
                     AuthorName = x.Author != null ? x.Author.FullName : null,
@@ -124,6 +126,7 @@ namespace CloudService.Infrastructure.Services
                     Title = x.Title,
                     Slug = x.Slug,
                     Summary = x.Summary,
+                    ThumbnailUrl = x.ThumbnailUrl,
                     Content = x.Content,
                     AuthorId = x.AuthorId,
                     AuthorName = x.Author != null ? x.Author.FullName : null,
@@ -156,6 +159,7 @@ namespace CloudService.Infrastructure.Services
                 Title = request.Title.Trim(),
                 Slug = slug,
                 Summary = request.Summary?.Trim(),
+                ThumbnailUrl = request.ThumbnailUrl?.Trim(),
                 Content = request.Content ?? string.Empty,
                 AuthorId = request.AuthorId,
                 PublishedAt = publishedDate,
@@ -193,6 +197,7 @@ namespace CloudService.Infrastructure.Services
             article.Title = request.Title.Trim();
             article.Slug = slug;
             article.Summary = request.Summary?.Trim();
+            article.ThumbnailUrl = request.ThumbnailUrl?.Trim();
             article.Content = request.Content ?? string.Empty;
             article.PublishedAt = request.IsActive 
                 ? (request.PublishedAt ?? article.PublishedAt ?? System.DateTime.UtcNow) 

@@ -1,12 +1,11 @@
 /**
- * Supabase Storage Configuration & Direct Uploader
- * Cấu hình trực tiếp trong code và hỗ trợ đọc qua biến môi trường .env
+ * Supabase Storage Configuration & Direct Uploader Utility
+ * Cấu hình bảo mật an toàn qua Biến Môi Trường (Environment Variables) .env.local
  */
 
-// Cấu hình cố định trực tiếp trong Code (Bạn có thể thay URL & Key của dự án tại đây)
 export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://fdfdtrcwyfgtygtdqfcf.supabase.co";
-export const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZkZmR0cmN3eWZndHlndGRxZmNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjMyNTY4NDEsImV4cCI6MjAzODgzMjg0MX0.YOUR_ANON_KEY_OR_ENV";
-export const DEFAULT_BUCKET = "news-images";
+export const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+export const DEFAULT_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_BUCKET || "news-images";
 
 export interface UploadResult {
   url: string;
@@ -15,21 +14,22 @@ export interface UploadResult {
 }
 
 /**
- * Tải file hình ảnh trực tiếp lên Supabase Storage bucket
+ * Tải file hình ảnh trực tiếp từ trình duyệt lên Supabase Storage bucket (Zero server-storage)
  * @param file Đối tượng File từ thẻ <input type="file" />
+ * @param bucket Tên bucket (Mặc định: news-images)
  */
 export async function uploadToSupabaseStorage(
   file: File,
   bucket: string = DEFAULT_BUCKET
 ): Promise<UploadResult> {
-  const url = SUPABASE_URL.replace(/\/$/, "");
+  const url = (SUPABASE_URL || "").replace(/\/$/, "");
   const anonKey = SUPABASE_ANON_KEY;
 
   if (!url) {
-    return { url: "", fileName: "", error: "Chưa cấu hình Supabase URL." };
+    return { url: "", fileName: "", error: "Chưa cấu hình NEXT_PUBLIC_SUPABASE_URL." };
   }
 
-  // Tạo tên file ngẫu nhiên an toàn: timestamp-filename.ext
+  // Tạo tên file ngẫu nhiên an toàn: timestamp-cleanname.ext
   const fileExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
   const cleanName = file.name
     .replace(/\.[^/.]+$/, "")
@@ -67,6 +67,6 @@ export async function uploadToSupabaseStorage(
     const publicUrl = `${url}/storage/v1/object/public/${bucket}/${uploadPath}`;
     return { url: publicUrl, fileName };
   } catch (err: any) {
-    return { url: "", fileName: "", error: err.message || "Lỗi mạng khi tải ảnh lên Supabase." };
+    return { url: "", fileName: "", error: err.message || "Lỗi kết nối khi tải ảnh lên Supabase." };
   }
 }

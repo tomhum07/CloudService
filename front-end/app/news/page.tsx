@@ -128,6 +128,18 @@ function NewsContent() {
                   </span>
                 </div>
 
+                {/* Thumbnail Image */}
+                {item.thumbnailUrl && (
+                  <div className="mb-4 overflow-hidden rounded-2xl border border-slate-200">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={item.thumbnailUrl}
+                      alt={item.title}
+                      className="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                )}
+
                 {/* Title */}
                 <h2 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors mb-3 leading-snug line-clamp-2">
                   <Link href={`/news/${item.id}`}>
