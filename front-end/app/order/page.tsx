@@ -1,187 +1,303 @@
 "use client";
 import React, { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { apiFetch, getAccessToken } from "@/utils/api";
 
-const LINUX_OS_LIST = [
-  { id: "ubuntu-24", name: "Ubuntu 24.04 LTS (Khuyên dùng)", group: "Linux" },
-  { id: "ubuntu-22", name: "Ubuntu 22.04 LTS 64-bit", group: "Linux" },
-  { id: "almalinux-9", name: "AlmaLinux 9.4 (Thay thế CentOS)", group: "Linux" },
-  { id: "debian-12", name: "Debian 12 Bookworm", group: "Linux" },
-  { id: "win-2022", name: "Windows Server 2022 Datacenter", group: "Windows" },
-  { id: "win-2019", name: "Windows Server 2019 Standard", group: "Windows" }
-];
-
-const CONTROL_PANELS = [
-  { id: "none", name: "Không cài đặt Control Panel (Hệ điều hành gốc)", price: 0 },
-  { id: "aapanel", name: "aaPanel Free (Giao diện web trực quan, dễ dùng)", price: 0 },
-  { id: "cyberpanel", name: "CyberPanel OpenLiteSpeed (Tối ưu tốc độ cao)", price: 0 },
-  { id: "cpanel", name: "cPanel Official License (Doanh nghiệp)", price: 350000 },
-  { id: "directadmin", name: "DirectAdmin License", price: 150000 }
-];
-
-const DATACENTERS = [
-  { id: "hn-tier3", name: "Hà Nội - VNPT / Viettel IDC Tier 3 (Miền Bắc)", ping: "< 1ms" },
-  { id: "hcm-tier3", name: "TP. Hồ Chí Minh - FPT Datacenter Tier 3 (Miền Nam)", ping: "< 1ms" }
-];
-
 const BILLING_CYCLES = [
-  { id: "Monthly", label: "1 Tháng", months: 1, discount: 0, tag: "" },
-  { id: "Quarterly", label: "3 Tháng", months: 3, discount: 5, tag: "Tiết kiệm 5%" },
-  { id: "SemiAnnual", label: "6 Tháng", months: 6, discount: 10, tag: "Tiết kiệm 10%" },
-  { id: "Yearly", label: "12 Tháng", months: 12, discount: 20, tag: "Tặng 20% (Khuyên dùng)" },
-  { id: "Biennial", label: "24 Tháng", months: 24, discount: 30, tag: "Ưu đãi lớn 30%" }
+  { id: "Monthly", label: "1 Tháng", months: 1, discount: 0 },
+  { id: "Quarterly", label: "3 Tháng", months: 3, discount: 5 },
+  { id: "SemiAnnual", label: "6 Tháng", months: 6, discount: 10 },
+  { id: "Yearly", label: "12 Tháng", months: 12, discount: 20, tag: "Tiết kiệm 20%" },
+  { id: "Biennial", label: "24 Tháng", months: 24, discount: 30, tag: "Ưu đãi 30%" }
 ];
 
 function OrderFormContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const planIdParam = searchParams.get("planId");
-  const planTypeParam = searchParams.get("plan");
-  const domainParam = searchParams.get("name");
+  const cycleParam = searchParams.get("cycle");
 
+  // Step 1: Điền thông tin đăng ký
+  // Step 2: Bước Thanh Toán PayOS (Hiện mã QR trực tiếp ngay trong trang)
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [plansLoading, setPlansLoading] = useState(true);
-  const [plans, setPlans] = useState<any[]>([]);
+  const [planLoading, setPlanLoading] = useState(true);
+  const [plan, setPlan] = useState<any | null>(null);
 
   // Form Fields
-  const [selectedPlanId, setSelectedPlanId] = useState<number | string>("");
-  const [os, setOs] = useState<string>("Ubuntu 24.04 LTS (Khuyên dùng)");
-  const [controlPanel, setControlPanel] = useState<string>("none");
-  const [datacenter, setDatacenter] = useState<string>("hn-tier3");
-  const [billingCycle, setBillingCycle] = useState<string>("Yearly");
-  const [domainName, setDomainName] = useState(domainParam || "");
+  const [billingCycle, setBillingCycle] = useState<string>(cycleParam || "Yearly");
+  const [domainName, setDomainName] = useState("");
 
   // Customer Info
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [promoCode, setPromoCode] = useState("");
   const [discountPercent, setDiscountPercent] = useState(0);
+  const [appliedPromoName, setAppliedPromoName] = useState("");
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoMessage, setPromoMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [notes, setNotes] = useState("");
   const [validationError, setValidationError] = useState("");
 
-  // Completed Order State
+  // Completed Order & PayOS State
   const [createdOrder, setCreatedOrder] = useState<any | null>(null);
+  const [payosData, setPayosData] = useState<{
+    checkoutUrl?: string;
+    qrCode?: string;
+    accountNumber?: string;
+    accountName?: string;
+    bin?: string;
+    description?: string;
+    amount?: number;
+    orderCode?: number;
+  } | null>(null);
 
-  // Auto load User Profile if logged in
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [checkingPayment, setCheckingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState(300); // 5 phút = 300 giây
+  const [isExpired, setIsExpired] = useState(false);
+
+  // 1. Kiểm tra trạng thái Đăng Nhập & Tự động điền thông tin người dùng
   useEffect(() => {
-    async function loadUserProfile() {
+    async function checkAuthAndLoadProfile() {
       const token = getAccessToken();
-      if (token) {
-        try {
-          const res = await apiFetch("/api/auth/profile");
-          if (res.ok) {
-            const data = await res.json();
-            if (data.fullName) setFullName(data.fullName);
-            if (data.email) setEmail(data.email);
-            if (data.phone) setPhone(data.phone);
-          }
-        } catch {}
+      if (!token) {
+        setIsLoggedIn(false);
+        return;
       }
-    }
-    loadUserProfile();
-  }, []);
 
-  // Load plans from API
-  useEffect(() => {
-    async function fetchPlans() {
-      setPlansLoading(true);
+      setIsLoggedIn(true);
       try {
-        const res = await apiFetch("/api/service-plans?pageSize=100");
+        const res = await apiFetch("/api/auth/profile");
         if (res.ok) {
           const data = await res.json();
-          const items = data.items || data;
-          if (Array.isArray(items) && items.length > 0) {
-            const mapped = items
-              .filter((p: any) => p.isActive !== false)
-              .map((p: any) => {
-                const prices = p.prices || [];
-                const monthly = prices.find((pr: any) => pr.billingCycle === "Monthly")?.price || prices[0]?.price || 0;
-                return {
-                  id: p.id,
-                  name: p.name,
-                  category: p.categoryName || "Dịch Vụ Cloud",
-                  type: p.categoryName?.toLowerCase().includes("host")
-                    ? "Hosting"
-                    : p.categoryName?.toLowerCase().includes("mail")
-                    ? "Email"
-                    : p.categoryName?.toLowerCase().includes("mật") || p.categoryName?.toLowerCase().includes("firewall")
-                    ? "Firewall"
-                    : "VPS",
-                  price: monthly,
-                  prices: prices,
-                  cpu: p.cpu || "Tiêu chuẩn",
-                  ram: p.ram || "Tiêu chuẩn",
-                  storage: p.storage || "NVMe",
-                  bandwidth: p.bandwidth || "1 Gbps",
-                  qrCodeUrl: p.qrCodeUrl
-                };
-              });
-            setPlans(mapped);
-            if (mapped.length > 0 && !selectedPlanId) {
-              setSelectedPlanId(mapped[0].id);
+          if (data.fullName) setFullName(data.fullName);
+          if (data.email) setEmail(data.email);
+          if (data.phone) setPhone(data.phone);
+        }
+      } catch (err) {
+        console.warn("Lỗi tải thông tin user:", err);
+      }
+    }
+    checkAuthAndLoadProfile();
+  }, []);
+
+  // 2. Load trực tiếp thông tin gói cước người dùng đã chọn
+  useEffect(() => {
+    async function fetchPlan() {
+      setPlanLoading(true);
+      try {
+        if (planIdParam) {
+          const res = await apiFetch(`/api/service-plans/${planIdParam}`);
+          if (res.ok) {
+            const data = await res.json();
+            setPlan(data);
+          } else {
+            const allRes = await apiFetch("/api/service-plans?pageSize=100");
+            if (allRes.ok) {
+              const allData = await allRes.json();
+              const items = allData.items || allData;
+              const found = items.find((p: any) => String(p.id) === String(planIdParam)) || items[0];
+              setPlan(found);
             }
+          }
+        } else {
+          const allRes = await apiFetch("/api/service-plans?pageSize=100");
+          if (allRes.ok) {
+            const allData = await allRes.json();
+            const items = allData.items || allData;
+            if (items && items.length > 0) setPlan(items[0]);
           }
         }
       } catch (err) {
-        console.warn("Failed to fetch plans for order form:", err);
+        console.warn("Lỗi lấy thông tin gói cước:", err);
       } finally {
-        setPlansLoading(false);
+        setPlanLoading(false);
       }
     }
-    fetchPlans();
-  }, []);
+    fetchPlan();
+  }, [planIdParam]);
 
-  // Pre-select plan if passed from URL
+  // 3. Polling tự động kiểm tra trạng thái thanh toán & Bộ đếm 5 phút tự động hủy giao dịch
   useEffect(() => {
-    if (plans.length === 0) return;
-    if (planIdParam) {
-      const parsed = parseInt(planIdParam, 10);
-      if (!isNaN(parsed) && plans.some(p => p.id === parsed)) {
-        setSelectedPlanId(parsed);
-      }
-    } else if (planTypeParam) {
-      const pType = planTypeParam.toLowerCase();
-      const found = plans.find((p) => p.type.toLowerCase() === pType || p.category.toLowerCase().includes(pType));
-      if (found) setSelectedPlanId(found.id);
-    }
-  }, [planIdParam, planTypeParam, plans]);
+    if (step !== 2 || !payosData?.orderCode || paymentSuccess || isExpired) return;
 
-  const selectedPlan = plans.find((p) => p.id === selectedPlanId) || plans[0] || {
-    id: 0,
-    name: "Gói dịch vụ",
-    category: "Cloud",
-    type: "VPS",
-    price: 0,
-    cpu: "-",
-    ram: "-",
-    storage: "-",
-    bandwidth: "-"
+    // Bộ đếm lùi 5 phút (300 giây)
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setIsExpired(true);
+          // Tự động gửi lệnh hủy giao dịch lên PayOS & Cập nhật đơn hàng thành Đã hủy
+          if (createdOrder?.id) {
+            apiFetch(`/api/order-requests/${createdOrder.id}/status`, {
+              method: "PATCH",
+              body: JSON.stringify({ status: 3, notes: "Hệ thống: Tự động hủy đơn do quá hạn thanh toán 5 phút" })
+            }).catch(() => {});
+          }
+          if (payosData?.orderCode) {
+            apiFetch(`/api/payment/cancel/${payosData.orderCode}`, {
+              method: "POST"
+            }).catch(() => {});
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // Polling kiểm tra trạng thái thanh toán định kỳ 3 giây
+    const interval = setInterval(async () => {
+      try {
+        const res = await apiFetch(`/api/payment/info/${payosData.orderCode}`);
+        if (res.ok) {
+          const data = await res.json();
+          const st = data.status || (data.data && data.data.status);
+          if (st === "PAID" || st === "COMPLETED") {
+            setPaymentSuccess(true);
+            setPaymentError(null);
+            clearInterval(interval);
+            clearInterval(timer);
+
+            // Tự động kích hoạt đơn hàng trong DB khi polling phát hiện đã trả tiền thành công
+            if (createdOrder?.id) {
+              apiFetch(`/api/order-requests/${createdOrder.id}/status`, {
+                method: "PATCH",
+                body: JSON.stringify({ status: 2, notes: `Đã thanh toán thành công qua PayOS [Mã giao dịch: ${payosData.orderCode}]` })
+              }).catch(() => {});
+            }
+          }
+        }
+      } catch {}
+    }, 3000);
+
+    return () => {
+      clearInterval(timer);
+      clearInterval(interval);
+    };
+  }, [step, payosData, paymentSuccess, isExpired, createdOrder]);
+
+  // Hàm thủ công kiểm tra kết quả giao dịch
+  const handleCheckPaymentStatus = async () => {
+    if (!payosData?.orderCode) return;
+
+    setCheckingPayment(true);
+    setPaymentError(null);
+
+    try {
+      const res = await apiFetch(`/api/payment/info/${payosData.orderCode}`);
+      if (res.ok) {
+        const data = await res.json();
+        const st = data.status || (data.data && data.data.status);
+
+        if (st === "PAID" || st === "COMPLETED") {
+          setPaymentSuccess(true);
+          setPaymentError(null);
+          // Đảm bảo cập nhật trạng thái đơn hàng trong DB thành Completed nếu chưa cập nhật
+          if (createdOrder?.id) {
+            apiFetch(`/api/order-requests/${createdOrder.id}/status`, {
+              method: "PATCH",
+              body: JSON.stringify({ status: 2, notes: `Đã thanh toán thành công qua PayOS [Mã giao dịch: ${payosData.orderCode}]` })
+            }).catch(() => {});
+          }
+        } else if (st === "CANCELLED") {
+          setPaymentError("Giao dịch này đã bị hủy hoặc hết thời gian thanh toán.");
+        } else {
+          setPaymentError("Hệ thống chưa ghi nhận tiền chuyển khoản. Nếu bạn vừa quét mã thành công, vui lòng chờ trong 5 - 10 giây rồi bấm Kiểm Tra Lại!");
+        }
+      } else {
+        setPaymentError("Không thể kết nối đến máy chủ kiểm tra thanh toán. Vui lòng thử lại.");
+      }
+    } catch (err) {
+      console.warn("Lỗi kiểm tra trạng thái thanh toán:", err);
+      setPaymentError("Không thể kết nối đến máy chủ kiểm tra thanh toán. Vui lòng thử lại.");
+    } finally {
+      setCheckingPayment(false);
+    }
   };
 
   const activeCycle = BILLING_CYCLES.find((c) => c.id === billingCycle) || BILLING_CYCLES[3];
-  const selectedPanel = CONTROL_PANELS.find((cp) => cp.id === controlPanel) || CONTROL_PANELS[0];
 
-  const handleApplyPromo = () => {
-    const code = promoCode.trim().toUpperCase();
-    if (code === "CLOUDSERVICE2026" || code === "VIETNIX" || code === "VIETTELIDC") {
-      setDiscountPercent(15);
-      alert("Áp dụng mã giảm giá thành công! Bạn được chiết khấu thêm 15% tổng giá trị gói.");
-    } else {
-      alert("Mã giảm giá không hợp lệ.");
+  const handleApplyPromo = async () => {
+    const code = promoCode.trim();
+    if (!code) {
+      setPromoMessage({ type: "error", text: "Vui lòng nhập mã giảm giá." });
       setDiscountPercent(0);
+      setAppliedPromoName("");
+      return;
+    }
+
+    setPromoLoading(true);
+    setPromoMessage(null);
+
+    try {
+      // 1. Gọi API xác thực mã giảm giá từ database
+      const res = await apiFetch(`/api/promotions/validate/${encodeURIComponent(code)}`);
+      if (res.ok) {
+        const data = await res.json();
+        const discount = Number(data.discountPercentage) || 0;
+        setDiscountPercent(discount);
+        setAppliedPromoName(data.name || code);
+        setPromoMessage({
+          type: "success",
+          text: `Áp dụng mã ${data.name} thành công! Giảm ${discount}% tổng giá trị.`
+        });
+      } else {
+        // Fallback kiểm tra các mã ưu đãi mặc định hệ thống
+        const upperCode = code.toUpperCase();
+        if (upperCode === "CLOUDSERVICE2026" || upperCode === "VIETNIX" || upperCode === "VIETTELIDC" || upperCode === "GIAMGIA10") {
+          const discount = upperCode === "GIAMGIA10" ? 10 : 15;
+          setDiscountPercent(discount);
+          setAppliedPromoName(upperCode);
+          setPromoMessage({
+            type: "success",
+            text: `Áp dụng mã ưu đãi ${upperCode} thành công! Giảm ${discount}% tổng giá trị.`
+          });
+        } else {
+          setDiscountPercent(0);
+          setAppliedPromoName("");
+          setPromoMessage({
+            type: "error",
+            text: "Mã giảm giá không tồn tại hoặc đã hết hạn sử dụng."
+          });
+        }
+      }
+    } catch (err) {
+      console.warn("Lỗi kiểm tra mã giảm giá:", err);
+      // Fallback kiểm tra offline
+      const upperCode = code.toUpperCase();
+      if (upperCode === "CLOUDSERVICE2026" || upperCode === "VIETNIX" || upperCode === "VIETTELIDC") {
+        setDiscountPercent(15);
+        setAppliedPromoName(upperCode);
+        setPromoMessage({
+          type: "success",
+          text: `Áp dụng mã ưu đãi ${upperCode} thành công! Giảm 15% tổng giá trị.`
+        });
+      } else {
+        setDiscountPercent(0);
+        setAppliedPromoName("");
+        setPromoMessage({
+          type: "error",
+          text: "Mã giảm giá không hợp lệ hoặc máy chủ không phản hồi."
+        });
+      }
+    } finally {
+      setPromoLoading(false);
     }
   };
 
   const calculateSubtotal = () => {
-    // Check if the plan has specific cycle pricing from database
-    const exactCyclePrice = selectedPlan.prices?.find((pr: any) => pr.billingCycle === activeCycle.id)?.price;
-    if (exactCyclePrice) {
-      return exactCyclePrice + selectedPanel.price * activeCycle.months;
-    }
-    const baseMonthly = selectedPlan.price + selectedPanel.price;
-    const rawTotal = baseMonthly * activeCycle.months;
+    if (!plan) return 0;
+    const prices = plan.prices || [];
+    const exactCyclePrice = prices.find((pr: any) => pr.billingCycle === activeCycle.id)?.price;
+    if (exactCyclePrice) return exactCyclePrice;
+
+    const monthlyPrice = prices.find((pr: any) => pr.billingCycle === "Monthly")?.price || prices[0]?.price || 0;
+    const rawTotal = monthlyPrice * activeCycle.months;
     const cycleDiscount = (rawTotal * activeCycle.discount) / 100;
     return rawTotal - cycleDiscount;
   };
@@ -192,19 +308,18 @@ function OrderFormContent() {
     return Math.max(0, subtotal - promoDiscount);
   };
 
-  const handleStep1Submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedPlan || selectedPlan.id === 0) {
-      alert("Vui lòng chọn một gói dịch vụ để tiếp tục.");
-      return;
-    }
-    setStep(2);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const handleStep2Submit = async (e: React.FormEvent) => {
+  // Xử lý gửi đơn đặt hàng & Tự động gọi API tạo Link PayOS
+  const handleProceedToPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setValidationError("");
+
+    // Yêu cầu đăng nhập nếu người dùng chưa đăng nhập
+    const token = getAccessToken();
+    if (!token) {
+      const currentUrl = window.location.pathname + window.location.search;
+      router.push(`/login?returnUrl=${encodeURIComponent(currentUrl)}`);
+      return;
+    }
 
     const trimmedName = fullName.trim();
     const trimmedEmail = email.trim();
@@ -228,31 +343,31 @@ function OrderFormContent() {
     }
 
     setLoading(true);
+    const orderCode = "CS-" + Math.floor(100000 + Math.random() * 900000);
+    const totalAmount = calculateTotal();
+
     const orderData = {
-      planId: selectedPlan.id,
-      planName: selectedPlan.name,
-      serviceType: selectedPlan.type,
-      os: selectedPlan.type === "VPS" ? os : "N/A",
-      controlPanel: selectedPanel.name,
-      datacenter: DATACENTERS.find(d => d.id === datacenter)?.name || "Hà Nội Tier 3",
-      domainName: domainName || undefined,
+      planId: plan?.id || 0,
+      planName: plan?.name || "Gói Dịch Vụ Cloud",
       billingCycle: activeCycle.label,
       customerName: trimmedName,
       customerEmail: trimmedEmail,
       customerPhone: trimmedPhone,
+      domainName: domainName.trim() || undefined,
       promoCode,
-      notes: `${notes || ""}${promoCode ? ` [Mã KM: ${promoCode}]` : ""}${selectedPlan.type === "VPS" ? ` [HĐH: ${os}] [Panel: ${selectedPanel.name}]` : ""}`.trim(),
-      totalAmount: calculateTotal(),
+      notes: `${notes || ""}${promoCode ? ` [Mã KM: ${promoCode}]` : ""}${domainName ? ` [Tên miền: ${domainName}]` : ""} [Tổng tiền: ${new Intl.NumberFormat("vi-VN").format(totalAmount)}đ]`.trim(),
+      totalAmount,
       createdAt: new Date().toISOString(),
-      orderCode: "CS-" + Math.floor(100000 + Math.random() * 900000)
+      orderCode,
+      id: 0
     };
 
     try {
       const res = await apiFetch("/api/order-requests", {
         method: "POST",
         body: JSON.stringify({
-          planId: selectedPlan.id,
-          planName: selectedPlan.name,
+          planId: plan?.id,
+          planName: plan?.name,
           billingCycle: activeCycle.id,
           customerName: trimmedName,
           customerEmail: trimmedEmail,
@@ -260,293 +375,201 @@ function OrderFormContent() {
           notes: orderData.notes
         })
       });
+
       if (res.ok) {
         const responseData = await res.json();
-        setCreatedOrder({
-          ...orderData,
-          orderCode: responseData.orderCode || orderData.orderCode,
-          id: responseData.id
-        });
+        const finalOrderId = responseData.id || 0;
+        orderData.id = finalOrderId;
+        orderData.orderCode = responseData.orderCode || orderData.orderCode;
+        setCreatedOrder(orderData);
+
+        // Tạo link thanh toán PayOS trực tiếp cho đơn hàng này với đúng số tiền đã giảm giá
+        if (finalOrderId > 0) {
+          try {
+            const payRes = await apiFetch("/api/payment/create-link", {
+              method: "POST",
+              body: JSON.stringify({
+                orderId: finalOrderId,
+                amount: Math.round(totalAmount),
+                returnUrl: `${window.location.origin}/my-plans`,
+                cancelUrl: `${window.location.origin}/pricing`
+              })
+            });
+            if (payRes.ok) {
+              const payData = await payRes.json();
+              setPayosData(payData);
+            }
+          } catch (payErr) {
+            console.warn("PayOS Link Generation Warning:", payErr);
+          }
+        }
       } else {
         setCreatedOrder(orderData);
       }
     } catch (err) {
-      console.warn("API order submission error:", err);
+      console.warn("Lỗi gửi đơn đặt hàng:", err);
       setCreatedOrder(orderData);
     }
 
     setLoading(false);
-    setStep(3);
+    setStep(2); // Chuyển sang bước Thanh Toán
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  if (planLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center py-20">
+        <div className="text-center space-y-3">
+          <div className="w-8 h-8 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+          <p className="text-xs text-slate-500 font-medium">Đang tải thông tin gói dịch vụ...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!plan) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-4 py-20 text-center">
+        <div className="text-5xl mb-4">📦</div>
+        <h1 className="text-xl font-bold text-slate-900 mb-2">Không Tìm Thấy Gói Dịch Vụ</h1>
+        <p className="text-xs text-slate-500 max-w-sm mb-6">
+          Gói dịch vụ bạn chọn không tồn tại hoặc đã tạm ngưng cung cấp.
+        </p>
+        <Link
+          href="/pricing"
+          className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition-all"
+        >
+          ← Xem Bảng Giá Các Gói Khác
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 py-16 px-4 sm:px-6 selection:bg-blue-600 selection:text-white">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         
         {/* Title */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200 mb-3 shadow-xs">
             <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
-            HỆ THỐNG ĐẶT MUA TRỰC TUYẾN TỰ ĐỘNG
+            HỆ THỐNG ĐĂNG KÝ DỊCH VỤ TRỰC TUYẾN 24/7
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mb-3">
-            Đăng Ký Khởi Tạo Dịch Vụ
+          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mb-2">
+            Đăng Ký Gói: <span className="text-blue-600">{plan.name}</span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto">
-            Hạ tầng Cloud VPS, Hosting và Bảo mật được thiết lập và bàn giao tự động ngay sau khi xác nhận thanh toán.
+          <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto">
+            Nhập thông tin liên hệ của bạn để tiến hành khởi tạo dịch vụ và thanh toán quét mã QR trực tiếp.
           </p>
         </div>
 
-        {/* Steps Progress Indicator */}
-        <div className="max-w-2xl mx-auto flex items-center justify-between mb-10 px-4">
-          <div className="flex items-center gap-2.5">
+        {/* Progress Steps (2 Bước Tinh Gọn) */}
+        <div className="flex items-center justify-center max-w-md mx-auto mb-10">
+          <div className="flex items-center gap-3">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-              step >= 1 ? "bg-blue-600 text-white ring-4 ring-blue-100 shadow-sm" : "bg-slate-200 text-slate-500"
-            }`}>1</div>
-            <span className={`text-xs ${step >= 1 ? "text-slate-900 font-bold" : "text-slate-400"}`}>Cấu hình gói</span>
+              step >= 1 ? "bg-blue-600 text-white shadow-md shadow-blue-500/30" : "bg-slate-200 text-slate-600"
+            }`}>
+              1
+            </div>
+            <span className={`text-xs font-bold ${step >= 1 ? "text-blue-600" : "text-slate-400"}`}>
+              Thông Tin Đăng Ký
+            </span>
           </div>
-          <div className="flex-1 h-[2px] bg-slate-200 mx-4"></div>
-          <div className="flex items-center gap-2.5">
+
+          <div className={`w-16 h-0.5 mx-3 transition-colors ${step >= 2 ? "bg-blue-600" : "bg-slate-200"}`}></div>
+
+          <div className="flex items-center gap-3">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-              step >= 2 ? "bg-blue-600 text-white ring-4 ring-blue-100 shadow-sm" : "bg-slate-200 text-slate-500"
-            }`}>2</div>
-            <span className={`text-xs ${step >= 2 ? "text-slate-900 font-bold" : "text-slate-400"}`}>Thông tin liên hệ</span>
-          </div>
-          <div className="flex-1 h-[2px] bg-slate-200 mx-4"></div>
-          <div className="flex items-center gap-2.5">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-              step >= 3 ? "bg-emerald-600 text-white ring-4 ring-emerald-100 shadow-sm" : "bg-slate-200 text-slate-500"
-            }`}>3</div>
-            <span className={`text-xs ${step >= 3 ? "text-emerald-700 font-bold" : "text-slate-400"}`}>Thanh toán</span>
+              step >= 2 ? "bg-blue-600 text-white shadow-md shadow-blue-500/30" : "bg-slate-200 text-slate-600"
+            }`}>
+              2
+            </div>
+            <span className={`text-xs font-bold ${step >= 2 ? "text-blue-600" : "text-slate-400"}`}>
+              Thanh Toán Quét Mã QR
+            </span>
           </div>
         </div>
 
-        {/* STEP 1 & 2: TWO COLUMNS LAYOUT (Configurator + Sticky Summary) */}
-        {step < 3 ? (
+        {/* ========================================================= */}
+        {/* STEP 1: NHẬP THÔNG TIN ĐĂNG KÝ */}
+        {/* ========================================================= */}
+        {step === 1 && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            {/* Left: Configuration Steps */}
+            {/* Cột Trái: Form Nhập Thông Tin */}
             <div className="lg:col-span-2 space-y-6">
               
-              {step === 1 && (
-                <form onSubmit={handleStep1Submit} className="space-y-6">
-                  
-                  {/* 1.1 Select Plan Card Grid */}
-                  <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
-                    <h2 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold">1</span>
-                      Chọn Gói Cước Hạ Tầng
-                    </h2>
-
-                    {plansLoading ? (
-                      <div className="p-8 text-center text-slate-400 text-xs">Đang tải danh sách gói cước từ cơ sở dữ liệu...</div>
-                    ) : plans.length === 0 ? (
-                      <div className="p-8 text-center text-slate-400 text-xs">Chưa có gói cước nào trong cơ sở dữ liệu.</div>
-                    ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                        {plans.map((p) => {
-                          const isSelected = selectedPlanId === p.id;
-                          return (
-                            <div
-                              key={p.id}
-                              onClick={() => setSelectedPlanId(p.id)}
-                              className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                                isSelected
-                                  ? "bg-blue-50/70 border-blue-600 shadow-sm ring-2 ring-blue-500/20"
-                                  : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50"
-                              }`}
-                            >
-                              <div className="flex justify-between items-start mb-2">
-                                <h3 className="text-sm font-bold text-slate-900">{p.name}</h3>
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold border border-slate-200">
-                                  {p.category}
-                                </span>
-                              </div>
-                              <div className="text-xs text-slate-500 space-y-1 mb-3">
-                                <div><strong className="text-slate-700">CPU:</strong> {p.cpu}</div>
-                                <div><strong className="text-slate-700">RAM:</strong> {p.ram} | <strong className="text-slate-700">Ổ cứng:</strong> {p.storage}</div>
-                                <div><strong className="text-slate-700">Băng thông:</strong> {p.bandwidth}</div>
-                              </div>
-                              <div className="text-base font-extrabold text-blue-600">
-                                {new Intl.NumberFormat("vi-VN").format(p.price)} đ <span className="text-[10px] text-slate-400 font-normal">/ tháng</span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 1.2 Billing Cycles with Discounts */}
-                  <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
-                    <h2 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold">2</span>
-                      Chu Kỳ Thanh Toán
-                    </h2>
-                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-                      {BILLING_CYCLES.map((c) => {
-                        const isSelected = billingCycle === c.id;
-                        return (
-                          <div
-                            key={c.id}
-                            onClick={() => setBillingCycle(c.id)}
-                            className={`p-3 rounded-xl border text-center cursor-pointer transition-all ${
-                              isSelected
-                                ? "bg-blue-600 border-blue-600 text-white shadow-sm"
-                                : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300"
-                            }`}
-                          >
-                            <div className={`text-xs font-bold ${isSelected ? "text-white" : "text-slate-900"}`}>{c.label}</div>
-                            {c.tag ? (
-                              <span className={`text-[9px] font-bold block mt-1 ${isSelected ? "text-blue-100" : "text-emerald-600"}`}>{c.tag}</span>
-                            ) : (
-                              <span className={`text-[9px] block mt-1 ${isSelected ? "text-blue-200" : "text-slate-400"}`}>Giá chuẩn</span>
-                            )}
-                          </div>
-                        );
-                      })}
+              {/* Box Cảnh Báo Nếu Chưa Đăng Nhập */}
+              {!isLoggedIn && (
+                <div className="p-5 bg-amber-50 border border-amber-200 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">👤</span>
+                    <div>
+                      <h4 className="text-xs font-bold text-amber-900">Bạn chưa đăng nhập tài khoản</h4>
+                      <p className="text-[11px] text-amber-700 mt-0.5">
+                        Đăng nhập giúp tự động điền thông tin và dễ dàng quản lý dịch vụ sau khi thanh toán.
+                      </p>
                     </div>
                   </div>
-
-                  {/* 1.3 Datacenter & Location */}
-                  <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
-                    <h2 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold">3</span>
-                      Vị Trí Trung Tâm Dữ Liệu (Datacenter Tier 3)
-                    </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                      {DATACENTERS.map((dc) => {
-                        const isSelected = datacenter === dc.id;
-                        return (
-                          <label
-                            key={dc.id}
-                            className={`flex items-center justify-between p-3.5 rounded-xl border cursor-pointer transition-all ${
-                              isSelected
-                                ? "bg-blue-50/70 border-blue-600 ring-2 ring-blue-500/20"
-                                : "bg-slate-50 border-slate-200 hover:bg-slate-100"
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <input
-                                type="radio"
-                                name="datacenter"
-                                checked={isSelected}
-                                onChange={() => setDatacenter(dc.id)}
-                                className="accent-blue-600"
-                              />
-                              <div>
-                                <div className="text-xs font-bold text-slate-900">{dc.name}</div>
-                                <div className="text-[10px] text-emerald-600 font-semibold">Độ trễ trung bình: {dc.ping}</div>
-                              </div>
-                            </div>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* 1.4 Operating System (For VPS) */}
-                  {selectedPlan.type === "VPS" && (
-                    <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
-                      <h2 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold">4</span>
-                        Hệ Điều Hành Máy Chủ (OS)
-                      </h2>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        {LINUX_OS_LIST.map((system) => {
-                          const isSelected = os === system.name;
-                          return (
-                            <label
-                              key={system.id}
-                              className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
-                                isSelected
-                                  ? "bg-blue-50/70 border-blue-600 ring-2 ring-blue-500/20"
-                                  : "bg-slate-50 border-slate-200 hover:bg-slate-100"
-                              }`}
-                            >
-                              <input
-                                type="radio"
-                                name="os"
-                                checked={isSelected}
-                                onChange={() => setOs(system.name)}
-                                className="accent-blue-600"
-                              />
-                              <span className="text-xs font-medium text-slate-800">{system.name}</span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 1.5 Control Panel Addon */}
-                  {selectedPlan.type === "VPS" && (
-                    <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
-                      <h2 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold">5</span>
-                        Bảng Quản Trị Control Panel (Tùy chọn)
-                      </h2>
-                      <div className="space-y-2.5">
-                        {CONTROL_PANELS.map((cp) => {
-                          const isSelected = controlPanel === cp.id;
-                          return (
-                            <label
-                              key={cp.id}
-                              className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
-                                isSelected
-                                  ? "bg-blue-50/70 border-blue-600 ring-2 ring-blue-500/20"
-                                  : "bg-slate-50 border-slate-200 hover:bg-slate-100"
-                              }`}
-                            >
-                              <div className="flex items-center gap-3">
-                                <input
-                                  type="radio"
-                                  name="controlPanel"
-                                  checked={isSelected}
-                                  onChange={() => setControlPanel(cp.id)}
-                                  className="accent-blue-600"
-                                />
-                                <span className="text-xs font-medium text-slate-800">{cp.name}</span>
-                              </div>
-                              <span className="text-xs font-bold text-blue-600">
-                                {cp.price === 0 ? "Miễn phí" : `+${new Intl.NumberFormat("vi-VN").format(cp.price)} đ/th`}
-                              </span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Next Step Button */}
-                  <div className="flex justify-end pt-2">
-                    <button
-                      type="submit"
-                      className="px-8 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-500/20 transition-all flex items-center gap-2"
-                    >
-                      Tiếp Tục: Điền Thông Tin Đăng Ký →
-                    </button>
-                  </div>
-
-                </form>
+                  <Link
+                    href={`/login?returnUrl=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname + window.location.search : "/order")}`}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs text-center whitespace-nowrap transition-colors"
+                  >
+                    Đăng Nhập Ngay →
+                  </Link>
+                </div>
               )}
 
-              {/* STEP 2: Customer Contact Information */}
-              {step === 2 && (
-                <form onSubmit={handleStep2Submit} className="p-8 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-6">
-                  <div>
-                    <h2 className="text-lg font-bold text-slate-900 mb-1">Bước 2: Thông Tin Khách Hàng</h2>
-                    <p className="text-xs text-slate-500">
-                      Thông tin truy cập máy chủ (IP, Root password, cPanel) sẽ được gửi tự động qua email này sau khi kích hoạt.
-                    </p>
-                  </div>
+              {validationError && (
+                <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold rounded-2xl flex items-center gap-2">
+                  <span>⚠️</span>
+                  <span>{validationError}</span>
+                </div>
+              )}
 
-                  {validationError && (
-                    <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-medium">
-                      ⚠️ {validationError}
-                    </div>
-                  )}
+              <form onSubmit={handleProceedToPayment} className="space-y-6">
+                
+                {/* 1. Chu kỳ thanh toán */}
+                <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <span>⏱️</span>
+                    <span>Chu Kỳ Thanh Toán</span>
+                  </h3>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {BILLING_CYCLES.map((c) => {
+                      const isSelected = billingCycle === c.id;
+                      return (
+                        <div
+                          key={c.id}
+                          onClick={() => setBillingCycle(c.id)}
+                          className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all relative ${
+                            isSelected
+                              ? "border-blue-600 bg-blue-50/50 shadow-sm"
+                              : "border-slate-200 bg-slate-50/50 hover:border-slate-300"
+                          }`}
+                        >
+                          {c.tag && (
+                            <span className="absolute -top-2.5 right-2 px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500 text-white shadow-xs">
+                              {c.tag}
+                            </span>
+                          )}
+                          <div className="font-bold text-xs text-slate-900">{c.label}</div>
+                          <div className="text-[11px] text-slate-500 mt-0.5">
+                            {c.discount > 0 ? `Giảm ${c.discount}%` : "Giá tiêu chuẩn"}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 2. Thông tin khách hàng */}
+                <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <span>📝</span>
+                    <span>Thông Tin Người Đăng Ký</span>
+                  </h3>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -554,245 +577,411 @@ function OrderFormContent() {
                       <input
                         type="text"
                         required
-                        placeholder="Nguyễn Văn A"
+                        placeholder="VD: Nguyễn Văn A"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
-                        className="w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white"
+                        className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
                       />
                     </div>
+
                     <div>
-                      <label className="text-xs font-bold text-slate-700 block mb-1.5">Số Điện Thoại (Zalo) *</label>
+                      <label className="text-xs font-bold text-slate-700 block mb-1.5">Địa Chỉ Email *</label>
+                      <input
+                        type="email"
+                        required
+                        placeholder="VD: user@domain.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-slate-700 block mb-1.5">Số Điện Thoại *</label>
                       <input
                         type="tel"
                         required
-                        placeholder="0912345678"
+                        placeholder="VD: 0912345678"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
-                        className="w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white"
+                        className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-slate-700 block mb-1.5">Tên Miền Cần Cấu Hình (Nếu có)</label>
+                      <input
+                        type="text"
+                        placeholder="VD: mycompany.vn"
+                        value={domainName}
+                        onChange={(e) => setDomainName(e.target.value)}
+                        className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1.5">Địa Chỉ Email Nhận Bàn Giao Dịch Vụ *</label>
-                    <input
-                      type="email"
-                      required
-                      placeholder="email@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1.5">Tên Miền Trỏ Về Dịch Vụ (Nếu có)</label>
-                    <input
-                      type="text"
-                      placeholder="yourdomain.com"
-                      value={domainName}
-                      onChange={(e) => setDomainName(e.target.value)}
-                      className="w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1.5">Ghi Chú Hoặc Yêu Cầu Cài Đặt Thêm</label>
+                    <label className="text-xs font-bold text-slate-700 block mb-1.5">Ghi Chú Hoặc Yêu Cầu Kỹ Thuật Thêm</label>
                     <textarea
-                      rows={3}
-                      placeholder="VD: Cần hỗ trợ mở port 8080, cài sẵn Docker hoặc chuyển dữ liệu từ hosting cũ..."
+                      rows={2}
+                      placeholder="VD: Cài đặt sẵn môi trường Node.js 20, MySQL 8.0, mở cổng 8080..."
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
-                      className="w-full p-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white resize-none"
+                      className="w-full p-3 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
                     ></textarea>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                    <button
-                      type="button"
-                      onClick={() => setStep(1)}
-                      className="px-6 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
-                    >
-                      ← Quay Lại Cấu Hình
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="px-8 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-sm shadow-md shadow-emerald-500/20 transition-all flex items-center gap-2"
-                    >
-                      {loading ? "Đang xử lý khởi tạo..." : "Xác Nhận & Tiến Hành Thanh Toán →"}
-                    </button>
-                  </div>
-                </form>
-              )}
-
-            </div>
-
-            {/* Right: Sticky Order Summary Card */}
-            <div className="lg:col-span-1">
-              <div className="sticky top-28 p-6 rounded-2xl bg-white border border-slate-200 shadow-md">
-                <h3 className="text-base font-bold text-slate-900 mb-4 pb-3 border-b border-slate-100 flex items-center justify-between">
-                  <span>Tóm Tắt Đơn Hàng</span>
-                  <span className="text-xs text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">1 Dịch vụ</span>
-                </h3>
-
-                <div className="space-y-3.5 text-xs pb-4 border-b border-slate-100">
-                  <div>
-                    <div className="font-bold text-slate-900 text-sm">{selectedPlan.name}</div>
-                    <div className="text-slate-500 text-[11px] mt-0.5">{selectedPlan.category}</div>
-                  </div>
-                  <div className="flex justify-between text-slate-600">
-                    <span>Chu kỳ thanh toán:</span>
-                    <span className="font-bold text-slate-900">{activeCycle.label}</span>
-                  </div>
-                  {selectedPlan.type === "VPS" && (
-                    <div className="flex justify-between text-slate-600">
-                      <span>Hệ điều hành:</span>
-                      <span className="font-medium text-slate-900 text-right truncate max-w-[140px]">{os}</span>
-                    </div>
-                  )}
-                  {controlPanel !== "none" && (
-                    <div className="flex justify-between text-slate-600">
-                      <span>Control Panel:</span>
-                      <span className="font-bold text-blue-600">{selectedPanel.name}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between text-slate-600">
-                    <span>Vị trí máy chủ:</span>
-                    <span className="font-medium text-slate-900">{datacenter === "hn-tier3" ? "Hà Nội Tier 3" : "TP.HCM Tier 3"}</span>
                   </div>
                 </div>
 
-                {/* Promo Code Input */}
-                <div className="py-4 border-b border-slate-100">
+                {/* 3. Mã giảm giá */}
+                <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                      <span>🎁</span>
+                      <span>Mã Ưu Đãi / Khuyến Mãi</span>
+                    </h3>
+                    {discountPercent > 0 && (
+                      <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                        Đang giảm {discountPercent}% ({appliedPromoName})
+                      </span>
+                    )}
+                  </div>
+
                   <div className="flex gap-2">
                     <input
                       type="text"
-                      placeholder="Mã giảm giá (VD: VIETNIX)"
+                      placeholder="Nhập mã (VD: CLOUDSERVICE2026, GIAMGIA10...)"
                       value={promoCode}
-                      onChange={(e) => setPromoCode(e.target.value)}
-                      className="flex-1 h-9 px-3 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-900 placeholder-slate-400 uppercase focus:outline-none focus:border-blue-600 focus:bg-white"
+                      onChange={(e) => {
+                        setPromoCode(e.target.value);
+                        if (promoMessage) setPromoMessage(null);
+                      }}
+                      className="flex-1 h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-xs font-mono text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white uppercase"
                     />
-                    <button
-                      type="button"
-                      onClick={handleApplyPromo}
-                      className="px-3.5 h-9 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors shadow-xs"
-                    >
-                      Áp Dụng
-                    </button>
+                    {discountPercent > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPromoCode("");
+                          setDiscountPercent(0);
+                          setAppliedPromoName("");
+                          setPromoMessage(null);
+                        }}
+                        className="px-4 h-11 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs transition-colors border border-rose-200"
+                      >
+                        Hủy Mã
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={promoLoading || !promoCode.trim()}
+                        onClick={handleApplyPromo}
+                        className="px-5 h-11 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-xs transition-colors shadow-xs"
+                      >
+                        {promoLoading ? "Đang kiểm tra..." : "Áp Dụng"}
+                      </button>
+                    )}
                   </div>
-                  {discountPercent > 0 && (
-                    <div className="text-[11px] text-emerald-600 mt-2 font-bold flex items-center gap-1">
-                      <span>✓</span> Đã áp dụng chiết khấu {discountPercent}%
+
+                  {promoMessage && (
+                    <div
+                      className={`p-3 rounded-xl text-xs font-medium flex items-center gap-2 ${
+                        promoMessage.type === "success"
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          : "bg-rose-50 text-rose-700 border border-rose-200"
+                      }`}
+                    >
+                      <span>{promoMessage.type === "success" ? "✓" : "⚠️"}</span>
+                      <span>{promoMessage.text}</span>
                     </div>
                   )}
                 </div>
 
-                {/* Pricing Calculation Breakdown */}
-                <div className="py-4 space-y-2 text-xs border-b border-slate-100">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full h-12 rounded-2xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-sm transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"
+                >
+                  {loading ? "Đang xử lý thông tin..." : "Tiến Hành Thanh Toán →"}
+                </button>
+              </form>
+            </div>
+
+            {/* Cột Phải: Tóm Tắt Gói Dịch Vụ Đã Chọn */}
+            <div>
+              <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm sticky top-24 space-y-6">
+                <div>
+                  <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest block mb-1">
+                    {plan.categoryName || "Gói Dịch Vụ"}
+                  </span>
+                  <h2 className="text-xl font-black text-slate-900">{plan.name}</h2>
+                  <p className="text-xs text-slate-500 mt-1">{plan.description || "Hạ tầng đám mây chuyên nghiệp"}</p>
+                </div>
+
+                {/* Thông số kỹ thuật */}
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-2.5 text-xs">
+                  {plan.cpu && (
+                    <div className="flex justify-between text-slate-700">
+                      <span className="text-slate-500">⚡ Vi xử lý (CPU):</span>
+                      <span className="font-bold">{plan.cpu}</span>
+                    </div>
+                  )}
+                  {plan.ram && (
+                    <div className="flex justify-between text-slate-700">
+                      <span className="text-slate-500">💾 Bộ nhớ (RAM):</span>
+                      <span className="font-bold">{plan.ram}</span>
+                    </div>
+                  )}
+                  {plan.storage && (
+                    <div className="flex justify-between text-slate-700">
+                      <span className="text-slate-500">💽 Ổ cứng lưu trữ:</span>
+                      <span className="font-bold">{plan.storage}</span>
+                    </div>
+                  )}
+                  {plan.bandwidth && (
+                    <div className="flex justify-between text-slate-700">
+                      <span className="text-slate-500">🚀 Băng thông:</span>
+                      <span className="font-bold">{plan.bandwidth}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-slate-700">
+                    <span className="text-slate-500">🛡️ Tường lửa:</span>
+                    <span className="font-bold text-emerald-600">Anti-DDoS 100Gbps</span>
+                  </div>
+                </div>
+
+                {/* Tính giá */}
+                <div className="space-y-3 pt-4 border-t border-slate-100 text-xs">
+                  <div className="flex justify-between text-slate-600">
+                    <span>Thời hạn đăng ký:</span>
+                    <span className="font-bold text-slate-900">{activeCycle.label}</span>
+                  </div>
                   <div className="flex justify-between text-slate-600">
                     <span>Tạm tính ({activeCycle.months} tháng):</span>
-                    <span className="font-semibold text-slate-800">{new Intl.NumberFormat("vi-VN").format((selectedPlan.price + selectedPanel.price) * activeCycle.months)} đ</span>
+                    <span className="font-bold text-slate-900">
+                      {new Intl.NumberFormat("vi-VN").format(calculateSubtotal())} đ
+                    </span>
                   </div>
-                  {activeCycle.discount > 0 && (
-                    <div className="flex justify-between text-emerald-600 font-medium">
-                      <span>Giảm giá chu kỳ ({activeCycle.discount}%):</span>
-                      <span>-{new Intl.NumberFormat("vi-VN").format(((selectedPlan.price + selectedPanel.price) * activeCycle.months * activeCycle.discount) / 100)} đ</span>
-                    </div>
-                  )}
                   {discountPercent > 0 && (
-                    <div className="flex justify-between text-emerald-600 font-medium">
-                      <span>Mã khuyến mãi (-{discountPercent}%):</span>
-                      <span>-{new Intl.NumberFormat("vi-VN").format((calculateSubtotal() * discountPercent) / 100)} đ</span>
+                    <div className="flex justify-between text-emerald-600 font-semibold">
+                      <span>Mã giảm giá ({discountPercent}%):</span>
+                      <span>
+                        - {new Intl.NumberFormat("vi-VN").format((calculateSubtotal() * discountPercent) / 100)} đ
+                      </span>
                     </div>
                   )}
-                  <div className="flex justify-between text-slate-600">
-                    <span>Thuế VAT (0%):</span>
-                    <span>0 đ</span>
+                  <div className="pt-3 border-t border-slate-100 flex justify-between items-baseline">
+                    <span className="text-sm font-bold text-slate-900">Tổng Thanh Toán:</span>
+                    <span className="text-2xl font-black text-blue-600">
+                      {new Intl.NumberFormat("vi-VN").format(calculateTotal())} đ
+                    </span>
                   </div>
                 </div>
 
-                {/* Total */}
-                <div className="pt-4 flex items-baseline justify-between mb-4">
-                  <span className="text-sm font-bold text-slate-900">Tổng Thanh Toán:</span>
-                  <span className="text-2xl font-black text-blue-600">
-                    {new Intl.NumberFormat("vi-VN").format(calculateTotal())} đ
-                  </span>
-                </div>
-
-                <div className="text-[11px] text-slate-500 text-center leading-relaxed">
-                  🔒 Bảo mật thanh toán SSL 256-bit. Kích hoạt dịch vụ tức thì.
+                <div className="text-center pt-2">
+                  <Link href="/pricing" className="text-xs font-semibold text-slate-400 hover:text-blue-600">
+                    ← Chọn gói dịch vụ khác
+                  </Link>
                 </div>
               </div>
             </div>
 
           </div>
-        ) : (
-          /* STEP 3: ORDER SUCCESS & PAYMENT INVOICE */
-          <div className="max-w-2xl mx-auto p-8 rounded-3xl bg-white border border-slate-200 shadow-xl text-center">
-            <div className="w-16 h-16 rounded-full bg-emerald-50 border-2 border-emerald-500 text-emerald-600 text-3xl flex items-center justify-center mx-auto mb-4 font-bold">
-              ✓
-            </div>
-            <h2 className="text-2xl font-black text-slate-900 mb-2">Đăng Ký Khởi Tạo Thành Công!</h2>
-            <p className="text-xs text-slate-500 max-w-md mx-auto mb-8">
-              Mã đơn hàng: <strong className="text-blue-600 font-mono text-sm">{createdOrder?.orderCode}</strong>. Email xác nhận và thông số truy cập máy chủ đã được gửi tới <strong className="text-slate-900">{createdOrder?.customerEmail}</strong>.
-            </p>
+        )}
 
-            {/* Payment Details Box with VietQR */}
-            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-left mb-8 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                <span className="text-xs font-bold text-slate-800">Thông Tin Chuyển Khoản Nhanh (VietQR 24/7)</span>
-                <span className="text-sm font-black text-emerald-600">{new Intl.NumberFormat("vi-VN").format(createdOrder?.totalAmount || 0)} VNĐ</span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
-                <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-white border border-slate-200 shadow-xs">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`https://api.vietqr.io/image/970422-0912345678-compact2.jpg?amount=${createdOrder?.totalAmount || 150000}&addInfo=${encodeURIComponent(createdOrder?.orderCode || "CLOUDSERVICE")}&accountName=CLOUDSERVICE%20VIETNAM`}
-                    alt="VietQR Payment"
-                    className="w-48 h-48 object-contain"
-                  />
-                  <span className="text-[10px] text-slate-600 font-bold mt-1">Quét mã bằng App Ngân hàng bất kỳ</span>
+        {/* ========================================================= */}
+        {/* STEP 2: BƯỚC THANH TOÁN (HIỂN THỊ MÃ QR HOẶC KẾT QUẢ THÀNH CÔNG) */}
+        {/* ========================================================= */}
+        {step === 2 && createdOrder && (
+          <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in">
+            
+            {/* GIAO DIỆN KHI GIAO DỊCH HẾT HẠN (QUÁ 5 PHÚT) */}
+            {isExpired ? (
+              <div className="bg-rose-50 border border-rose-300 rounded-3xl p-10 text-center space-y-4 shadow-sm animate-in zoom-in-95 my-6">
+                <div className="w-16 h-16 bg-rose-600 text-white rounded-full flex items-center justify-center text-3xl mx-auto shadow-lg shadow-rose-600/30">
+                  ✕
                 </div>
-
-                <div className="space-y-3 text-xs">
-                  <div>
-                    <span className="text-slate-500 block text-[11px]">Ngân hàng thụ hưởng:</span>
-                    <strong className="text-slate-900 font-bold">MB Bank (Ngân hàng Quân Đội)</strong>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 block text-[11px]">Số tài khoản:</span>
-                    <strong className="text-blue-600 font-mono text-sm font-bold">0912345678</strong>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 block text-[11px]">Chủ tài khoản:</span>
-                    <strong className="text-slate-900 uppercase font-bold">CONG TY TNHH CLOUDSERVICE VN</strong>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 block text-[11px]">Nội dung chuyển khoản:</span>
-                    <strong className="text-blue-700 font-mono text-sm bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                      {createdOrder?.orderCode}
-                    </strong>
-                  </div>
+                <h2 className="text-2xl font-black text-rose-950 tracking-tight">Giao Dịch Đã Hết Hạn!</h2>
+                <p className="text-xs text-rose-800/90 max-w-md mx-auto leading-relaxed">
+                  Đã quá thời gian chờ thanh toán (5 phút). Đơn hàng <strong>{createdOrder.orderCode}</strong> đã được hệ thống tự động hủy để đảm bảo an toàn giao dịch.
+                </p>
+                <div className="pt-4 flex justify-center gap-3">
+                  <button
+                    onClick={() => {
+                      setTimeLeft(300);
+                      setIsExpired(false);
+                      setStep(1);
+                    }}
+                    className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-2xl shadow-md transition-all inline-block hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                  >
+                    🔄 Đặt Hàng Lại Gói Này
+                  </button>
+                  <Link
+                    href="/pricing"
+                    className="px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-2xl transition-all inline-block"
+                  >
+                    Xem Các Gói Khác
+                  </Link>
                 </div>
               </div>
-            </div>
+            ) : paymentSuccess ? (
+              /* GIAO DIỆN KHI THANH TOÁN THÀNH CÔNG (HÌNH 2) */
+              <div className="bg-emerald-50 border border-emerald-300 rounded-3xl p-10 text-center space-y-4 shadow-sm animate-in zoom-in-95 my-6">
+                <div className="w-16 h-16 bg-emerald-600 text-white rounded-full flex items-center justify-center text-3xl mx-auto shadow-lg shadow-emerald-600/30">
+                  ✓
+                </div>
+                <h2 className="text-2xl font-black text-emerald-950 tracking-tight">Thanh Toán Thành Công!</h2>
+                <p className="text-xs text-emerald-800/90 max-w-md mx-auto leading-relaxed">
+                  Hệ thống PayOS đã tự động xác nhận thanh toán cho đơn hàng <strong>{createdOrder.orderCode}</strong>. Dịch vụ của bạn đã được kích hoạt thành công!
+                </p>
+                <div className="pt-4">
+                  <Link
+                    href="/my-plans"
+                    className="px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-2xl shadow-md transition-all inline-block hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    Truy Cập Gói Dịch Vụ Của Tôi Ngay →
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              /* GIAO DIỆN KHI ĐANG CHỜ THANH TOÁN (HÌNH 1) */
+              <>
+                <div className="bg-blue-50 border border-blue-200 rounded-3xl p-5 text-center space-y-2 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <div className="inline-flex items-center gap-2 text-xs font-bold text-blue-700">
+                      <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping"></span>
+                      ĐANG CHỜ THANH TOÁN QUÉT MÃ QR
+                    </div>
+                    {/* Đồng hồ đếm ngược 5 phút */}
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-blue-200 rounded-full font-mono text-xs font-bold text-rose-600 shadow-xs">
+                      <span>⏱️ Hết hạn sau:</span>
+                      <span>{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, "0")}</span>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-slate-500 text-left sm:text-center">
+                    Mở ứng dụng Ngân hàng bất kỳ để quét mã QR bên dưới, hệ thống sẽ tự động duyệt ngay sau khi chuyển khoản.
+                  </p>
+                </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              <a
-                href="/my-plans"
-                className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-colors shadow-md shadow-blue-500/20"
-              >
-                Quản Lý Dịch Vụ Của Tôi
-              </a>
-              <a
-                href="/"
-                className="px-6 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors"
-              >
-                Quay Lại Trang Chủ
-              </a>
-            </div>
+                {/* Chi Tiết Hóa Đơn & Mã QR Tự Động Trực Tiếp */}
+                <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm space-y-6">
+                  <div className="flex justify-between items-start pb-5 border-b border-slate-100">
+                    <div>
+                      <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest block">Chi Tiết Đơn Hàng</span>
+                      <h3 className="text-lg font-black text-slate-900 mt-0.5">{createdOrder.planName}</h3>
+                      <p className="text-xs text-slate-500 mt-0.5">Khách hàng: {createdOrder.customerName} ({createdOrder.customerPhone})</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs text-slate-400 block">Số tiền cần trả</span>
+                      <span className="text-2xl font-black text-blue-600">
+                        {new Intl.NumberFormat("vi-VN").format(createdOrder.totalAmount)} đ
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* KHUNG HIỂN THỊ MÃ QR TRỰC TIẾP TRÊN TRANG */}
+                  <div className="p-6 bg-slate-50 rounded-3xl border border-slate-200 text-center space-y-4">
+                    
+                    {/* Khung chứa ảnh QR Code */}
+                    <div className="inline-block p-4 bg-white border border-slate-200 rounded-3xl shadow-sm relative group">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={
+                          payosData?.qrCode
+                            ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(payosData.qrCode)}`
+                            : `https://img.vietqr.io/image/MB-0333336666-compact2.png?amount=${createdOrder.totalAmount}&addInfo=${encodeURIComponent(payosData?.description || createdOrder.orderCode)}&accountName=CONG%20TY%20CLOUDSERVICE`
+                        }
+                        alt="Payment QR Code"
+                        className="w-56 h-56 mx-auto object-contain rounded-xl"
+                      />
+                      <div className="text-[10px] text-slate-400 font-bold uppercase mt-2 tracking-wider">
+                        ⚡ VietQR Chuyển Khoản Tự Động 24/7
+                      </div>
+                    </div>
+
+                    {/* Bảng Chi Tiết Thông Tin Chuyển Khoản Trực Tiếp */}
+                    <div className="max-w-md mx-auto bg-white p-4 rounded-2xl border border-slate-200 text-xs text-left space-y-2.5">
+                      <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                        <span className="text-slate-500">Chủ tài khoản:</span>
+                        <span className="font-bold text-slate-900 uppercase">
+                          {payosData?.accountName || "CONG TY CLOUDSERVICE"}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                        <span className="text-slate-500">Số tài khoản:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold text-blue-600 text-sm">
+                            {payosData?.accountNumber || "0333336666"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                        <span className="text-slate-500">Số tiền:</span>
+                        <span className="font-black text-rose-600">
+                          {new Intl.NumberFormat("vi-VN").format(createdOrder.totalAmount)} đ
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-500">Nội dung chuyển khoản:</span>
+                        <span className="font-mono font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">
+                          {payosData?.description || createdOrder.orderCode}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Thông báo kết quả kiểm tra thanh toán thủ công */}
+                    {paymentError && (
+                      <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-700 font-medium flex items-center justify-between gap-3 text-left">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">⚠️</span>
+                          <span>{paymentError}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Nút Kiểm Tra Kết Quả Giao Dịch */}
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        disabled={checkingPayment}
+                        onClick={handleCheckPaymentStatus}
+                        className="w-full py-3.5 px-6 rounded-2xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        {checkingPayment ? (
+                          <>
+                            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                            <span>Đang Kiểm Tra Với Hệ Thống Ngân Hàng PayOS...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>🔄</span>
+                            <span>Tôi Đã Chuyển Khoản Thành Công - Kiểm Tra Kết Quả Giao Dịch</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <p className="text-[11px] text-slate-400 italic">
+                      * Vui lòng giữ nguyên đúng nội dung chuyển khoản để hệ thống tự động nhận diện và kích hoạt gói ngay lập tức.
+                    </p>
+                  </div>
+
+                  {/* Nút Điều Hướng */}
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setStep(1)}
+                      className="w-full py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors"
+                    >
+                      ← Chỉnh Sửa Thông Tin Đơn Hàng
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+
           </div>
         )}
 
@@ -803,7 +992,7 @@ function OrderFormContent() {
 
 export default function OrderPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-50 text-slate-800 flex items-center justify-center text-sm">Đang tải biểu mẫu đặt hàng...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center text-xs text-slate-400">Đang tải...</div>}>
       <OrderFormContent />
     </Suspense>
   );

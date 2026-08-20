@@ -72,7 +72,7 @@ export default function ForgotPasswordPage() {
 
     setLoading(true);
     try {
-      const res = await apiFetch("/api/auth/reset-password", {
+      const res = await apiFetch("/api/auth/reset-password-otp", {
         method: "POST",
         body: JSON.stringify({
           emailOrUsername: emailOrUsername.trim(),

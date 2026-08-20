@@ -13,9 +13,12 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
+{
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"),
         b => b.MigrationsAssembly("CloudService.Infrastructure")
-             .EnableRetryOnFailure()));
+             .EnableRetryOnFailure());
+    options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+});
 
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -31,6 +34,9 @@ builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 
 // Cấu hình Resend Email Service
 builder.Services.AddScoped<IEmailService, ResendEmailService>();
+
+// Cấu hình PayOS Payment Gateway
+builder.Services.AddScoped<IPayOSService, PayOSService>();
 
 // Cấu hình JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"];

@@ -155,10 +155,13 @@ namespace CloudService.Infrastructure.Services
             var order = await _context.OrderRequests.IgnoreQueryFilters().FirstOrDefaultAsync(o => o.Id == id);
             if (order == null) return null;
 
+            var oldStatus = order.Status;
             order.Status = dto.Status;
             if (!string.IsNullOrWhiteSpace(dto.Notes))
             {
-                order.Notes = dto.Notes;
+                order.Notes = string.IsNullOrWhiteSpace(order.Notes)
+                    ? dto.Notes
+                    : (order.Notes.Contains(dto.Notes) ? order.Notes : $"{order.Notes} | {dto.Notes}");
             }
 
             await _context.SaveChangesAsync();
@@ -272,6 +275,23 @@ namespace CloudService.Infrastructure.Services
 
         private static OrderRequestDto MapToDto(OrderRequest o)
         {
+            decimal price = o.PlanPrice?.Price ?? 0;
+
+            // Nếu trong Notes có ghi nhận số tiền thanh toán thực tế sau khi giảm giá hoặc qua PayOS, ưu tiên hiển thị đúng số tiền đó
+            if (!string.IsNullOrEmpty(o.Notes))
+            {
+                // Hỗ trợ [Tổng tiền: 2.000đ], [Tổng tiền: 2,000đ], [PayOS: Đã thanh toán 2.000đ], [Số tiền: 2000đ]
+                var match = System.Text.RegularExpressions.Regex.Match(o.Notes, @"(?:Tổng tiền|Đã thanh toán|Số tiền|Gia tien):\s*([\d\.\,]+)\s*(?:đ|vnd|đồng)?", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                if (match.Success)
+                {
+                    var cleanNum = match.Groups[1].Value.Replace(".", "").Replace(",", "").Trim();
+                    if (decimal.TryParse(cleanNum, out decimal parsedAmount) && parsedAmount > 0)
+                    {
+                        price = parsedAmount;
+                    }
+                }
+            }
+
             return new OrderRequestDto
             {
                 Id = o.Id,
@@ -279,7 +299,7 @@ namespace CloudService.Infrastructure.Services
                 PlanName = o.PlanPrice?.Plan?.Name ?? "Dịch vụ Cloud",
                 CategoryName = o.PlanPrice?.Plan?.Category?.Name ?? "Hạ tầng",
                 BillingCycle = o.PlanPrice?.BillingCycle ?? "Monthly",
-                Price = o.PlanPrice?.Price ?? 0,
+                Price = price,
                 CustomerName = o.CustomerName,
                 CustomerEmail = o.CustomerEmail,
                 CustomerPhone = o.CustomerPhone,

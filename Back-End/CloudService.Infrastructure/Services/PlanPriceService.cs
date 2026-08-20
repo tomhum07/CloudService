@@ -135,6 +135,34 @@ namespace CloudService.Infrastructure.Services
             };
         }
 
+        public async Task<PromotionDto?> ValidatePromotionAsync(string code)
+        {
+            if (string.IsNullOrWhiteSpace(code)) return null;
+
+            var trimmedCode = code.Trim().ToLower();
+            var now = DateTime.UtcNow;
+
+            var promotion = await _context.Promotions
+                .Where(p => p.IsActive && p.Name.ToLower() == trimmedCode)
+                .FirstOrDefaultAsync();
+
+            if (promotion == null) return null;
+
+            // Kiểm tra thời hạn hiệu lực (nếu có cấu hình)
+            if (promotion.StartDate != default && promotion.StartDate > now) return null;
+            if (promotion.EndDate != default && promotion.EndDate < now) return null;
+
+            return new PromotionDto
+            {
+                Id = promotion.Id,
+                Name = promotion.Name,
+                DiscountPercentage = promotion.DiscountPercentage,
+                StartDate = promotion.StartDate,
+                EndDate = promotion.EndDate,
+                IsActive = promotion.IsActive
+            };
+        }
+
         private async Task<PlanPriceDto> GetPriceDtoByIdAsync(int priceId)
         {
             var price = await _context.PlanPrices
