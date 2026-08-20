@@ -176,15 +176,14 @@ export default function AffiliatePage() {
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 mb-2">Đăng Ký Thành Công!</h3>
                 <p className="text-xs text-slate-600 max-w-sm mx-auto mb-6 leading-relaxed">
-                  Cảm ơn bạn đã quan tâm. Ban quản trị sẽ đối soát và gửi liên kết Affiliate qua email của bạn trong thời gian sớm nhất.
+                  Cảm ơn bạn đã quan tâm. Ban quản trị sẽ đối soát và gửi kết quả xét duyệt qua email của bạn trong thời gian sớm nhất.
                 </p>
-                <button
-                  type="button"
-                  onClick={() => setRegistered(false)}
-                  className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs"
+                <Link
+                  href="/"
+                  className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs inline-block"
                 >
-                  Đăng Ký Thêm
-                </button>
+                  🏠 Quay Về Trang Chủ
+                </Link>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">

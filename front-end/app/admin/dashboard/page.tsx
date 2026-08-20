@@ -24,14 +24,14 @@ export default function AdminDashboard() {
 
     // Lắng nghe SignalR để tự động cập nhật số liệu và đơn hàng mới nhất trên Dashboard
     const unsubscribe = dataSyncService.subscribe(() => {
-      fetchDashboardData();
+      fetchDashboardData(true);
     });
 
     return () => unsubscribe();
   }, []);
 
-  const fetchDashboardData = async () => {
-    setLoading(true);
+  const fetchDashboardData = async (isBackground = false) => {
+    if (!isBackground) setLoading(true);
     try {
       // 1. Fetch Real Stats
       const statRes = await apiFetch("/api/statistics/dashboard");
@@ -145,7 +145,7 @@ export default function AdminDashboard() {
           <p className="text-xs text-slate-500 mt-1">Dữ liệu thời gian thực được đồng bộ từ trung tâm dữ liệu</p>
         </div>
         <button
-          onClick={fetchDashboardData}
+          onClick={() => fetchDashboardData(false)}
           disabled={loading}
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-xs font-bold text-white rounded-xl transition-colors flex items-center gap-2 shadow-sm shadow-blue-500/20"
         >

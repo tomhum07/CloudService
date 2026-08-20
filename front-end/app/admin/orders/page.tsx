@@ -22,16 +22,16 @@ export default function AdminOrdersPage() {
 
     // Lắng nghe SignalR để tự động cập nhật danh sách đơn hàng khi có đơn mới hoặc thanh toán thành công
     const unsubscribe = dataSyncService.subscribe((entity) => {
-      if (entity === "order" || entity === "all") {
-        fetchOrdersAndPartners();
+      if (entity === "order" || entity === "affiliate" || entity === "all") {
+        fetchOrdersAndPartners(true);
       }
     });
 
     return () => unsubscribe();
   }, []);
 
-  const fetchOrdersAndPartners = async () => {
-    setLoading(true);
+  const fetchOrdersAndPartners = async (isBackground = false) => {
+    if (!isBackground) setLoading(true);
     try {
       // Fetch Orders
       const orderRes = await apiFetch("/api/order-requests/all");
@@ -173,12 +173,11 @@ export default function AdminOrdersPage() {
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={fetchOrdersAndPartners}
-            disabled={loading}
-            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 rounded-xl transition-colors"
-          >
-            🔄 {loading ? "Đang tải..." : "Làm mới"}
-          </button>
+          onClick={() => fetchOrdersAndPartners(false)}
+          className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold shadow-xs flex items-center gap-1.5 transition-colors"
+        >
+          <span className="text-sm">🔄</span> Làm Mới
+        </button>
           <button
             onClick={handleExportExcel}
             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-xs font-bold text-white rounded-xl transition-colors flex items-center gap-2 shadow-sm shadow-emerald-500/20"
