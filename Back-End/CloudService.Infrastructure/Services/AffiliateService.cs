@@ -74,11 +74,30 @@ namespace CloudService.Infrastructure.Services
 
         public async Task<AffiliateApplicationDto> CreateApplicationAsync(CreateAffiliateApplicationDto dto)
         {
+            // Kiểm tra nếu email đã gửi đơn trước đó
+            var existing = await _context.AffiliateApplications
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(a => a.Email.ToLower() == dto.Email.ToLower().Trim());
+
+            if (existing != null)
+            {
+                existing.FullName = dto.FullName;
+                existing.Phone = dto.Phone;
+                existing.WebsiteUrl = dto.WebsiteUrl;
+                existing.Motivation = dto.Motivation;
+                existing.Status = 0; // Đặt lại về chờ duyệt (New)
+                existing.IsActive = true;
+                existing.CreatedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+                return MapToDto(existing);
+            }
+
             var entity = new AffiliateApplication
             {
                 FullName = dto.FullName,
-                Email = dto.Email,
-                Phone = dto.Phone,
+                Email = dto.Email.Trim(),
+                Phone = dto.Phone.Trim(),
                 WebsiteUrl = dto.WebsiteUrl,
                 Motivation = dto.Motivation,
                 Status = 0, // New
