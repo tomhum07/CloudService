@@ -166,10 +166,10 @@ export default function AdminOrdersPage() {
     <div className="space-y-6">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white py-4 px-5 rounded-2xl border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900">Quản Lý Đơn Hàng & Đối Tác CTV</h1>
-          <p className="text-xs text-slate-500 mt-1">Dữ liệu đơn hàng thực tế đồng bộ trực tiếp từ cơ sở dữ liệu</p>
+          <h1 className="text-lg sm:text-xl font-black text-slate-900">Quản Lý Đơn Hàng & Đối Tác CTV</h1>
+          <p className="text-xs text-slate-500 mt-0.5">Dữ liệu đơn hàng thực tế đồng bộ trực tiếp từ cơ sở dữ liệu</p>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -250,8 +250,8 @@ export default function AdminOrdersPage() {
                         {typeof ord.amount === "number" ? `${ord.amount.toLocaleString("vi-VN")}đ` : ord.amount}
                       </td>
                       <td className="py-3.5 px-4 text-slate-500">{ord.date}</td>
-                      <td className="py-3.5 px-4">
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold whitespace-nowrap ${
                           ord.status === "Hoàn tất"
                             ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                             : ord.status === "Đã hủy"
@@ -337,8 +337,8 @@ export default function AdminOrdersPage() {
                       <td className="py-3.5 px-4 text-blue-600">{part.channel}</td>
                       <td className="py-3.5 px-4 text-slate-700 font-mono text-[11px]">{part.bank}</td>
                       <td className="py-3.5 px-4 text-slate-500">{part.date}</td>
-                      <td className="py-3.5 px-4">
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold whitespace-nowrap ${
                           part.status === "Đã duyệt"
                             ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                             : part.status === "Đã từ chối"

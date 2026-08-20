@@ -193,7 +193,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50">
         
         {/* Top Navbar */}
-        <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-8 z-10 shadow-xs">
+        <header className="h-14 border-b border-slate-200 bg-white flex items-center justify-between px-6 z-10 shadow-xs">
           <div className="flex items-center gap-3">
             <span className="text-xs font-medium text-slate-400">Khu vực:</span>
             <span className="text-xs font-bold text-slate-800 bg-slate-100 px-3 py-1 rounded-lg">
@@ -201,11 +201,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Link
               href="/"
               target="_blank"
-              className="text-xs text-slate-600 hover:text-blue-600 font-bold flex items-center gap-1.5 bg-slate-50 hover:bg-blue-50 px-3.5 py-1.5 rounded-xl border border-slate-200 transition-all"
+              className="text-xs text-slate-600 hover:text-blue-600 font-bold flex items-center gap-1.5 bg-slate-50 hover:bg-blue-50 px-3 py-1.5 rounded-xl border border-slate-200 transition-all"
             >
               <span>🌐 Xem Trang Bán Hàng</span>
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -213,14 +213,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </svg>
             </Link>
             
-            <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-sm shadow-blue-500/20">
+            <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
               {role.charAt(0)}
             </div>
           </div>
         </header>
 
         {/* Dynamic Admin Body */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-8">
+        <main className="flex-1 overflow-y-auto p-5 md:p-6">
           {children}
         </main>
       </div>
