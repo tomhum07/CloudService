@@ -19,6 +19,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     const verifySession = async () => {
       let token = getAccessToken();
+      if (token && role !== "Unauthorized" && !checking) {
+        // Đã xác thực session trước đó, không cần load spinner lại khi chuyển qua lại giữa các menu
+        return;
+      }
+
       if (!token) {
         const success = await refreshAccessToken();
         if (!success) {
@@ -60,7 +65,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     };
 
     verifySession();
-  }, [pathname, router]);
+  }, [pathname, router, role, checking]);
 
   const handleLogout = async () => {
     try {
