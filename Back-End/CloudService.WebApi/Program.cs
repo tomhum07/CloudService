@@ -102,7 +102,8 @@ builder.Services.AddOpenApi(options =>
 
         document.Servers = new System.Collections.Generic.List<Microsoft.OpenApi.OpenApiServer>
         {
-            new Microsoft.OpenApi.OpenApiServer { Url = "https://cloudservice-r3rm.onrender.com", Description = "Production Server" }
+            new Microsoft.OpenApi.OpenApiServer { Url = "https://api.tomhum07.me", Description = "Production Custom Domain (HTTPS)" },
+            new Microsoft.OpenApi.OpenApiServer { Url = "https://cloudservice-r3rm.onrender.com", Description = "Render Default Server (HTTPS)" }
         };
 
         foreach (var server in originalServers)
