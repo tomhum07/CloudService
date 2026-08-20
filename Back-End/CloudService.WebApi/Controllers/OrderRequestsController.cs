@@ -1,8 +1,10 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using CloudService.Application.DTOs.Orders;
 using CloudService.Application.Interfaces;
+using CloudService.WebApi.Hubs;
 
 namespace CloudService.WebApi.Controllers
 {
@@ -13,12 +15,18 @@ namespace CloudService.WebApi.Controllers
         private readonly IOrderRequestService _orderService;
         private readonly IAuditLogService _auditLogService;
         private readonly IEmailService _emailService;
+        private readonly IHubContext<DataSyncHub> _hubContext;
 
-        public OrderRequestsController(IOrderRequestService orderService, IAuditLogService auditLogService, IEmailService emailService)
+        public OrderRequestsController(
+            IOrderRequestService orderService, 
+            IAuditLogService auditLogService, 
+            IEmailService emailService,
+            IHubContext<DataSyncHub> hubContext)
         {
             _orderService = orderService;
             _auditLogService = auditLogService;
             _emailService = emailService;
+            _hubContext = hubContext;
         }
 
         [HttpGet]
@@ -60,6 +68,8 @@ namespace CloudService.WebApi.Controllers
                 payload: $"{created.PlanName} ({created.BillingCycle}) - {created.Price:N0}đ"
             );
 
+            await _hubContext.Clients.All.SendAsync("DataChanged", "order", "create");
+
             return CreatedAtAction(nameof(GetOrderById), new { id = created.Id }, created);
         }
 
@@ -95,6 +105,8 @@ namespace CloudService.WebApi.Controllers
                     catch { }
                 });
             }
+
+            await _hubContext.Clients.All.SendAsync("DataChanged", "order", "update");
 
             return Ok(updated);
         }

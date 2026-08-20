@@ -2,9 +2,11 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using CloudService.Application.DTOs.Common;
 using CloudService.Application.DTOs.Services;
 using CloudService.Application.Interfaces;
+using CloudService.WebApi.Hubs;
 
 namespace CloudService.WebApi.Controllers
 {
@@ -14,11 +16,16 @@ namespace CloudService.WebApi.Controllers
     {
         private readonly IServicePlanService _servicePlanService;
         private readonly IPlanPriceService _planPriceService;
+        private readonly IHubContext<DataSyncHub> _hubContext;
 
-        public ServicePlansController(IServicePlanService servicePlanService, IPlanPriceService planPriceService)
+        public ServicePlansController(
+            IServicePlanService servicePlanService, 
+            IPlanPriceService planPriceService,
+            IHubContext<DataSyncHub> hubContext)
         {
             _servicePlanService = servicePlanService;
             _planPriceService = planPriceService;
+            _hubContext = hubContext;
         }
 
         [HttpGet]
@@ -47,6 +54,7 @@ namespace CloudService.WebApi.Controllers
         public async Task<ActionResult<ServicePlanDto>> Create([FromBody] CreateServicePlanRequest request)
         {
             var plan = await _servicePlanService.CreateAsync(request);
+            await _hubContext.Clients.All.SendAsync("DataChanged", "plan", "create");
             return CreatedAtAction(nameof(GetById), new { id = plan.Id }, plan);
         }
 
@@ -56,6 +64,7 @@ namespace CloudService.WebApi.Controllers
         {
             var plan = await _servicePlanService.UpdateAsync(id, request);
             if (plan == null) return NotFound();
+            await _hubContext.Clients.All.SendAsync("DataChanged", "plan", "update");
             return Ok(plan);
         }
 
@@ -65,6 +74,7 @@ namespace CloudService.WebApi.Controllers
         {
             var result = await _servicePlanService.DeleteAsync(id);
             if (!result) return NotFound();
+            await _hubContext.Clients.All.SendAsync("DataChanged", "plan", "delete");
             return NoContent();
         }
 
@@ -80,6 +90,7 @@ namespace CloudService.WebApi.Controllers
         public async Task<ActionResult<PlanPriceDto>> CreatePrice(int id, [FromBody] CreatePlanPriceRequest request)
         {
             var price = await _planPriceService.CreatePriceAsync(id, request);
+            await _hubContext.Clients.All.SendAsync("DataChanged", "price", "create");
             return CreatedAtAction(nameof(GetPrices), new { id = id }, price);
         }
 
@@ -89,6 +100,7 @@ namespace CloudService.WebApi.Controllers
         {
             var price = await _planPriceService.UpdatePriceAsync(id, priceId, request);
             if (price == null) return NotFound();
+            await _hubContext.Clients.All.SendAsync("DataChanged", "price", "update");
             return Ok(price);
         }
 
@@ -98,6 +110,7 @@ namespace CloudService.WebApi.Controllers
         {
             var result = await _planPriceService.DeletePriceAsync(id, priceId);
             if (!result) return NotFound();
+            await _hubContext.Clients.All.SendAsync("DataChanged", "price", "delete");
             return NoContent();
         }
     }

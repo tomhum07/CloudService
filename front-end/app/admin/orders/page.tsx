@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { apiFetch } from "@/utils/api";
+import { dataSyncService } from "@/utils/signalr";
 
 export default function AdminOrdersPage() {
   const [activeTab, setActiveTab] = useState<"orders" | "partners">("orders");
@@ -18,6 +19,15 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     fetchOrdersAndPartners();
+
+    // Lắng nghe SignalR để tự động cập nhật danh sách đơn hàng khi có đơn mới hoặc thanh toán thành công
+    const unsubscribe = dataSyncService.subscribe((entity) => {
+      if (entity === "order" || entity === "all") {
+        fetchOrdersAndPartners();
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const fetchOrdersAndPartners = async () => {

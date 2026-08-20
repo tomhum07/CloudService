@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { apiFetch } from "@/utils/api";
+import { dataSyncService } from "@/utils/signalr";
 
 const DOMAIN_PRICES = [
   { tld: ".vn", price: "450.000đ", renew: "350.000đ", popular: true },
@@ -102,6 +103,15 @@ export default function Home() {
     }
 
     fetchData();
+
+    // Lắng nghe SignalR để cập nhật tức thì khi Admin thêm/sửa/xóa gói hoặc danh mục
+    const unsubscribe = dataSyncService.subscribe((entity) => {
+      if (entity === "plan" || entity === "category" || entity === "price" || entity === "all") {
+        fetchData();
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handleDomainCheck = (e: React.FormEvent) => {

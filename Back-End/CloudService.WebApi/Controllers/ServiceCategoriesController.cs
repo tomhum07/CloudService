@@ -1,8 +1,10 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using CloudService.Application.DTOs.Services;
 using CloudService.Application.Interfaces;
+using CloudService.WebApi.Hubs;
 
 namespace CloudService.WebApi.Controllers
 {
@@ -11,10 +13,12 @@ namespace CloudService.WebApi.Controllers
     public class ServiceCategoriesController : ControllerBase
     {
         private readonly IServiceCategoryService _serviceCategoryService;
+        private readonly IHubContext<DataSyncHub> _hubContext;
 
-        public ServiceCategoriesController(IServiceCategoryService serviceCategoryService)
+        public ServiceCategoriesController(IServiceCategoryService serviceCategoryService, IHubContext<DataSyncHub> hubContext)
         {
             _serviceCategoryService = serviceCategoryService;
+            _hubContext = hubContext;
         }
 
         [HttpGet]
@@ -45,6 +49,7 @@ namespace CloudService.WebApi.Controllers
             }
 
             var category = await _serviceCategoryService.CreateAsync(request);
+            await _hubContext.Clients.All.SendAsync("DataChanged", "category", "create");
             return CreatedAtAction(nameof(GetById), new { id = category.Id }, category);
         }
 
@@ -62,6 +67,7 @@ namespace CloudService.WebApi.Controllers
             {
                 return NotFound();
             }
+            await _hubContext.Clients.All.SendAsync("DataChanged", "category", "update");
             return Ok(category);
         }
 
@@ -74,6 +80,7 @@ namespace CloudService.WebApi.Controllers
             {
                 return NotFound();
             }
+            await _hubContext.Clients.All.SendAsync("DataChanged", "category", "delete");
             return NoContent();
         }
     }

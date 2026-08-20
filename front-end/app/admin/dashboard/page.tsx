@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { apiFetch } from "@/utils/api";
+import { dataSyncService } from "@/utils/signalr";
 
 export default function AdminDashboard() {
   const [statsData, setStatsData] = useState<any>({
@@ -20,6 +21,13 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchDashboardData();
+
+    // Lắng nghe SignalR để tự động cập nhật số liệu và đơn hàng mới nhất trên Dashboard
+    const unsubscribe = dataSyncService.subscribe(() => {
+      fetchDashboardData();
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const fetchDashboardData = async () => {

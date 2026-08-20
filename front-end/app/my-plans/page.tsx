@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { apiFetch, getAccessToken, refreshAccessToken } from "@/utils/api";
+import { dataSyncService } from "@/utils/signalr";
 
 export default function MyPlansPage() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -12,6 +13,15 @@ export default function MyPlansPage() {
 
   useEffect(() => {
     loadMyOrders();
+
+    // Lắng nghe SignalR để cập nhật trạng thái đơn hàng tức thì khi được duyệt hoặc thanh toán
+    const unsubscribe = dataSyncService.subscribe((entity) => {
+      if (entity === "order" || entity === "all") {
+        loadMyOrders();
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const loadMyOrders = async () => {
