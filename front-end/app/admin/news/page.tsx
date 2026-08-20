@@ -1,7 +1,19 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
+import dynamic from "next/dynamic";
 import { apiFetch } from "@/utils/api";
 import { uploadToSupabaseStorage, DEFAULT_BUCKET } from "@/utils/supabase";
+
+// Import TinyMCE động để tương thích hoàn toàn với Next.js SSR
+const Editor = dynamic(() => import("@tinymce/tinymce-react").then((mod) => mod.Editor), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-80 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col items-center justify-center gap-2 text-slate-400 text-xs">
+      <span className="w-6 h-6 border-2 border-blue-600/30 border-t-blue-600 rounded-full animate-spin"></span>
+      <span>Đang tải trình soạn thảo TinyMCE...</span>
+    </div>
+  )
+});
 
 const PRESET_CATEGORIES = ["Khuyến Mãi", "Sự Kiện", "Hướng Dẫn", "Tin Tức"];
 
@@ -315,14 +327,14 @@ export default function AdminNewsPage() {
         )}
       </div>
 
-      {/* Modal Soạn Thảo & Chỉnh Sửa Bài Viết */}
+      {/* Modal Soạn Thảo & Chỉnh Sửa Bài Viết (TinyMCE Rich Editor) */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in overflow-y-auto">
-          <div className="w-full max-w-2xl bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl my-8">
-            <h3 className="text-lg font-bold text-slate-900 mb-1">
+          <div className="w-full max-w-4xl bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-2xl my-8 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-black text-slate-900 mb-1">
               {editingArticle ? "Chỉnh Sửa Bài Viết" : "Soạn Thảo Bài Viết Mới"}
             </h3>
-            <p className="text-xs text-slate-500 mb-4">Nhập đầy đủ tiêu đề, chọn ảnh tải lên Supabase và viết nội dung.</p>
+            <p className="text-xs text-slate-500 mb-6">Trình soạn thảo TinyMCE chuyên nghiệp hỗ trợ định dạng văn bản, chèn ảnh, bảng và video.</p>
 
             {formError && (
               <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium mb-4">
@@ -330,9 +342,9 @@ export default function AdminNewsPage() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="col-span-2">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="sm:col-span-2">
                   <label className="text-xs font-bold text-slate-700 block mb-1">Tiêu Đề Bài Viết *</label>
                   <input
                     type="text"
@@ -340,7 +352,7 @@ export default function AdminNewsPage() {
                     placeholder="VD: Hướng dẫn cấu hình Web Hosting LiteSpeed tối ưu..."
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+                    className="w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all font-medium"
                   />
                 </div>
                 <div>
@@ -348,7 +360,7 @@ export default function AdminNewsPage() {
                   <select
                     value={categoryName}
                     onChange={(e) => setCategoryName(e.target.value)}
-                    className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+                    className="w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all font-medium"
                   >
                     {PRESET_CATEGORIES.map(c => (
                       <option key={c} value={c}>{c}</option>
@@ -364,13 +376,13 @@ export default function AdminNewsPage() {
                   placeholder="Mô tả tóm tắt hiển thị ngoài danh sách tin tức..."
                   value={summary}
                   onChange={(e) => setSummary(e.target.value)}
-                  className="w-full p-3 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+                  className="w-full p-3 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all leading-relaxed"
                 ></textarea>
               </div>
 
               {/* Tải & Xem Ảnh Thumbnail Thu Nhỏ */}
-              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
                   {thumbnailUrl ? (
                     <div className="relative group cursor-pointer" onClick={() => setShowImageZoom(true)}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -391,7 +403,7 @@ export default function AdminNewsPage() {
 
                   <div>
                     <div className="text-xs font-bold text-slate-900">Ảnh Bìa Bài Viết (Supabase)</div>
-                    <div className="text-[11px] text-slate-500">
+                    <div className="text-[11px] text-slate-500 mt-0.5">
                       {thumbnailUrl ? (
                         <button
                           type="button"
@@ -418,10 +430,10 @@ export default function AdminNewsPage() {
                   />
                   <label
                     htmlFor="upload-image-input"
-                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5 ${
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5 ${
                       isUploading
                         ? "bg-slate-300 text-slate-500 cursor-not-allowed"
-                        : "bg-emerald-600 hover:bg-emerald-700 text-white"
+                        : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20"
                     }`}
                   >
                     {isUploading ? (
@@ -456,19 +468,38 @@ export default function AdminNewsPage() {
                 </div>
               )}
 
+              {/* TinyMCE Rich Text Editor */}
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Nội Dung Chi Tiết (Hỗ trợ văn bản & đoạn văn) *</label>
-                <textarea
-                  rows={7}
-                  required
-                  placeholder="Nhập nội dung bài viết chi tiết tại đây..."
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  className="w-full p-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white font-sans leading-relaxed"
-                ></textarea>
+                <label className="text-xs font-bold text-slate-700 block mb-1.5">
+                  Nội Dung Chi Tiết (TinyMCE Rich Text Editor) *
+                </label>
+                <div className="border border-slate-300 rounded-2xl overflow-hidden shadow-xs">
+                  <Editor
+                    apiKey="no-api-key"
+                    value={content}
+                    onEditorChange={(newContent) => setContent(newContent)}
+                    init={{
+                      height: 380,
+                      menubar: true,
+                      plugins: [
+                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                        'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                      ],
+                      toolbar:
+                        'undo redo | blocks fontfamily fontsize | ' +
+                        'bold italic underline forecolor backcolor | alignleft aligncenter ' +
+                        'alignright alignjustify | bullist numlist outdent indent | ' +
+                        'link image media table | removeformat code help',
+                      content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #1e293b; }',
+                      branding: false,
+                      promotion: false
+                    }}
+                  />
+                </div>
               </div>
 
-              <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
+              <div className="flex items-center gap-2 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
                 <input
                   type="checkbox"
                   id="isActive"
