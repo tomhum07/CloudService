@@ -3,9 +3,9 @@
  * Cấu hình bảo mật an toàn qua Biến Môi Trường (Environment Variables) .env.local
  */
 
-export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://fdfdtrcwyfgtygtdqfcf.supabase.co";
+export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 export const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-export const DEFAULT_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_BUCKET || "news-images";
+export const DEFAULT_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_BUCKET || "CLOUDSERVICCl_img";
 
 export interface UploadResult {
   url: string;
