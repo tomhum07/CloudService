@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { apiFetch } from "@/utils/api";
+import { dataSyncService } from "@/utils/signalr";
 
 export default function PricingPage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -13,6 +14,15 @@ export default function PricingPage() {
 
   useEffect(() => {
     fetchData();
+
+    // Lắng nghe SignalR để cập nhật bảng giá, gói cước, danh mục tức thì
+    const unsubscribe = dataSyncService.subscribe((entity) => {
+      if (entity === "plan" || entity === "category" || entity === "price" || entity === "promotion" || entity === "all") {
+        fetchData();
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const fetchData = async () => {

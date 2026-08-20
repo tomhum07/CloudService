@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { apiFetch } from "@/utils/api";
+import { dataSyncService } from "@/utils/signalr";
 
 export default function AdminOrdersPage() {
   const [activeTab, setActiveTab] = useState<"orders" | "partners">("orders");
@@ -18,10 +19,19 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     fetchOrdersAndPartners();
+
+    // Lắng nghe SignalR để tự động cập nhật danh sách đơn hàng khi có đơn mới hoặc thanh toán thành công
+    const unsubscribe = dataSyncService.subscribe((entity) => {
+      if (entity === "order" || entity === "affiliate" || entity === "all") {
+        fetchOrdersAndPartners(true);
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const fetchOrdersAndPartners = async () => {
-    setLoading(true);
+  const fetchOrdersAndPartners = async (isBackground = false) => {
+    if (!isBackground) setLoading(true);
     try {
       // Fetch Orders
       const orderRes = await apiFetch("/api/order-requests/all");
@@ -156,19 +166,18 @@ export default function AdminOrdersPage() {
     <div className="space-y-6">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white py-4 px-5 rounded-2xl border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900">Quản Lý Đơn Hàng & Đối Tác CTV</h1>
-          <p className="text-xs text-slate-500 mt-1">Dữ liệu đơn hàng thực tế đồng bộ trực tiếp từ cơ sở dữ liệu</p>
+          <h1 className="text-lg sm:text-xl font-black text-slate-900">Quản Lý Đơn Hàng & Đối Tác CTV</h1>
+          <p className="text-xs text-slate-500 mt-0.5">Dữ liệu đơn hàng thực tế đồng bộ trực tiếp từ cơ sở dữ liệu</p>
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={fetchOrdersAndPartners}
-            disabled={loading}
-            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 rounded-xl transition-colors"
-          >
-            🔄 {loading ? "Đang tải..." : "Làm mới"}
-          </button>
+          onClick={() => fetchOrdersAndPartners(false)}
+          className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold shadow-xs flex items-center gap-1.5 transition-colors"
+        >
+          <span className="text-sm">🔄</span> Làm Mới
+        </button>
           <button
             onClick={handleExportExcel}
             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-xs font-bold text-white rounded-xl transition-colors flex items-center gap-2 shadow-sm shadow-emerald-500/20"
@@ -241,8 +250,8 @@ export default function AdminOrdersPage() {
                         {typeof ord.amount === "number" ? `${ord.amount.toLocaleString("vi-VN")}đ` : ord.amount}
                       </td>
                       <td className="py-3.5 px-4 text-slate-500">{ord.date}</td>
-                      <td className="py-3.5 px-4">
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold whitespace-nowrap ${
                           ord.status === "Hoàn tất"
                             ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                             : ord.status === "Đã hủy"
@@ -328,8 +337,8 @@ export default function AdminOrdersPage() {
                       <td className="py-3.5 px-4 text-blue-600">{part.channel}</td>
                       <td className="py-3.5 px-4 text-slate-700 font-mono text-[11px]">{part.bank}</td>
                       <td className="py-3.5 px-4 text-slate-500">{part.date}</td>
-                      <td className="py-3.5 px-4">
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold whitespace-nowrap ${
                           part.status === "Đã duyệt"
                             ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                             : part.status === "Đã từ chối"

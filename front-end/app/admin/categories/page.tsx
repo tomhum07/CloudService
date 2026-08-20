@@ -137,10 +137,10 @@ export default function CategoriesPage() {
     <div className="space-y-6">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white py-4 px-5 rounded-2xl border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900">Quản Lý Danh Mục Dịch Vụ</h1>
-          <p className="text-xs text-slate-500 mt-1">Phân loại các nhóm sản phẩm (Cloud VPS, Hosting, Tên miền, Email, SSL, Firewall...)</p>
+          <h1 className="text-lg sm:text-xl font-black text-slate-900">Quản Lý Danh Mục Dịch Vụ</h1>
+          <p className="text-xs text-slate-500 mt-0.5">Phân loại các nhóm sản phẩm (Cloud VPS, Hosting, Tên miền, Email, SSL, Firewall...)</p>
         </div>
         <button 
           onClick={() => handleOpenFormModal()}
@@ -193,18 +193,18 @@ export default function CategoriesPage() {
                     <td className="py-3.5 px-4 text-slate-600 max-w-xs truncate" title={category.description}>
                       {category.description || "-"}
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       {category.isActive ? (
-                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold whitespace-nowrap">
                           Đang hiện
                         </span>
                       ) : (
-                        <span className="px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold whitespace-nowrap">
                           Đang ẩn
                         </span>
                       )}
                     </td>
-                    <td className="py-3.5 px-4 text-right space-x-1">
+                    <td className="py-3.5 px-4 text-right space-x-1 whitespace-nowrap">
                       <button 
                         onClick={() => handleOpenFormModal(category)}
                         className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-[11px] transition-colors"

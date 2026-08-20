@@ -11,5 +11,6 @@ namespace CloudService.Application.Interfaces
         Task<ServicePlanDto> CreateAsync(CreateServicePlanRequest request);
         Task<ServicePlanDto?> UpdateAsync(int id, UpdateServicePlanRequest request);
         Task<bool> DeleteAsync(int id);
+        Task<ServicePlanDto?> RegenerateQrCodeAsync(int id);
     }
 }

@@ -130,7 +130,6 @@ namespace CloudService.Infrastructure.Data.Configurations
             builder.HasKey(a => a.Id);
             builder.Property(a => a.FullName).HasMaxLength(100).IsRequired();
             builder.Property(a => a.Email).HasMaxLength(100).IsRequired();
-            builder.HasIndex(a => a.Email).IsUnique();
             builder.Property(a => a.Phone).HasMaxLength(20).IsRequired();
             builder.Property(a => a.WebsiteUrl).HasMaxLength(255);
             builder.Property(a => a.Motivation).HasMaxLength(2000);

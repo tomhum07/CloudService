@@ -3,6 +3,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { apiFetch, getAccessToken } from "@/utils/api";
+import { dataSyncService } from "@/utils/signalr";
 
 const BILLING_CYCLES = [
   { id: "Monthly", label: "1 Tháng", months: 1, discount: 0 },
@@ -120,6 +121,15 @@ function OrderFormContent() {
       }
     }
     fetchPlan();
+
+    // Lắng nghe SignalR để cập nhật gói cước tức thì nếu Admin sửa gói khi đang xem
+    const unsubscribe = dataSyncService.subscribe((entity) => {
+      if (entity === "plan" || entity === "price" || entity === "all") {
+        fetchPlan();
+      }
+    });
+
+    return () => unsubscribe();
   }, [planIdParam]);
 
   // 3. Polling tự động kiểm tra trạng thái thanh toán & Bộ đếm 5 phút tự động hủy giao dịch
