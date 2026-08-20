@@ -475,7 +475,7 @@ export default function AdminNewsPage() {
                 </label>
                 <div className="border border-slate-300 rounded-2xl overflow-hidden shadow-xs">
                   <Editor
-                    apiKey="no-api-key"
+                    apiKey={process.env.NEXT_PUBLIC_TINYMCE_API_KEY || ""}
                     value={content}
                     onEditorChange={(newContent) => setContent(newContent)}
                     init={{
