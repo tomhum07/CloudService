@@ -68,7 +68,21 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowNextJS", policy =>
     {
-        policy.WithOrigins("http://localhost:3000", "https://cloudservice-r3rm.onrender.com", "http://cloudservice-r3rm.onrender.com") // URL của Next.js và Render
+        policy.WithOrigins(
+                "http://localhost:3000",
+                "https://localhost:3000",
+                "https://cloudservice-r3rm.onrender.com",
+                "http://cloudservice-r3rm.onrender.com",
+                "https://tomhum07.me",
+                "https://www.tomhum07.me",
+                "https://api.tomhum07.me"
+              )
+              .SetIsOriginAllowed(origin => 
+                  origin.EndsWith(".vercel.app") || 
+                  origin.EndsWith("tomhum07.me") || 
+                  origin.StartsWith("http://localhost:") || 
+                  origin.StartsWith("https://localhost:")
+              )
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -88,7 +102,8 @@ builder.Services.AddOpenApi(options =>
 
         document.Servers = new System.Collections.Generic.List<Microsoft.OpenApi.OpenApiServer>
         {
-            new Microsoft.OpenApi.OpenApiServer { Url = "https://cloudservice-r3rm.onrender.com", Description = "Production Server" }
+            new Microsoft.OpenApi.OpenApiServer { Url = "https://api.tomhum07.me", Description = "Production Custom Domain (HTTPS)" },
+            new Microsoft.OpenApi.OpenApiServer { Url = "https://cloudservice-r3rm.onrender.com", Description = "Render Default Server (HTTPS)" }
         };
 
         foreach (var server in originalServers)
