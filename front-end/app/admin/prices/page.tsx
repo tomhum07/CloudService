@@ -288,10 +288,10 @@ export default function PricesPage() {
     <div className="space-y-6">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white py-4 px-5 rounded-2xl border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900">Quản Lý Bảng Giá & Khuyến Mãi</h1>
-          <p className="text-xs text-slate-500 mt-1">Cấu hình giá cước theo từng chu kỳ thanh toán và gắn chương trình ưu đãi giảm giá</p>
+          <h1 className="text-lg sm:text-xl font-black text-slate-900">Quản Lý Bảng Giá & Khuyến Mãi</h1>
+          <p className="text-xs text-slate-500 mt-0.5">Cấu hình giá cước theo từng chu kỳ thanh toán và gắn chương trình ưu đãi giảm giá</p>
         </div>
         <div className="flex items-center gap-3">
           <button 

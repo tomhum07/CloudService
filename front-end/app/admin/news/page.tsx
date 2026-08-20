@@ -174,10 +174,10 @@ export default function AdminNewsPage() {
     <div className="space-y-6">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white py-4 px-5 rounded-2xl border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900">Quản Lý Tin Tức & Blog Kiến Thức</h1>
-          <p className="text-xs text-slate-500 mt-1">Dữ liệu bài viết thực tế được lưu trữ trực tiếp trong Database</p>
+          <h1 className="text-lg sm:text-xl font-black text-slate-900">Quản Lý Tin Tức & Blog Kiến Thức</h1>
+          <p className="text-xs text-slate-500 mt-0.5">Dữ liệu bài viết thực tế được lưu trữ trực tiếp trong Database</p>
         </div>
         <button
           onClick={handleOpenCreate}
