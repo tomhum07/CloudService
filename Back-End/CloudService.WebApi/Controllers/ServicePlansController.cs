@@ -78,6 +78,16 @@ namespace CloudService.WebApi.Controllers
             return NoContent();
         }
 
+        [HttpPost("{id}/qr-code/regenerate")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ServicePlanDto>> RegenerateQrCode(int id)
+        {
+            var plan = await _servicePlanService.RegenerateQrCodeAsync(id);
+            if (plan == null) return NotFound();
+            await _hubContext.Clients.All.SendAsync("DataChanged", "plan", "update");
+            return Ok(plan);
+        }
+
         [HttpGet("{id}/prices")]
         public async Task<ActionResult<IEnumerable<PlanPriceDto>>> GetPrices(int id, [FromQuery] bool includeInactive = false)
         {
