@@ -20,7 +20,9 @@ namespace CloudService.UnitTests.Application.Services
         {
             public Task<bool> SendEmailAsync(string toEmail, string subject, string htmlBody) => Task.FromResult(true);
             public Task<bool> SendOtpResetPasswordAsync(string toEmail, string fullName, string otpCode) => Task.FromResult(true);
-            public Task<bool> SendOrderNotificationAsync(string toEmail, string customerName, string orderCode, string planName, decimal price) => Task.FromResult(true);
+            public Task<bool> SendOrderSuccessNotificationAsync(string toEmail, string customerName, string orderCode, string planName, decimal price) => Task.FromResult(true);
+            public Task<bool> SendAffiliateApprovalNotificationAsync(string toEmail, string fullName) => Task.FromResult(true);
+            public Task<bool> SendAffiliateRejectionNotificationAsync(string toEmail, string fullName) => Task.FromResult(true);
         }
 
         private ApplicationDbContext GetInMemoryDbContext()

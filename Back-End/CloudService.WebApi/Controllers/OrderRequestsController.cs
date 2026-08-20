@@ -1,8 +1,10 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using CloudService.Application.DTOs.Orders;
 using CloudService.Application.Interfaces;
+using CloudService.WebApi.Hubs;
 
 namespace CloudService.WebApi.Controllers
 {
@@ -13,12 +15,18 @@ namespace CloudService.WebApi.Controllers
         private readonly IOrderRequestService _orderService;
         private readonly IAuditLogService _auditLogService;
         private readonly IEmailService _emailService;
+        private readonly IHubContext<DataSyncHub> _hubContext;
 
-        public OrderRequestsController(IOrderRequestService orderService, IAuditLogService auditLogService, IEmailService emailService)
+        public OrderRequestsController(
+            IOrderRequestService orderService, 
+            IAuditLogService auditLogService, 
+            IEmailService emailService,
+            IHubContext<DataSyncHub> hubContext)
         {
             _orderService = orderService;
             _auditLogService = auditLogService;
             _emailService = emailService;
+            _hubContext = hubContext;
         }
 
         [HttpGet]
@@ -60,21 +68,7 @@ namespace CloudService.WebApi.Controllers
                 payload: $"{created.PlanName} ({created.BillingCycle}) - {created.Price:N0}đ"
             );
 
-            // Gửi email xác nhận tự động qua Resend (background task)
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await _emailService.SendOrderNotificationAsync(
-                        toEmail: created.CustomerEmail,
-                        customerName: created.CustomerName,
-                        orderCode: created.OrderCode,
-                        planName: created.PlanName,
-                        price: created.Price
-                    );
-                }
-                catch { }
-            });
+            await _hubContext.Clients.All.SendAsync("DataChanged", "order", "create");
 
             return CreatedAtAction(nameof(GetOrderById), new { id = created.Id }, created);
         }
@@ -86,12 +80,33 @@ namespace CloudService.WebApi.Controllers
             var updated = await _orderService.UpdateStatusAsync(id, dto);
             if (updated == null) return NotFound(new { message = "Không tìm thấy đơn đặt hàng." });
 
-            var user = User.Identity?.Name ?? "Admin";
+            var user = User.Identity?.Name ?? "System";
             await _auditLogService.LogAsync(
                 username: user,
                 action: $"Cập nhật trạng thái đơn {updated.OrderCode} sang '{updated.StatusName}'",
                 payload: $"Status={dto.Status}"
             );
+
+            // Tự động gửi email xác nhận nếu trạng thái chuyển sang 2 (Hoàn tất / Đã thanh toán)
+            if (dto.Status == 2 && !string.IsNullOrWhiteSpace(updated.CustomerEmail))
+            {
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await _emailService.SendOrderSuccessNotificationAsync(
+                            toEmail: updated.CustomerEmail,
+                            customerName: updated.CustomerName,
+                            orderCode: updated.OrderCode,
+                            planName: updated.PlanName,
+                            price: updated.Price
+                        );
+                    }
+                    catch { }
+                });
+            }
+
+            await _hubContext.Clients.All.SendAsync("DataChanged", "order", "update");
 
             return Ok(updated);
         }

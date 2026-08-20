@@ -182,10 +182,10 @@ namespace CloudService.Infrastructure.Services
             _context.ServicePlans.Add(plan);
             await _context.SaveChangesAsync();
 
-            // Generate QR Code
+            // Generate QR Code dẫn trực tiếp tới trang đặt hàng /order?planId={plan.Id}
             string frontendUrl = _configuration["FrontendUrl"] ?? "https://cloudservice-r3rm.onrender.com";
-            string link = $"{frontendUrl}/plans/{plan.Id}";
-            plan.QrCodeUrl = $"https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl={Uri.EscapeDataString(link)}";
+            string link = $"{frontendUrl.TrimEnd('/')}/order?planId={plan.Id}";
+            plan.QrCodeUrl = $"https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={Uri.EscapeDataString(link)}";
             
             await _context.SaveChangesAsync();
 
@@ -263,6 +263,51 @@ namespace CloudService.Infrastructure.Services
 
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<ServicePlanDto?> RegenerateQrCodeAsync(int id)
+        {
+            var plan = await _context.ServicePlans
+                .IgnoreQueryFilters()
+                .Include(p => p.Category)
+                .Include(p => p.Prices)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (plan == null) return null;
+
+            string frontendUrl = _configuration["FrontendUrl"] ?? "https://cloudservice-r3rm.onrender.com";
+            string link = $"{frontendUrl.TrimEnd('/')}/order?planId={plan.Id}";
+            plan.QrCodeUrl = $"https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={Uri.EscapeDataString(link)}";
+            plan.LastModifiedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return new ServicePlanDto
+            {
+                Id = plan.Id,
+                CategoryId = plan.CategoryId,
+                CategoryName = plan.Category?.Name,
+                Name = plan.Name,
+                Description = plan.Description,
+                Cpu = plan.Cpu,
+                Ram = plan.Ram,
+                Storage = plan.Storage,
+                Bandwidth = plan.Bandwidth,
+                QrCodeUrl = plan.QrCodeUrl,
+                IsActive = plan.IsActive,
+                CreatedAt = plan.CreatedAt,
+                Prices = plan.Prices.Where(p => p.IsActive).Select(p => new PlanPriceDto
+                {
+                    Id = p.Id,
+                    PlanId = p.PlanId,
+                    BillingCycle = p.BillingCycle,
+                    Price = p.Price,
+                    PromotionId = p.PromotionId,
+                    PromotionName = p.Promotion != null ? p.Promotion.Name : null,
+                    DiscountPercentage = p.Promotion != null ? (decimal?)p.Promotion.DiscountPercentage : null,
+                    IsActive = p.IsActive
+                }).ToList()
+            };
         }
     }
 }

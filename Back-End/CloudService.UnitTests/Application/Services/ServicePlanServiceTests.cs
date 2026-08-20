@@ -69,8 +69,8 @@ namespace CloudService.UnitTests.Application.Services
             Assert.Equal(request.Name, result.Name);
             Assert.True(result.IsActive);
             Assert.NotNull(result.QrCodeUrl);
-            Assert.Contains("chart.googleapis.com", result.QrCodeUrl);
-            Assert.Contains(Uri.EscapeDataString($"https://test.com/plans/{result.Id}"), result.QrCodeUrl);
+            Assert.Contains("api.qrserver.com", result.QrCodeUrl);
+            Assert.Contains(Uri.EscapeDataString($"https://test.com/order?planId={result.Id}"), result.QrCodeUrl);
             
             var planInDb = await _context.ServicePlans.FindAsync(result.Id);
             Assert.NotNull(planInDb);

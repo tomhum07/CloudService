@@ -130,7 +130,6 @@ namespace CloudService.Infrastructure.Data.Configurations
             builder.HasKey(a => a.Id);
             builder.Property(a => a.FullName).HasMaxLength(100).IsRequired();
             builder.Property(a => a.Email).HasMaxLength(100).IsRequired();
-            builder.HasIndex(a => a.Email).IsUnique();
             builder.Property(a => a.Phone).HasMaxLength(20).IsRequired();
             builder.Property(a => a.WebsiteUrl).HasMaxLength(255);
             builder.Property(a => a.Motivation).HasMaxLength(2000);
@@ -164,6 +163,7 @@ namespace CloudService.Infrastructure.Data.Configurations
             builder.Property(n => n.Slug).HasMaxLength(300).IsRequired();
             builder.HasIndex(n => n.Slug).IsUnique();
             builder.Property(n => n.Summary).HasMaxLength(1000);
+            builder.Property(n => n.ThumbnailUrl).HasMaxLength(1000);
             builder.Property(n => n.Content).IsRequired();
 
             builder.HasOne(n => n.Author)
