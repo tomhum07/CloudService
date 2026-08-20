@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://localhost:7108"; // Địa chỉ HTTPS của Backend (Khớp cổng Visual Studio)
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.tomhum07.me";
 
 let inMemoryToken = "";
 let refreshPromise: Promise<boolean> | null = null;

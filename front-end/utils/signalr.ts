@@ -1,6 +1,6 @@
-﻿import * as signalR from "@microsoft/signalr";
+import * as signalR from "@microsoft/signalr";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://localhost:7108";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.tomhum07.me";
 
 type DataSyncCallback = (entity: string, action: string) => void;
 

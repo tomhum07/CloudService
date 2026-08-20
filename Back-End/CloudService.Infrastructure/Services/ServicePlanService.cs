@@ -183,7 +183,7 @@ namespace CloudService.Infrastructure.Services
             await _context.SaveChangesAsync();
 
             // Generate QR Code dẫn trực tiếp tới trang đặt hàng /order?planId={plan.Id}
-            string frontendUrl = _configuration["FrontendUrl"] ?? "https://cloudservice-r3rm.onrender.com";
+            string frontendUrl = _configuration["FrontendUrl"] ?? "https://tomhum07.me";
             string link = $"{frontendUrl.TrimEnd('/')}/order?planId={plan.Id}";
             plan.QrCodeUrl = $"https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={Uri.EscapeDataString(link)}";
             
@@ -275,7 +275,7 @@ namespace CloudService.Infrastructure.Services
 
             if (plan == null) return null;
 
-            string frontendUrl = _configuration["FrontendUrl"] ?? "https://cloudservice-r3rm.onrender.com";
+            string frontendUrl = _configuration["FrontendUrl"] ?? "https://tomhum07.me";
             string link = $"{frontendUrl.TrimEnd('/')}/order?planId={plan.Id}";
             plan.QrCodeUrl = $"https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={Uri.EscapeDataString(link)}";
             plan.LastModifiedAt = DateTime.UtcNow;
