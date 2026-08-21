@@ -135,10 +135,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   navLinks.push({ label: "Đổi Mật Khẩu", href: "/admin/change-password", icon: "🔑" });
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 flex overflow-hidden selection:bg-blue-600 selection:text-white">
+    <div className="h-screen w-screen bg-slate-50 text-slate-800 flex overflow-hidden selection:bg-blue-600 selection:text-white">
       
       {/* Desktop Sidebar Navigation */}
-      <aside className="w-64 border-r border-slate-200 bg-white flex-col hidden md:flex z-20 shadow-xs shrink-0">
+      <aside className="w-64 border-r border-slate-200 bg-white flex-col hidden md:flex z-20 shadow-xs shrink-0 h-full overflow-hidden">
         <div className="p-5 border-b border-slate-100 flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center font-black text-white shadow-md shadow-blue-500/20">
             C
@@ -270,10 +270,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-slate-50">
         
         {/* Top Navbar */}
-        <header className="h-14 border-b border-slate-200 bg-white flex items-center justify-between px-4 sm:px-6 z-10 shadow-xs">
+        <header className="h-14 border-b border-slate-200 bg-white flex items-center justify-between px-4 sm:px-6 z-10 shadow-xs shrink-0">
           <div className="flex items-center gap-3">
             {/* Hamburger Button for Mobile */}
             <button
@@ -309,8 +309,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </header>
 
-        {/* Dynamic Admin Body */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-5 md:p-6">
+        {/* Dynamic Admin Body - Chỉ nội dung này được cuộn, Sidebar và Topbar cố định */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-5 md:p-6 overscroll-contain">
           {children}
         </main>
       </div>
