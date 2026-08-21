@@ -29,9 +29,21 @@ export default function NewsDetailPage() {
     if (id) fetchArticle();
   }, [id]);
 
-  // Helper parser for Markdown images: ![alt](url)
+  // Helper parser: Hỗ trợ hiển thị cả HTML Rich Text từ TinyMCE lẫn định dạng văn bản / Markdown
   const renderFormattedContent = (content: string) => {
     if (!content) return null;
+
+    // Nếu nội dung chứa các thẻ HTML từ TinyMCE (ví dụ: <p>, <h1>, <div>, <strong>, <table>, <img>)
+    const isHtml = /<[a-z][\s\S]*>/i.test(content);
+
+    if (isHtml) {
+      return (
+        <div
+          className="prose prose-slate max-w-none text-slate-800 leading-relaxed space-y-4 [&>p]:leading-relaxed [&>h1]:text-2xl [&>h1]:font-bold [&>h2]:text-xl [&>h2]:font-bold [&>h3]:text-lg [&>h3]:font-bold [&>ul]:list-disc [&>ul]:pl-5 [&>ol]:list-decimal [&>ol]:pl-5 [&>table]:w-full [&>table]:border-collapse [&>table_td]:border [&>table_td]:p-2 [&>table_th]:border [&>table_th]:p-2 [&>img]:rounded-2xl [&>img]:shadow-md [&>img]:mx-auto"
+          dangerouslySetInnerHTML={{ __html: content }}
+        />
+      );
+    }
     
     // Split by image markdown pattern ![alt](url)
     const parts = content.split(/(!\[.*?\]\(.*?\))/g);

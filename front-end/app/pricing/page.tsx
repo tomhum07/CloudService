@@ -11,6 +11,7 @@ export default function PricingPage() {
   const [selectedCat, setSelectedCat] = useState<string | number | "all">("all");
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [loading, setLoading] = useState(true);
+  const [selectedQrPlan, setSelectedQrPlan] = useState<any | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -174,17 +175,14 @@ export default function PricingPage() {
                         </span>
                         <h3 className="text-xl font-bold text-slate-900 mt-2">{plan.name}</h3>
                       </div>
-                      {plan.qrCodeUrl && (
-                        <img src={plan.qrCodeUrl} alt="QR Code" className="w-12 h-12 border border-slate-200 rounded-lg p-0.5 bg-white shadow-xs" />
-                      )}
                     </div>
 
-                    <p className="text-xs text-slate-500 mb-6 leading-relaxed">
+                    <p className="text-xs text-slate-500 mb-5 leading-relaxed">
                       {plan.description || "Máy chủ ảo đám mây hiệu năng cao, sao lưu dữ liệu an toàn."}
                     </p>
 
                     {/* Price */}
-                    <div className="mb-6 pb-6 border-b border-slate-100">
+                    <div className="mb-5 pb-5 border-b border-slate-100">
                       <div className="flex items-baseline gap-1">
                         <span className="text-3xl font-black text-slate-900">
                           {currentPrice > 0
@@ -201,6 +199,35 @@ export default function PricingPage() {
                         </div>
                       )}
                     </div>
+
+                    {/* Prominent Large QR Code Section */}
+                    {plan.qrCodeUrl && (
+                      <div
+                        onClick={() => setSelectedQrPlan(plan)}
+                        className="p-3 bg-slate-50 hover:bg-blue-50/60 border border-slate-200 hover:border-blue-300 rounded-2xl mb-6 flex items-center gap-3.5 cursor-pointer transition-all duration-200 group/qr shadow-xs"
+                        title="Bấm để phóng to mã QR quét trên điện thoại"
+                      >
+                        <div className="relative shrink-0 bg-white p-1.5 rounded-xl border border-slate-200 shadow-xs">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={plan.qrCodeUrl}
+                            alt={`QR Code ${plan.name}`}
+                            className="w-16 h-16 object-contain rounded-lg group-hover/qr:scale-105 transition-transform"
+                          />
+                          <div className="absolute inset-0 bg-blue-600/10 rounded-xl opacity-0 group-hover/qr:opacity-100 transition-opacity flex items-center justify-center">
+                            <span className="text-xs">🔍</span>
+                          </div>
+                        </div>
+                        <div className="text-left flex-1 min-w-0">
+                          <div className="flex items-center gap-1 text-[11px] font-bold text-slate-900 group-hover/qr:text-blue-600 transition-colors">
+                            <span>📱 Quét QR Thanh Toán</span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5 leading-snug">
+                            Chạm để phóng to & quét đặt mua nhanh
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Hardware Specs */}
                     <div className="space-y-3 mb-8">
@@ -239,6 +266,62 @@ export default function PricingPage() {
           </div>
         )}
       </div>
+
+      {/* MODAL PHÓNG TO MÃ QR KHỔ LỚN TRÊN TRANG BẢNG GIÁ */}
+      {selectedQrPlan && (
+        <div
+          onClick={() => setSelectedQrPlan(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 shadow-2xl text-center animate-in zoom-in-95 duration-200"
+          >
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                {selectedQrPlan.category?.name || "Gói Dịch Vụ"}
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedQrPlan(null)}
+                className="w-8 h-8 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <h3 className="text-lg font-black text-slate-900 mb-1">{selectedQrPlan.name}</h3>
+            <p className="text-xs text-slate-500 mb-5">
+              Quét mã bằng Camera điện thoại hoặc Zalo để chuyển thẳng đến trang đăng ký & thanh toán
+            </p>
+
+            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 mb-5 inline-block shadow-inner">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={selectedQrPlan.qrCodeUrl}
+                alt={`QR Code ${selectedQrPlan.name}`}
+                className="w-60 h-60 mx-auto rounded-xl shadow-xs bg-white p-3 border border-slate-100"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Link
+                href={`/order?planId=${selectedQrPlan.id}&cycle=${billingCycle}`}
+                className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-blue-500/20 transition-all"
+              >
+                <span>🔗 Mở Trang Đặt Mua Ngay</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setSelectedQrPlan(null)}
+                className="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
