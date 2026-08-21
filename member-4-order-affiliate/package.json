@@ -1,0 +1,11 @@
+{
+  "name": "order-affiliate-manager",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Quản lý đơn đăng ký dịch vụ và đối tác Affiliate",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node tests/api.test.js"
+  },
+  "engines": { "node": ">=18" }
+}
