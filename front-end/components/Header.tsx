@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { getAccessToken, refreshAccessToken, apiFetch, setAccessToken } from "@/utils/api";
+import { dataSyncService } from "@/utils/signalr";
 
 interface UserProfile {
   username: string;
@@ -11,190 +12,29 @@ interface UserProfile {
   role: string;
 }
 
-// Cấu trúc danh mục Dịch Vụ gom chung vào 1 tab Mega Menu
-const SERVICE_CATEGORIES = [
-  {
-    id: "vps",
-    title: "Cloud VPS",
-    badge: "Bán chạy",
-    icon: "⚡",
-    tagline: "Máy chủ ảo đám mây hiệu năng cao KVM, CPU AMD EPYC / Intel Xeon, ổ cứng NVMe Gen4",
-    items: [
-      {
-        slug: "vps-nvme",
-        title: "Cloud VPS NVMe Pro",
-        desc: "2 vCPUs - 4 GB RAM - 60 GB NVMe - AMD EPYC",
-        price: "150.000đ/th",
-        highlight: "Tối ưu database & app"
-      },
-      {
-        slug: "vps-nvme",
-        title: "Cloud VPS NVMe Enterprise",
-        desc: "4 vCPUs - 8 GB RAM - 120 GB NVMe - AMD EPYC",
-        price: "320.000đ/th",
-        highlight: "Chịu tải lớn"
-      },
-      {
-        slug: "vps-nvme",
-        title: "Cloud VPS NVMe Extreme",
-        desc: "8 vCPUs - 16 GB RAM - 200 GB NVMe Gen4",
-        price: "650.000đ/th",
-        highlight: "Cấu hình cực khủng"
-      },
-      {
-        slug: "vps-ssd",
-        title: "Cloud VPS SSD Tiết Kiệm",
-        desc: "1 vCPU - 2 GB RAM - 40 GB SSD Enterprise",
-        price: "90.000đ/th",
-        highlight: "Cân bằng chi phí"
-      }
-    ]
-  },
-  {
-    id: "hosting",
-    title: "Web Hosting",
-    badge: "Tối ưu WP",
-    icon: "🌐",
-    tagline: "Lưu trữ web tốc độ cao sử dụng LiteSpeed Web Server, LSCache và bảo mật Imunify360 AI",
-    items: [
-      {
-        slug: "maxspeed-hosting",
-        title: "MaxSpeed Hosting NVMe",
-        desc: "LiteSpeed Enterprise, tối ưu điểm PageSpeed 95+",
-        price: "45.000đ/th",
-        highlight: "Tải nhanh < 0.5s"
-      },
-      {
-        slug: "business-hosting",
-        title: "Business Hosting Doanh Nghiệp",
-        desc: "CPU AMD EPYC riêng biệt, backup 2 lần/ngày",
-        price: "120.000đ/th",
-        highlight: "Tài nguyên độc lập"
-      },
-      {
-        slug: "wordpress-hosting",
-        title: "WordPress Hosting Chuyên Sâu",
-        desc: "Tích hợp WP Toolkit, tự động vá lỗi bảo mật",
-        price: "39.000đ/th",
-        highlight: "1-Click cài đặt WP"
-      },
-      {
-        slug: "seo-hosting",
-        title: "SEO Hosting Multi IP",
-        desc: "Nhiều dải IP Class C khác nhau xây dựng web vệ tinh",
-        price: "150.000đ/th",
-        highlight: "Tối ưu hóa SEO"
-      }
-    ]
-  },
-  {
-    id: "domain",
-    title: "Tên Miền (Domain)",
-    badge: "VNNIC",
-    icon: "🏷️",
-    tagline: "Đăng ký tên miền Việt Nam (.vn) & Quốc tế (.com, .net), kích hoạt DNS Anycast tức thì",
-    items: [
-      {
-        slug: "domain-register",
-        title: "Đăng Ký Tên Miền Quốc Tế (.com, .net)",
-        desc: "Quản lý DNS Anycast toàn cầu, miễn phí Whois Privacy",
-        price: "249.000đ/năm",
-        highlight: "Kích hoạt tức thì"
-      },
-      {
-        slug: "domain-vn",
-        title: "Tên Miền Quốc Gia .VN",
-        desc: "Khẳng định thương hiệu, được pháp luật Việt Nam bảo hộ",
-        price: "450.000đ/năm",
-        highlight: "Ưu tiên SEO VN"
-      },
-      {
-        slug: "domain-transfer",
-        title: "Chuyển Tên Miền Về CloudService",
-        desc: "Không gián đoạn website, tặng thêm 1 năm duy trì",
-        price: "Miễn phí thủ tục",
-        highlight: "Giữ nguyên DNS"
-      }
-    ]
-  },
-  {
-    id: "email",
-    title: "Email Doanh Nghiệp",
-    badge: "Inbox 99.9%",
-    icon: "✉️",
-    tagline: "Hệ thống email theo tên miền riêng (@tenmien.vn), bảo mật chống spam và virus kép",
-    items: [
-      {
-        slug: "email-doanh-nghiep",
-        title: "Email Doanh Nghiệp Pro",
-        desc: "Cấu hình SPF, DKIM, DMARC, tỷ lệ vào Inbox 99.9%",
-        price: "99.000đ/th",
-        highlight: "Tên miền riêng"
-      },
-      {
-        slug: "email-doanh-nghiep",
-        title: "Email Server Riêng (Mail Cluster)",
-        desc: "Hạ tầng gửi nhận email độc lập, dedicated IP sạch",
-        price: "550.000đ/th",
-        highlight: "Gửi nhận số lượng lớn"
-      }
-    ]
-  },
-  {
-    id: "ssl",
-    title: "Chứng Chỉ Số SSL",
-    badge: "Bảo hiểm lớn",
-    icon: "🔒",
-    tagline: "Mã hóa đường truyền dữ liệu an toàn 256-bit chuẩn quốc tế từ Sectigo, GeoTrust",
-    items: [
-      {
-        slug: "ssl",
-        title: "Sectigo PositiveSSL (DV)",
-        desc: "Xác thực tên miền nhanh chóng, hiển thị ổ khóa xanh an toàn",
-        price: "199.000đ/năm",
-        highlight: "Kích hoạt trong 5 phút"
-      },
-      {
-        slug: "ssl",
-        title: "Sectigo Wildcard SSL (*.domain)",
-        desc: "Bảo vệ không giới hạn tất cả các tên miền con subdomain",
-        price: "1.450.000đ/năm",
-        highlight: "Không giới hạn Subdomain"
-      }
-    ]
-  },
-  {
-    id: "firewall",
-    title: "Firewall Chống DDoS",
-    badge: "Độc quyền",
-    icon: "🛡️",
-    tagline: "Tường lửa lọc sạch tấn công từ chối dịch vụ Layer 3/4/7 thời gian thực với dung lượng 100Gbps+",
-    items: [
-      {
-        slug: "firewall-anti-ddos",
-        title: "Tường Lửa Anti-DDoS Đa Tầng",
-        desc: "Ngăn chặn SYN/UDP Flood, HTTP Request Flood bằng AI",
-        price: "350.000đ/th",
-        highlight: "Độ trễ < 2ms"
-      },
-      {
-        slug: "firewall-anti-ddos",
-        title: "WAF Bảo Vệ Ứng Dụng Web Layer 7",
-        desc: "Chống cào dữ liệu, chống brute-force và spam request",
-        price: "650.000đ/th",
-        highlight: "AI Smart Filter"
-      }
-    ]
-  }
-];
+// Helper lấy icon mặc định sinh động theo tên danh mục thực tế
+function getCategoryIcon(name: string = ""): string {
+  const lower = name.toLowerCase();
+  if (lower.includes("vps") || lower.includes("máy chủ")) return "⚡";
+  if (lower.includes("host") || lower.includes("web")) return "🌐";
+  if (lower.includes("domain") || lower.includes("miền")) return "🏷️";
+  if (lower.includes("mail") || lower.includes("thư")) return "✉️";
+  if (lower.includes("ssl") || lower.includes("chứng chỉ")) return "🔒";
+  if (lower.includes("firewall") || lower.includes("ddos") || lower.includes("bảo mật")) return "🛡️";
+  return "📦";
+}
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isServicesOpen, setIsServicesOpen] = useState(false);
-  const [activeCategoryTab, setActiveCategoryTab] = useState("vps");
+  const [activeCategoryTab, setActiveCategoryTab] = useState<number | string>("");
   
+  // Dữ liệu Danh Mục & Gói Cước thật từ Cơ Sở Dữ Liệu
+  const [dbCategories, setDbCategories] = useState<any[]>([]);
+  const [dbPlans, setDbPlans] = useState<any[]>([]);
+
   // Modals state
   const [showEditModal, setShowEditModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -217,7 +57,48 @@ export default function Header() {
 
   useEffect(() => {
     checkUserSession();
+    fetchRealServicesData();
+
+    // Lắng nghe SignalR để tự động cập nhật Header Menu tức thì khi Admin thêm/sửa/xóa danh mục hoặc gói cước
+    const unsubscribe = dataSyncService.subscribe((entity) => {
+      if (entity === "category" || entity === "plan" || entity === "price" || entity === "all") {
+        fetchRealServicesData();
+      }
+    });
+
+    return () => unsubscribe();
   }, [pathname]);
+
+  const fetchRealServicesData = async () => {
+    try {
+      const [catRes, planRes] = await Promise.all([
+        apiFetch("/api/service-categories?pageSize=50"),
+        apiFetch("/api/service-plans?pageSize=100")
+      ]);
+
+      if (catRes.ok) {
+        const catData = await catRes.json();
+        const rawCats = catData.items || catData;
+        if (Array.isArray(rawCats) && rawCats.length > 0) {
+          const activeCats = rawCats.filter((c: any) => c.isActive !== false);
+          setDbCategories(activeCats);
+          if (activeCats.length > 0) {
+            setActiveCategoryTab((prev) => prev || activeCats[0].id);
+          }
+        }
+      }
+
+      if (planRes.ok) {
+        const planData = await planRes.json();
+        const rawPlans = planData.items || planData;
+        if (Array.isArray(rawPlans)) {
+          setDbPlans(rawPlans.filter((p: any) => p.isActive !== false));
+        }
+      }
+    } catch (err) {
+      console.warn("Lỗi khi tải dữ liệu thực tế cho menu dịch vụ:", err);
+    }
+  };
 
   const checkUserSession = async () => {
     let token = getAccessToken();
@@ -389,7 +270,10 @@ export default function Header() {
     return null;
   }
 
-  const selectedCategory = SERVICE_CATEGORIES.find((c) => c.id === activeCategoryTab) || SERVICE_CATEGORIES[0];
+  const currentCategory = dbCategories.find((c) => c.id === activeCategoryTab) || dbCategories[0] || null;
+  const currentCategoryPlans = currentCategory
+    ? dbPlans.filter((p) => p.categoryId === currentCategory.id)
+    : [];
 
   return (
     <>
@@ -421,7 +305,7 @@ export default function Header() {
               Trang Chủ
             </Link>
 
-            {/* TAB DỊCH VỤ - RÊ CHUỘT HIỆN TẤT CẢ DANH MỤC (VPS, Hosting, Domain, Email, SSL, Firewall) */}
+            {/* TAB DỊCH VỤ - DỮ LIỆU THẬT TỪ CƠ SỞ DỮ LIỆU */}
             <div
               className="relative h-full flex items-center"
               onMouseEnter={() => setIsServicesOpen(true)}
@@ -433,9 +317,11 @@ export default function Header() {
                 }`}
               >
                 <span>Dịch Vụ</span>
-                <span className="text-[10px] font-black bg-blue-600 text-white px-1.5 py-0.2 rounded-full ml-0.5">
-                  6+
-                </span>
+                {dbCategories.length > 0 && (
+                  <span className="text-[10px] font-black bg-blue-600 text-white px-1.5 py-0.2 rounded-full ml-0.5">
+                    {dbCategories.length}
+                  </span>
+                )}
                 <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${isServicesOpen ? "rotate-180 text-blue-600" : "text-slate-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                 </svg>
@@ -446,98 +332,121 @@ export default function Header() {
                 <div className="absolute top-[calc(100%-4px)] left-1/2 -translate-x-1/2 w-[920px] bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 z-50 text-slate-800 animate-in fade-in zoom-in-95 duration-150">
                   <div className="grid grid-cols-12 gap-6">
                     
-                    {/* Cột trái: 6 Danh mục Dịch vụ */}
-                    <div className="col-span-4 border-r border-slate-100 pr-4 space-y-1.5">
+                    {/* Cột trái: Danh mục Dịch vụ thực tế từ DB */}
+                    <div className="col-span-4 border-r border-slate-100 pr-4 space-y-1.5 max-h-[380px] overflow-y-auto">
                       <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2 px-2">
                         Danh Mục Dịch Vụ
                       </span>
-                      {SERVICE_CATEGORIES.map((cat) => (
-                        <div
-                          key={cat.id}
-                          onMouseEnter={() => setActiveCategoryTab(cat.id)}
-                          className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${
-                            activeCategoryTab === cat.id
-                              ? "bg-blue-50 text-blue-700 font-bold border border-blue-200 shadow-sm"
-                              : "hover:bg-slate-50 text-slate-700 font-medium"
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="text-xl">{cat.icon}</span>
-                            <span className="text-xs">{cat.title}</span>
-                          </div>
-                          {cat.badge && (
-                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
-                              activeCategoryTab === cat.id ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"
-                            }`}>
-                              {cat.badge}
+                      {dbCategories.length === 0 ? (
+                        <div className="p-4 text-center text-xs text-slate-400">Đang tải danh mục...</div>
+                      ) : (
+                        dbCategories.map((cat) => (
+                          <div
+                            key={cat.id}
+                            onMouseEnter={() => setActiveCategoryTab(cat.id)}
+                            className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${
+                              (activeCategoryTab === cat.id || (!activeCategoryTab && dbCategories[0]?.id === cat.id))
+                                ? "bg-blue-50 text-blue-700 font-bold border border-blue-200 shadow-sm"
+                                : "hover:bg-slate-50 text-slate-700 font-medium"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className="text-xl">{getCategoryIcon(cat.name)}</span>
+                              <span className="text-xs truncate">{cat.name}</span>
+                            </div>
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600 shrink-0">
+                              {dbPlans.filter((p) => p.categoryId === cat.id).length} gói
                             </span>
-                          )}
-                        </div>
-                      ))}
+                          </div>
+                        ))
+                      )}
                     </div>
 
-                    {/* Cột phải: Các sản phẩm & cấu hình chi tiết của danh mục đang chọn */}
+                    {/* Cột phải: Các gói cước & cấu hình chi tiết thực tế của danh mục đang chọn */}
                     <div className="col-span-8 flex flex-col justify-between pl-2">
                       <div>
-                        {/* Category Header */}
-                        <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
-                          <div>
-                            <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
-                              <span>{selectedCategory.icon}</span>
-                              <span>{selectedCategory.title}</span>
-                            </h3>
-                            <p className="text-[11px] text-slate-500 mt-0.5">
-                              {selectedCategory.tagline}
-                            </p>
-                          </div>
-                          <Link
-                            href="/pricing"
-                            onClick={() => setIsServicesOpen(false)}
-                            className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline shrink-0"
-                          >
-                            Bảng giá →
-                          </Link>
-                        </div>
+                        {currentCategory ? (
+                          <>
+                            {/* Category Header */}
+                            <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
+                              <div>
+                                <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                                  <span>{getCategoryIcon(currentCategory.name)}</span>
+                                  <span>{currentCategory.name}</span>
+                                </h3>
+                                <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
+                                  {currentCategory.description || "Hệ thống dịch vụ đám mây hiệu năng cao tiêu chuẩn quốc tế"}
+                                </p>
+                              </div>
+                              <Link
+                                href="/pricing"
+                                onClick={() => setIsServicesOpen(false)}
+                                className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline shrink-0"
+                              >
+                                Xem Bảng giá →
+                              </Link>
+                            </div>
 
-                        {/* Items Grid */}
-                        <div className="grid grid-cols-2 gap-3.5">
-                          {selectedCategory.items.map((item, idx) => (
-                            <Link
-                              key={idx}
-                              href={`/services/${item.slug}`}
-                              onClick={() => setIsServicesOpen(false)}
-                              className="p-3.5 rounded-xl border border-slate-100 hover:border-blue-300 hover:bg-blue-50/40 transition-all group block shadow-xs"
-                            >
-                              <div className="flex items-center justify-between mb-1">
-                                <h4 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
-                                  {item.title}
-                                </h4>
-                                <span className="text-xs font-black text-blue-600">{item.price}</span>
-                              </div>
-                              <p className="text-[11px] text-slate-500 line-clamp-1 mb-2">
-                                {item.desc}
-                              </p>
-                              <div className="flex items-center gap-1.5 text-[10px] text-emerald-600 font-bold">
-                                <span>✓</span>
-                                <span>{item.highlight}</span>
-                              </div>
-                            </Link>
-                          ))}
-                        </div>
+                            {/* Items Grid */}
+                            <div className="grid grid-cols-2 gap-3.5 max-h-[260px] overflow-y-auto pr-1">
+                              {currentCategoryPlans.length === 0 ? (
+                                <div className="col-span-2 text-center py-8 text-xs text-slate-400 bg-slate-50 rounded-xl border border-slate-100">
+                                  Chưa có gói cước nào trong danh mục này.
+                                </div>
+                              ) : (
+                                currentCategoryPlans.map((plan: any) => {
+                                  const prices = plan.prices || [];
+                                  const firstPrice = prices[0]?.price || 0;
+                                  const formattedPrice = firstPrice > 0
+                                    ? new Intl.NumberFormat("vi-VN").format(firstPrice) + "đ/th"
+                                    : "Liên hệ";
+
+                                  return (
+                                    <Link
+                                      key={plan.id}
+                                      href={`/order?planId=${plan.id}`}
+                                      onClick={() => setIsServicesOpen(false)}
+                                      className="p-3.5 rounded-xl border border-slate-100 hover:border-blue-300 hover:bg-blue-50/40 transition-all group block shadow-xs bg-white"
+                                    >
+                                      <div className="flex items-center justify-between mb-1">
+                                        <h4 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate pr-2">
+                                          {plan.name}
+                                        </h4>
+                                        <span className="text-xs font-black text-blue-600 shrink-0">{formattedPrice}</span>
+                                      </div>
+                                      <p className="text-[11px] text-slate-500 line-clamp-1 mb-2">
+                                        {plan.description || `${plan.cpu || ""} - ${plan.ram || ""} - ${plan.storage || ""}`}
+                                      </p>
+                                      <div className="flex items-center gap-2 text-[10px] text-slate-600 font-medium">
+                                        {plan.cpu && <span>⚡ {plan.cpu}</span>}
+                                        {plan.ram && <span>💾 {plan.ram}</span>}
+                                        {plan.storage && <span>💽 {plan.storage}</span>}
+                                      </div>
+                                    </Link>
+                                  );
+                                })
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-center py-12 text-xs text-slate-400">
+                            Đang kết nối cơ sở dữ liệu...
+                          </div>
+                        )}
                       </div>
 
                       {/* Bottom Banner */}
-                      <div className="mt-5 p-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-between">
+                      <div className="mt-4 p-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-between">
                         <div className="text-xs">
                           <strong className="block font-bold">🚀 Miễn Phí Chuyển Đổi Dữ Liệu & Hỗ Trợ 24/7</strong>
                           <span className="text-[10px] text-blue-100">Cam kết Uptime 99.99% tại Datacenter chuẩn Tier 3.</span>
                         </div>
                         <Link
-                          href="/order"
+                          href="/pricing"
                           onClick={() => setIsServicesOpen(false)}
                           className="px-4 py-1.5 rounded-lg bg-white text-blue-700 hover:bg-blue-50 text-xs font-bold transition-colors shadow-sm shrink-0"
                         >
-                          Khởi Tạo Ngay
+                          Xem Toàn Bộ Gói
                         </Link>
                       </div>
 
@@ -706,25 +615,36 @@ export default function Header() {
               Trang Chủ
             </Link>
 
-            {SERVICE_CATEGORIES.map((cat) => (
-              <div key={cat.id} className="border-t border-slate-100 pt-3">
-                <span className="text-xs font-bold text-blue-600 uppercase tracking-wider block mb-2">
-                  {cat.icon} {cat.title}
-                </span>
-                <div className="space-y-2 pl-3">
-                  {cat.items.map((it, idx) => (
-                    <Link
-                      key={idx}
-                      href={`/services/${it.slug}`}
-                      onClick={() => setIsOpen(false)}
-                      className="block text-xs font-semibold text-slate-700 hover:text-blue-600"
-                    >
-                      {it.title} - <span className="text-blue-600">{it.price}</span>
-                    </Link>
-                  ))}
+            {dbCategories.map((cat) => {
+              const catPlans = dbPlans.filter((p) => p.categoryId === cat.id);
+              return (
+                <div key={cat.id} className="border-t border-slate-100 pt-3">
+                  <span className="text-xs font-bold text-blue-600 uppercase tracking-wider block mb-2">
+                    {getCategoryIcon(cat.name)} {cat.name}
+                  </span>
+                  <div className="space-y-2 pl-3">
+                    {catPlans.length === 0 ? (
+                      <span className="text-xs text-slate-400 italic">Chưa có gói cước</span>
+                    ) : (
+                      catPlans.map((p) => {
+                        const firstPrice = p.prices?.[0]?.price || 0;
+                        const priceStr = firstPrice > 0 ? `${new Intl.NumberFormat("vi-VN").format(firstPrice)}đ` : "Liên hệ";
+                        return (
+                          <Link
+                            key={p.id}
+                            href={`/order?planId=${p.id}`}
+                            onClick={() => setIsOpen(false)}
+                            className="block text-xs font-semibold text-slate-700 hover:text-blue-600 truncate"
+                          >
+                            {p.name} - <span className="text-blue-600 font-bold">{priceStr}</span>
+                          </Link>
+                        );
+                      })
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             <div className="border-t border-slate-100 pt-3 space-y-2">
               <Link href="/pricing" onClick={() => setIsOpen(false)} className="block text-xs font-bold text-slate-800 hover:text-blue-600">Bảng Giá</Link>

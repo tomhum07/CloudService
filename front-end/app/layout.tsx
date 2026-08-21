@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import LayoutWrapper from "@/components/LayoutWrapper";
 
 export const metadata: Metadata = {
   title: "CloudService - Điện toán đám mây tốc độ cao",
@@ -16,9 +15,7 @@ export default function RootLayout({
   return (
     <html lang="vi" className="scroll-smooth">
       <body className="antialiased">
-        <Header />
-        <main className="pt-20">{children}</main>
-        <Footer />
+        <LayoutWrapper>{children}</LayoutWrapper>
       </body>
     </html>
   );

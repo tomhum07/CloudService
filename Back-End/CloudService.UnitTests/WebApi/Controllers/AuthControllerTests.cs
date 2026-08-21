@@ -101,7 +101,7 @@ namespace CloudService.UnitTests.WebApi.Controllers
             var setCookieHeader = httpContext.Response.Headers["Set-Cookie"].ToString();
             Assert.Contains("refreshToken=test-refresh-token", setCookieHeader);
             Assert.Contains("httponly", setCookieHeader, StringComparison.OrdinalIgnoreCase);
-            Assert.Contains("samesite=strict", setCookieHeader, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("samesite=none", setCookieHeader, StringComparison.OrdinalIgnoreCase);
         }
 
         [Fact]
