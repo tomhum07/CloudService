@@ -1152,7 +1152,7 @@ function OrderFormContent() {
           </div>
         )}
 
-      {/* MODAL CHỌN MÃ ƯU ĐÃI / VOUCHER (ĐỒNG BỘ GIAO DIỆN WEBSITE) */}
+      {/* MODAL CHỌN MÃ ƯU ĐÃI / VOUCHER (ĐỒNG BỘ 100% GIAO DIỆN WEBSITE) */}
       {isVoucherModalOpen && (
         <div
           onClick={() => setIsVoucherModalOpen(false)}
@@ -1171,8 +1171,8 @@ function OrderFormContent() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">Chọn Mã Ưu Đãi / Voucher</h3>
-                  <p className="text-[10px] text-slate-400">Ưu đãi giảm giá áp dụng trực tiếp cho đơn hàng</p>
+                  <h3 className="text-sm font-bold text-slate-900">Chọn Mã Giảm Giá</h3>
+                  <p className="text-[10px] text-slate-500">Ưu đãi áp dụng trực tiếp vào đơn hàng của bạn</p>
                 </div>
               </div>
               <button
@@ -1217,7 +1217,7 @@ function OrderFormContent() {
             {/* Danh Sách Vé Khuyến Mãi (Ticket Cards) */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/70 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <div className="flex justify-between items-center mb-1">
-                <span className="text-xs font-bold text-slate-800">Mã Khuyến Mãi Dành Cho Bạn</span>
+                <span className="text-xs font-bold text-slate-800">Mã Khuyến Mãi Khả Dụng</span>
                 <span className="text-[11px] text-slate-400 font-medium">{availableVouchers.length} mã khả dụng</span>
               </div>
 
@@ -1244,20 +1244,17 @@ function OrderFormContent() {
                         isSelected ? "border-blue-600 ring-1 ring-blue-600" : "border-slate-200 hover:border-blue-300"
                       }`}
                     >
-                      {/* Cuống vé bên trái */}
-                      <div className="w-22 bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-3 flex flex-col justify-between items-center text-center relative shrink-0">
-                        <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-xs font-black">
-                          👑
+                      {/* Cuống vé bên trái (Sleek Slate/Dark Tone) */}
+                      <div className="w-24 bg-slate-900 text-white p-3 flex flex-col justify-between items-center text-center relative shrink-0 border-r border-dashed border-slate-700">
+                        <span className="text-[9px] font-bold tracking-widest text-slate-400 uppercase">GIẢM GIÁ</span>
+                        <div className="font-black text-sm tracking-tight text-blue-400 font-mono">
+                          -{v.discountPercentage}%
                         </div>
-                        <div className="font-black text-xs uppercase tracking-wider">CLOUD</div>
-                        <div className="text-[9px] text-blue-100 font-medium">Voucher</div>
+                        <div className="text-[9px] text-slate-400 font-medium">VOUCHER</div>
 
-                        {/* Răng cưa viền vé */}
-                        <div className="absolute right-[-4px] top-0 bottom-0 flex flex-col justify-around">
-                          {[...Array(5)].map((_, i) => (
-                            <div key={i} className="w-2 h-2 rounded-full bg-slate-50"></div>
-                          ))}
-                        </div>
+                        {/* Lỗ khuyết bấm vé */}
+                        <div className="absolute -top-1.5 -right-1.5 w-3 h-3 rounded-full bg-slate-50 border border-slate-200"></div>
+                        <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 rounded-full bg-slate-50 border border-slate-200"></div>
                       </div>
 
                       {/* Chi tiết vé bên phải */}
@@ -1268,27 +1265,29 @@ function OrderFormContent() {
                               Giảm {v.discountPercentage}% cho đơn hàng
                             </h4>
                             {isBestDeal && (
-                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-500 text-white shrink-0 ml-1">
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-200 shrink-0 ml-1">
                                 Ưu đãi lớn nhất
                               </span>
                             )}
                           </div>
 
-                          <div className="text-[11px] font-mono text-blue-600 font-semibold mb-2">
-                            Mã: {v.name}
+                          <div className="mb-2">
+                            <span className="text-[11px] font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200/70 inline-block">
+                              {v.name}
+                            </span>
                           </div>
 
-                          {/* Thanh tiến độ */}
-                          <div className="w-full bg-slate-100 rounded-full h-1.5 mb-2 overflow-hidden">
+                          {/* Thanh tiến độ tối giản */}
+                          <div className="w-full bg-slate-100 rounded-full h-1 mb-2 overflow-hidden">
                             <div
-                              className="bg-gradient-to-r from-blue-500 to-indigo-600 h-1.5 rounded-full"
+                              className="bg-blue-600 h-1 rounded-full"
                               style={{ width: `${Math.min(95, 45 + ((idx * 20) % 50))}%` }}
                             ></div>
                           </div>
 
-                          <div className="flex justify-between items-center text-[10px] text-slate-400">
+                          <div className="flex justify-between items-center text-[10px] text-slate-500">
                             <span>
-                              {v.endDate ? `Hạn dùng: ${new Date(v.endDate).toLocaleDateString("vi-VN")}` : "Đang áp dụng"}
+                              {v.endDate ? `HSD: ${new Date(v.endDate).toLocaleDateString("vi-VN")}` : "Đang áp dụng"}
                             </span>
                             <button
                               type="button"
@@ -1306,8 +1305,8 @@ function OrderFormContent() {
                         {/* Chi tiết điều kiện popup */}
                         {activeConditionId === v.id && (
                           <div className="mt-2 p-2 rounded-lg bg-slate-50 border border-slate-200 text-[10px] text-slate-600 animate-in fade-in">
-                            • Giảm trực tiếp {v.discountPercentage}% tổng số tiền thanh toán.<br />
-                            • Áp dụng cho mọi chu kỳ thanh toán.
+                            • Giảm trực tiếp {v.discountPercentage}% tổng giá trị đơn hàng.<br />
+                            • Áp dụng cho toàn bộ các chu kỳ thanh toán.
                           </div>
                         )}
                       </div>

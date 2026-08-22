@@ -100,7 +100,7 @@ namespace CloudService.Infrastructure.Services
         public async Task<IEnumerable<PromotionDto>> GetAllPromotionsAsync(bool activeOnly = false)
         {
             var now = DateTime.UtcNow;
-            var query = _context.Promotions.AsQueryable();
+            var query = _context.Promotions.IgnoreQueryFilters().AsQueryable();
 
             if (activeOnly)
             {
@@ -135,7 +135,8 @@ namespace CloudService.Infrastructure.Services
                 Name = request.Name.Trim(),
                 DiscountPercentage = (int)request.DiscountPercentage,
                 StartDate = startDate,
-                EndDate = endDate
+                EndDate = endDate,
+                IsActive = request.IsActive
             };
 
             _context.Promotions.Add(promotion);
@@ -154,7 +155,7 @@ namespace CloudService.Infrastructure.Services
 
         public async Task<PromotionDto?> UpdatePromotionAsync(int id, UpdatePromotionRequest request)
         {
-            var promotion = await _context.Promotions.FindAsync(id);
+            var promotion = await _context.Promotions.IgnoreQueryFilters().FirstOrDefaultAsync(p => p.Id == id);
             if (promotion == null) return null;
 
             var startDate = request.StartDate == default ? DateTime.UtcNow : request.StartDate.ToUniversalTime();
@@ -181,11 +182,11 @@ namespace CloudService.Infrastructure.Services
 
         public async Task<bool> DeletePromotionAsync(int id)
         {
-            var promotion = await _context.Promotions.FindAsync(id);
+            var promotion = await _context.Promotions.IgnoreQueryFilters().FirstOrDefaultAsync(p => p.Id == id);
             if (promotion == null) return false;
 
             // Xóa liên kết khuyến mãi khỏi các PlanPrice trước khi xóa
-            var linkedPrices = await _context.PlanPrices.Where(p => p.PromotionId == id).ToListAsync();
+            var linkedPrices = await _context.PlanPrices.IgnoreQueryFilters().Where(p => p.PromotionId == id).ToListAsync();
             foreach (var price in linkedPrices)
             {
                 price.PromotionId = null;
