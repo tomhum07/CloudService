@@ -55,6 +55,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               return;
             }
 
+            // Kiểm tra phân quyền trang cho vai trò Editor
+            if (userRole === "Editor") {
+              const allowedEditorRoutes = [
+                "/admin/news",
+                "/admin/orders",
+                "/admin/change-password"
+              ];
+
+              const isAllowed = allowedEditorRoutes.some(route => 
+                pathname === route || pathname?.startsWith(route + "/")
+              );
+
+              if (!isAllowed) {
+                // Tự động chuyển hướng Editor vào trang tin tức nếu truy cập trang bị cấm
+                router.replace("/admin/news");
+                return;
+              }
+            }
+
             setRole(userRole);
           }
         } catch (e) {
@@ -118,21 +137,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  const navLinks = [
-    { label: "Bảng Điều Khiển", href: "/admin/dashboard", icon: "📊" },
-    { label: "Quản Lý Danh Mục", href: "/admin/categories", icon: "📂" },
-    { label: "Quản Lý Gói Cước", href: "/admin/plans", icon: "📦" },
-    { label: "Bảng Giá & Chu Kỳ", href: "/admin/prices", icon: "💰" },
-    { label: "Duyệt Đơn Hàng & CTV", href: "/admin/orders", icon: "🛒" },
-    { label: "Quản Lý Tin Tức", href: "/admin/news", icon: "📰" },
-    { label: "Nhật Ký Hệ Thống", href: "/admin/audit-logs", icon: "📜" },
-  ];
-
-  if (role === "Admin") {
-    navLinks.push({ label: "Quản Lý Tài Khoản", href: "/admin/users", icon: "👤" });
-  }
-
-  navLinks.push({ label: "Đổi Mật Khẩu", href: "/admin/change-password", icon: "🔑" });
+  // Phân quyền danh sách Menu điều hướng (Sidebar Navigation Links)
+  const navLinks = role === "Editor"
+    ? [
+        { label: "Quản Lý Tin Tức", href: "/admin/news", icon: "📰" },
+        { label: "Duyệt Đơn Hàng & CTV", href: "/admin/orders", icon: "🛒" },
+        { label: "Đổi Mật Khẩu", href: "/admin/change-password", icon: "🔑" },
+      ]
+    : [
+        { label: "Bảng Điều Khiển", href: "/admin/dashboard", icon: "📊" },
+        { label: "Quản Lý Danh Mục", href: "/admin/categories", icon: "📂" },
+        { label: "Quản Lý Gói Cước", href: "/admin/plans", icon: "📦" },
+        { label: "Bảng Giá & Chu Kỳ", href: "/admin/prices", icon: "💰" },
+        { label: "Duyệt Đơn Hàng & CTV", href: "/admin/orders", icon: "🛒" },
+        { label: "Quản Lý Tin Tức", href: "/admin/news", icon: "📰" },
+        { label: "Nhật Ký Hệ Thống", href: "/admin/audit-logs", icon: "📜" },
+        { label: "Quản Lý Tài Khoản", href: "/admin/users", icon: "👤" },
+        { label: "Đổi Mật Khẩu", href: "/admin/change-password", icon: "🔑" },
+      ];
 
   return (
     <div className="h-screen w-screen bg-slate-50 text-slate-800 flex overflow-hidden selection:bg-blue-600 selection:text-white">

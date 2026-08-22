@@ -9,6 +9,7 @@ namespace CloudService.WebApi.Controllers
     [ApiController]
     [Route("api/admin/audit-logs")]
     [Route("api/audit-logs")]
+    [Authorize(Roles = "Admin")]
     public class AuditLogsController : ControllerBase
     {
         private readonly IAuditLogService _auditLogService;
