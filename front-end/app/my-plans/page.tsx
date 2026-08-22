@@ -519,7 +519,7 @@ export default function MyPlansPage() {
         {/* MODAL QUÉT MÃ QR THANH TOÁN CHO ĐƠN TRONG 30 PHÚT (COMPACT & NO SCROLLBAR) */}
         {selectedPayOrder && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/70 backdrop-blur-xs animate-in fade-in duration-200">
-            <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-3 relative overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-3xl max-w-[450px] w-full p-5 sm:p-6 shadow-2xl space-y-3 relative overflow-hidden">
               
               {/* Nút đóng modal */}
               <button
@@ -567,7 +567,7 @@ export default function MyPlansPage() {
                   </div>
 
                   {/* Đồng hồ đếm ngược 30 phút */}
-                  <div className="py-2 px-3 bg-rose-50 border border-rose-200 rounded-xl text-center flex items-center justify-center gap-1.5">
+                  <div className="py-1.5 px-3 bg-rose-50 border border-rose-200 rounded-xl text-center flex items-center justify-center gap-1.5">
                     <svg className="w-3.5 h-3.5 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -578,13 +578,13 @@ export default function MyPlansPage() {
 
                   {/* Khung Mã QR PayOS Thật */}
                   {loadingQr ? (
-                    <div className="p-8 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-2">
+                    <div className="p-10 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-2">
                       <div className="w-7 h-7 border-3 border-blue-600/30 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
                       <p className="text-xs text-slate-600 font-medium">Đang tải mã QR thanh toán PayOS...</p>
                     </div>
                   ) : (
-                    <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-2.5">
-                      <div className="inline-block p-2 bg-white border border-slate-200 rounded-xl shadow-xs">
+                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-2">
+                      <div className="inline-block p-2.5 bg-white border border-slate-200 rounded-xl shadow-xs">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={
@@ -595,7 +595,7 @@ export default function MyPlansPage() {
                               : `https://img.vietqr.io/image/970422-0987654321-compact2.png?amount=${Math.round(selectedPayOrder.price || selectedPayOrder.totalAmount || 0)}&addInfo=${encodeURIComponent(selectedPayOrder.orderCode)}`
                           }
                           alt="PayOS VietQR Payment Code"
-                          className="w-40 h-40 mx-auto object-contain rounded-lg"
+                          className="w-52 h-52 mx-auto object-contain rounded-lg"
                         />
                         <div className="text-[9px] text-slate-500 font-bold uppercase mt-1 tracking-wider flex items-center justify-center gap-1">
                           <svg className="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
