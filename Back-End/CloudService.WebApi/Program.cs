@@ -12,6 +12,7 @@ using Serilog;
 Serilog.Log.Logger = new Serilog.LoggerConfiguration()
     .MinimumLevel.Information()
     .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.Hosting.Lifetime", Serilog.Events.LogEventLevel.Information)
     .MinimumLevel.Override("Microsoft.EntityFrameworkCore", Serilog.Events.LogEventLevel.Warning)
     .Enrich.FromLogContext()
     .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
@@ -21,6 +22,8 @@ Serilog.Log.Logger = new Serilog.LoggerConfiguration()
         retainedFileCountLimit: 14,
         outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
     .CreateLogger();
+
+Serilog.Log.Information(">>> CloudService WebAPI Server đang khởi động...");
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -181,5 +184,12 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<CloudService.WebApi.Hubs.DataSyncHub>("/hubs/datasync");
+
+Serilog.Log.Information("==================================================================");
+Serilog.Log.Information("  CloudService WebAPI Backend Đã Sẵn Sàng!");
+Serilog.Log.Information("  - HTTP URL:    http://localhost:5074");
+Serilog.Log.Information("  - HTTPS URL:   https://localhost:7108");
+Serilog.Log.Information("  - Swagger API: http://localhost:5074/scalar/v1");
+Serilog.Log.Information("==================================================================");
 
 app.Run();
