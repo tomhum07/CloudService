@@ -15,36 +15,90 @@ const DOMAIN_PRICES = [
 
 const FEATURES_HIGHLIGHT = [
   {
-    icon: "⚡",
+    iconType: "cpu",
     title: "100% Ổ Cứng NVMe Enterprise",
     desc: "Sử dụng dòng ổ cứng NVMe chuyên dụng cho trung tâm dữ liệu, mang lại tốc độ đọc/ghi IOPS vượt trội gấp 10 lần SSD thông thường."
   },
   {
-    icon: "🛡️",
+    iconType: "shield",
     title: "Tường Lửa Chống DDoS Độc Quyền",
     desc: "Hệ thống Anti-DDoS Firewall đa tầng Layer 3, 4 và 7 tự động nhận diện và lọc sạch các đợt tấn công SYN Flood, UDP Flood, HTTP Request Flood."
   },
   {
-    icon: "🌐",
+    iconType: "server",
     title: "Hạ Tầng Datacenter Tier 3 Quốc Tế",
     desc: "Cụm máy chủ đặt tại các trung tâm dữ liệu đạt chuẩn Quốc tế TIA-942 Rated 3 tại Hà Nội và TP.HCM với cam kết 99.99% Uptime."
   },
   {
-    icon: "🔄",
+    iconType: "backup",
     title: "Tự Động Sao Lưu (Daily Backup)",
     desc: "Dữ liệu của bạn luôn an toàn với cơ chế Backup tự động hàng ngày độc lập ra cụm Storage ngoài và hỗ trợ khôi phục Snapshot 1-Click."
   },
   {
-    icon: "👨‍💻",
+    iconType: "support",
     title: "Hỗ Trợ Kỹ Thuật 24/7/365",
     desc: "Đội ngũ chuyên gia hệ thống túc trực 24/7 qua Ticket, Hotline và LiveChat với thời gian phản hồi trung bình dưới 5 phút."
   },
   {
-    icon: "💰",
+    iconType: "refund",
     title: "Hoàn Tiền 100% Trong 30 Ngày",
     desc: "Cam kết hoàn lại 100% chi phí trong vòng 30 ngày nếu chất lượng dịch vụ không đáp ứng được kỳ vọng của quý khách hàng."
   }
 ];
+
+function FeatureIcon({ type }: { type: string }) {
+  switch (type) {
+    case "cpu":
+      return (
+        <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-5 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-200">
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+          </svg>
+        </div>
+      );
+    case "shield":
+      return (
+        <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-5 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-200">
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+        </div>
+      );
+    case "server":
+      return (
+        <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-5 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-200">
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+          </svg>
+        </div>
+      );
+    case "backup":
+      return (
+        <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-5 group-hover:bg-amber-600 group-hover:text-white transition-colors duration-200">
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </div>
+      );
+    case "support":
+      return (
+        <div className="w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center mb-5 group-hover:bg-sky-600 group-hover:text-white transition-colors duration-200">
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+        </div>
+      );
+    case "refund":
+    default:
+      return (
+        <div className="w-12 h-12 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center mb-5 group-hover:bg-violet-600 group-hover:text-white transition-colors duration-200">
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+          </svg>
+        </div>
+      );
+  }
+}
 
 export default function Home() {
   const [domainQuery, setDomainQuery] = useState("");
@@ -586,10 +640,10 @@ export default function Home() {
           {FEATURES_HIGHLIGHT.map((f, idx) => (
             <div
               key={idx}
-              className="p-7 rounded-2xl bg-white border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all shadow-sm"
+              className="p-7 rounded-2xl bg-white border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all shadow-xs group"
             >
-              <div className="text-3xl mb-4">{f.icon}</div>
-              <h3 className="text-base font-bold text-slate-900 mb-2">{f.title}</h3>
+              <FeatureIcon type={f.iconType} />
+              <h3 className="text-base font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">{f.title}</h3>
               <p className="text-xs text-slate-600 leading-relaxed">{f.desc}</p>
             </div>
           ))}
