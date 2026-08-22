@@ -409,11 +409,23 @@ export default function AdminNewsPage() {
       {/* Modal Soạn Thảo & Chỉnh Sửa Bài Viết (TinyMCE Rich Editor) */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in overflow-y-auto">
-          <div className="w-full max-w-4xl bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-2xl my-8 max-h-[92vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            <h3 className="text-xl font-black text-slate-900 mb-1">
-              {editingArticle ? "Chỉnh Sửa Bài Viết" : "Soạn Thảo Bài Viết Mới"}
-            </h3>
-            <p className="text-xs text-slate-500 mb-6">Trình soạn thảo TinyMCE chuyên nghiệp hỗ trợ định dạng văn bản, chèn ảnh, bảng và video.</p>
+          <div className="w-full max-w-4xl bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-2xl my-8 max-h-[92vh] overflow-y-auto">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div>
+                <h3 className="text-xl font-black text-slate-900 mb-1">
+                  {editingArticle ? "Chỉnh Sửa Bài Viết" : "Soạn Thảo Bài Viết Mới"}
+                </h3>
+                <p className="text-xs text-slate-500">Trình soạn thảo TinyMCE chuyên nghiệp hỗ trợ định dạng văn bản, chèn ảnh, bảng và video.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowModal(false)}
+                className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 flex items-center justify-center font-bold text-sm transition-colors shrink-0"
+                title="Đóng cửa sổ"
+              >
+                ✕
+              </button>
+            </div>
 
             {formError && (
               <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium mb-4 flex items-center gap-2">
