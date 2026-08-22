@@ -21,13 +21,15 @@ namespace CloudService.WebApi.Controllers
 
         [HttpGet]
         public async Task<ActionResult<PagedNewsResult>> GetAll(
-            int page = 1,
-            int pageSize = 10,
-            string? search = null,
-            bool includeInactive = false)
+            [FromQuery] int page = 1,
+            [FromQuery] int pageNumber = 0,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? search = null,
+            [FromQuery] bool includeInactive = false)
         {
+            int targetPage = pageNumber > 0 ? pageNumber : page;
             var articles = await _newsArticleService.GetAllAsync(
-                page,
+                targetPage,
                 pageSize,
                 search,
                 includeInactive);

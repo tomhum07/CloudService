@@ -85,14 +85,29 @@ function NewsContent() {
         <form onSubmit={handleSearchSubmit} className="relative w-full md:w-80">
           <input
             type="text"
-            placeholder="Tìm kiếm bài viết, tài liệu..."
+            placeholder="Tìm kiếm bài viết (không phân biệt hoa/thường)..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full h-11 pl-10 pr-4 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all placeholder-slate-400"
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full h-11 pl-10 pr-9 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all placeholder-slate-400"
           />
           <svg className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
+          {searchTerm && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchTerm("");
+                setCurrentPage(1);
+              }}
+              className="absolute right-3 top-3 text-xs text-slate-400 hover:text-slate-600"
+            >
+              ✕
+            </button>
+          )}
         </form>
       </div>
 

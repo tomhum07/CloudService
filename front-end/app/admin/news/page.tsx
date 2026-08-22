@@ -20,9 +20,26 @@ const PRESET_CATEGORIES = ["Khuyến Mãi", "Sự Kiện", "Hướng Dẫn", "Ti
 export default function AdminNewsPage() {
   const [articles, setArticles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("Tất cả");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
-  const totalPages = Math.ceil(articles.length / itemsPerPage) || 1;
+  
+  // Lọc bài viết không phân biệt chữ hoa, chữ thường và dấu khoảng trắng (Case-insensitive search)
+  const filteredArticles = articles.filter((art) => {
+    const term = searchTerm.trim().toLowerCase();
+    const matchesSearch = !term || 
+      (art.title && art.title.toLowerCase().includes(term)) ||
+      (art.slug && art.slug.toLowerCase().includes(term)) ||
+      (art.summary && art.summary.toLowerCase().includes(term));
+
+    const matchesCategory = selectedCategoryFilter === "Tất cả" || 
+      (art.categoryName && art.categoryName.toLowerCase() === selectedCategoryFilter.toLowerCase());
+
+    return matchesSearch && matchesCategory;
+  });
+
+  const totalPages = Math.ceil(filteredArticles.length / itemsPerPage) || 1;
   
   // Form/Modal states
   const [showModal, setShowModal] = useState(false);
@@ -200,6 +217,53 @@ export default function AdminNewsPage() {
         </button>
       </div>
 
+      {/* Search & Category Filter Bar */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4 justify-between items-center">
+        <div className="relative flex-1 w-full">
+          <input
+            type="text"
+            placeholder="Tìm kiếm theo tiêu đề, slug hoặc tóm tắt (không phân biệt hoa/thường)..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full h-10 pl-10 pr-4 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all placeholder-slate-400"
+          />
+          <svg className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          {searchTerm && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchTerm("");
+                setCurrentPage(1);
+              }}
+              className="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-slate-600"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <select
+            value={selectedCategoryFilter}
+            onChange={(e) => {
+              setSelectedCategoryFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="h-10 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white w-full sm:w-48 font-medium"
+          >
+            <option value="Tất cả">Tất cả chuyên mục</option>
+            {PRESET_CATEGORIES.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       {/* Table */}
       <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
@@ -219,12 +283,14 @@ export default function AdminNewsPage() {
                 <tr>
                   <td colSpan={6} className="py-8 text-center text-slate-400">Đang tải danh sách bài viết...</td>
                 </tr>
-              ) : articles.length === 0 ? (
+              ) : filteredArticles.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-400">Chưa có bài viết nào trong cơ sở dữ liệu.</td>
+                  <td colSpan={6} className="py-8 text-center text-slate-400">
+                    {searchTerm ? "Không tìm thấy bài viết nào phù hợp với từ khóa." : "Chưa có bài viết nào trong cơ sở dữ liệu."}
+                  </td>
                 </tr>
               ) : (
-                articles.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((art) => (
+                filteredArticles.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((art) => (
                   <tr key={art.id} className="hover:bg-slate-50/60 transition-colors">
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-3">
