@@ -14,11 +14,16 @@ namespace CloudService.WebApi.Controllers
     public class PromotionsController : ControllerBase
     {
         private readonly IPlanPriceService _planPriceService;
+        private readonly IAuditLogService _auditLogService;
         private readonly IHubContext<DataSyncHub> _hubContext;
 
-        public PromotionsController(IPlanPriceService planPriceService, IHubContext<DataSyncHub> hubContext)
+        public PromotionsController(
+            IPlanPriceService planPriceService,
+            IAuditLogService auditLogService,
+            IHubContext<DataSyncHub> hubContext)
         {
             _planPriceService = planPriceService;
+            _auditLogService = auditLogService;
             _hubContext = hubContext;
         }
 
@@ -44,7 +49,9 @@ namespace CloudService.WebApi.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<PromotionDto>> Create([FromBody] CreatePromotionRequest request)
         {
+            var actor = User?.Identity?.Name ?? "Admin";
             var promotion = await _planPriceService.CreatePromotionAsync(request);
+            await _auditLogService.LogAsync(actor, "Tạo khuyến mãi mới", $"Tạo chương trình khuyến mãi: {promotion.Name} (Giảm {promotion.DiscountPercentage}%)");
             await _hubContext.Clients.All.SendAsync("DataChanged", "promotion", "create");
             return CreatedAtAction(nameof(GetAll), new { }, promotion);
         }

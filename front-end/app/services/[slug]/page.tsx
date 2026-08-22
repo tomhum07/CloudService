@@ -12,8 +12,9 @@ export const SERVICE_DETAILS_DATA: Record<string, {
   speedRating: number;
   highlightChip: string;
   priceStarting: string;
-  features: { title: string; desc: string; icon: string }[];
+  features: { title: string; desc: string; icon?: string }[];
   plans: {
+    id?: number;
     name: string;
     cpu: string;
     ram: string;
@@ -34,10 +35,10 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "Vietnix Speed Optimizer & LiteSpeed Enterprise",
     priceStarting: "45.000đ/tháng",
     features: [
-      { icon: "⚡", title: "Ổ cứng Enterprise NVMe", desc: "Tốc độ đọc ghi IOPS vượt trội gấp 10 lần SSD thông thường, xử lý database mượt mà." },
-      { icon: "🚀", title: "LiteSpeed Enterprise & LSCache", desc: "Tăng tốc độ phản hồi website WordPress gấp 5 lần so với Apache / Nginx." },
-      { icon: "🛡️", title: "Bảo vệ Imunify360 AI", desc: "Tự động quét và diệt mã độc thời gian thực, ngăn chặn tấn công WAF Layer 7." },
-      { icon: "🔄", title: "JetBackup 2 Lần / Ngày", desc: "Dữ liệu được sao lưu độc lập 2 lần mỗi ngày, hỗ trợ phục hồi 1-Click an toàn." }
+      { title: "Ổ cứng Enterprise NVMe", desc: "Tốc độ đọc ghi IOPS vượt trội gấp 10 lần SSD thông thường, xử lý database mượt mà." },
+      { title: "LiteSpeed Enterprise & LSCache", desc: "Tăng tốc độ phản hồi website WordPress gấp 5 lần so với Apache / Nginx." },
+      { title: "Bảo vệ Imunify360 AI", desc: "Tự động quét và diệt mã độc thời gian thực, ngăn chặn tấn công WAF Layer 7." },
+      { title: "JetBackup 2 Lần / Ngày", desc: "Dữ liệu được sao lưu độc lập 2 lần mỗi ngày, hỗ trợ phục hồi 1-Click an toàn." }
     ],
     plans: [
       { name: "MaxSpeed 1", cpu: "1 Core AMD EPYC", ram: "1 GB RAM", storage: "10 GB NVMe", bandwidth: "Không giới hạn", price: "45.000đ" },
@@ -60,10 +61,10 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "CPU AMD EPYC 7003 & Dedicated Resources",
     priceStarting: "120.000đ/tháng",
     features: [
-      { icon: "🏢", title: "Tài nguyên cấp phát độc lập", desc: "Không lo nghẽn tài nguyên do các website khác trên cùng server." },
-      { icon: "🛡️", title: "Tường lửa Anti-DDoS WAF", desc: "Chống spam request và tấn công DDoS bảo đảm website luôn online 99.99%." },
-      { icon: "📧", title: "Mail Server riêng biệt", desc: "Tỷ lệ gửi email thông báo đơn hàng vào thẳng hộp thư Inbox của khách hàng." },
-      { icon: "⚡", title: "Hỗ trợ Redis Cache & Memcached", desc: "Tối ưu hóa truy vấn cơ sở dữ liệu cho hệ thống WooCommerce/Magento." }
+      { title: "Tài nguyên cấp phát độc lập", desc: "Không lo nghẽn tài nguyên do các website khác trên cùng server." },
+      { title: "Tường lửa Anti-DDoS WAF", desc: "Chống spam request và tấn công DDoS bảo đảm website luôn online 99.99%." },
+      { title: "Mail Server riêng biệt", desc: "Tỷ lệ gửi email thông báo đơn hàng vào thẳng hộp thư Inbox của khách hàng." },
+      { title: "Hỗ trợ Redis Cache & Memcached", desc: "Tối ưu hóa truy vấn cơ sở dữ liệu cho hệ thống WooCommerce/Magento." }
     ],
     plans: [
       { name: "Business Pro 1", cpu: "2 vCPUs", ram: "4 GB RAM", storage: "40 GB NVMe", bandwidth: "Không giới hạn", price: "120.000đ" },
@@ -84,9 +85,9 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "Vietnix Speed Optimizer & WP Toolkit",
     priceStarting: "39.000đ/tháng",
     features: [
-      { icon: "🌐", title: "Cài đặt WordPress 1-Click", desc: "Khởi tạo website WordPress mới tinh chỉ trong vòng 30 giây." },
-      { icon: "⚡", title: "Plugin LSCache Độc Quyền", desc: "Tăng tốc điểm số Core Web Vitals của Google giúp lên top SEO nhanh hơn." },
-      { icon: "🔒", title: "Tự động vá lỗi bảo mật", desc: "Phát hiện và ngăn chặn các plugin chứa mã độc hay lỗ hổng zero-day." }
+      { title: "Cài đặt WordPress 1-Click", desc: "Khởi tạo website WordPress mới tinh chỉ trong vòng 30 giây." },
+      { title: "Plugin LSCache Độc Quyền", desc: "Tăng tốc điểm số Core Web Vitals của Google giúp lên top SEO nhanh hơn." },
+      { title: "Tự động vá lỗi bảo mật", desc: "Phát hiện và ngăn chặn các plugin chứa mã độc hay lỗ hổng zero-day." }
     ],
     plans: [
       { name: "WP Starter", cpu: "1 Core", ram: "1.5 GB RAM", storage: "15 GB NVMe", bandwidth: "Không giới hạn", price: "39.000đ" },
@@ -107,8 +108,8 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "100% NVMe Storage & cPanel Bản Quyền",
     priceStarting: "25.000đ/tháng",
     features: [
-      { icon: "💾", title: "Ổ cứng NVMe Tốc Độ Cao", desc: "Trải nghiệm tốc độ mượt mà hơn hẳn so với các loại hosting HDD/SSD truyền thống." },
-      { icon: "🛡️", title: "DirectAdmin / cPanel", desc: "Bảng điều khiển trực quan, hỗ trợ cài đặt chứng chỉ SSL chỉ với 1 click." }
+      { title: "Ổ cứng NVMe Tốc Độ Cao", desc: "Trải nghiệm tốc độ mượt mà hơn hẳn so với các loại hosting HDD/SSD truyền thống." },
+      { title: "DirectAdmin / cPanel", desc: "Bảng điều khiển trực quan, hỗ trợ cài đặt chứng chỉ SSL chỉ với 1 click." }
     ],
     plans: [
       { name: "NVMe Mini", cpu: "1 Core", ram: "1 GB RAM", storage: "5 GB NVMe", bandwidth: "Không giới hạn", price: "25.000đ" },
@@ -129,8 +130,8 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "Multi IP Class C & Diệt Mã Độc Imunify360",
     priceStarting: "150.000đ/tháng",
     features: [
-      { icon: "🌐", title: "Nhiều dải IP Class C", desc: "Mỗi website được gắn một địa chỉ IP riêng biệt tránh bị Google phạt mạng lưới." },
-      { icon: "📁", title: "Quản lý tập trung 1 Dashboard", desc: "Dễ dàng quản lý hàng chục website và database trên cùng một tài khoản." }
+      { title: "Nhiều dải IP Class C", desc: "Mỗi website được gắn một địa chỉ IP riêng biệt tránh bị Google phạt mạng lưới." },
+      { title: "Quản lý tập trung 1 Dashboard", desc: "Dễ dàng quản lý hàng chục website và database trên cùng một tài khoản." }
     ],
     plans: [
       { name: "SEO 5 IPs", cpu: "2 Core", ram: "3 GB RAM", storage: "30 GB NVMe", bandwidth: "5 Dedicated IPs", price: "150.000đ" },
@@ -149,10 +150,10 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "CPU AMD EPYC 7003 & KVM Virtualization",
     priceStarting: "150.000đ/tháng",
     features: [
-      { icon: "⚡", title: "CPU AMD EPYC & Intel Xeon Gold", desc: "Tần số xung nhịp cao chuyên dụng cho các ứng dụng backend, API và database lớn." },
-      { icon: "🛡️", title: "Tường lửa Anti-DDoS 100Gbps+", desc: "Bảo vệ miễn phí trước các đợt tấn công từ chối dịch vụ Layer 3/4/7." },
-      { icon: "🎛️", title: "Toàn quyền Root Access", desc: "Tự do cài đặt hệ điều hành Linux (Ubuntu, AlmaLinux, Debian) hoặc Windows Server." },
-      { icon: "🔄", title: "Snapshot & Backup Tự Động", desc: "Khởi tạo bản sao lưu snapshot chỉ trong vài giây, an toàn tuyệt đối dữ liệu." }
+      { title: "CPU AMD EPYC & Intel Xeon Gold", desc: "Tần số xung nhịp cao chuyên dụng cho các ứng dụng backend, API và database lớn." },
+      { title: "Tường lửa Anti-DDoS 100Gbps+", desc: "Bảo vệ miễn phí trước các đợt tấn công từ chối dịch vụ Layer 3/4/7." },
+      { title: "Toàn quyền Root Access", desc: "Tự do cài đặt hệ điều hành Linux (Ubuntu, AlmaLinux, Debian) hoặc Windows Server." },
+      { title: "Snapshot & Backup Tự Động", desc: "Khởi tạo bản sao lưu snapshot chỉ trong vài giây, an toàn tuyệt đối dữ liệu." }
     ],
     plans: [
       { name: "VPS NVMe 1", cpu: "2 vCPUs", ram: "4 GB RAM ECC", storage: "60 GB NVMe Gen4", bandwidth: "1 Gbps Unmetered", price: "150.000đ" },
@@ -174,8 +175,8 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "Dung Lượng Lớn & Chi Phí Tiết Kiệm",
     priceStarting: "90.000đ/tháng",
     features: [
-      { icon: "💾", title: "Dung lượng SSD lớn", desc: "Thoải mái lưu trữ dữ liệu với mức chi phí trên mỗi GB tối ưu nhất." },
-      { icon: "⚡", title: "Băng thông trong nước 1Gbps", desc: "Tốc độ tải về cực nhanh tại các trung tâm dữ liệu Viettel IDC / VNPT." }
+      { title: "Dung lượng SSD lớn", desc: "Thoải mái lưu trữ dữ liệu với mức chi phí trên mỗi GB tối ưu nhất." },
+      { title: "Băng thông trong nước 1Gbps", desc: "Tốc độ tải về cực nhanh tại các trung tâm dữ liệu Viettel IDC / VNPT." }
     ],
     plans: [
       { name: "VPS SSD 1", cpu: "1 vCPU", ram: "2 GB RAM", storage: "40 GB SSD", bandwidth: "1 Gbps", price: "90.000đ" },
@@ -194,9 +195,9 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "DNS Anycast Toàn Cầu & Quản Lý Miễn Phí",
     priceStarting: "249.000đ/năm",
     features: [
-      { icon: "🌐", title: "Kích hoạt DNS tức thì", desc: "Tên miền được kích hoạt và phân giải địa chỉ IP chỉ sau vài giây." },
-      { icon: "🔒", title: "Khóa an toàn Registry Lock", desc: "Bảo vệ tên miền thương hiệu tránh bị chiếm đoạt hoặc đổi nameserver trái phép." },
-      { icon: "🛡️", title: "Ẩn danh Whois Privacy", desc: "Bảo vệ thông tin cá nhân và số điện thoại khỏi bị spam quảng cáo." }
+      { title: "Kích hoạt DNS tức thì", desc: "Tên miền được kích hoạt và phân giải địa chỉ IP chỉ sau vài giây." },
+      { title: "Khóa an toàn Registry Lock", desc: "Bảo vệ tên miền thương hiệu tránh bị chiếm đoạt hoặc đổi nameserver trái phép." },
+      { title: "Ẩn danh Whois Privacy", desc: "Bảo vệ thông tin cá nhân và số điện thoại khỏi bị spam quảng cáo." }
     ],
     plans: [
       { name: "Tên Miền .com", cpu: "ICANN Quốc Tế", ram: "DNS Anycast", storage: "Whois Privacy", bandwidth: "Toàn cầu", price: "249.000đ/năm" },
@@ -215,8 +216,8 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "Bảo Hộ Pháp Lý VNNIC & Ưu Tiên SEO VN",
     priceStarting: "350.000đ/năm",
     features: [
-      { icon: "🇻🇳", title: "Được pháp luật bảo hộ", desc: "Tránh nguy cơ mất thương hiệu tại thị trường Việt Nam." },
-      { icon: "📈", title: "Tăng điểm SEO Google", desc: "Tối ưu hóa hiển thị cho người dùng tìm kiếm tại Việt Nam." }
+      { title: "Được pháp luật bảo hộ", desc: "Tránh nguy cơ mất thương hiệu tại thị trường Việt Nam." },
+      { title: "Tăng điểm SEO Google", desc: "Tối ưu hóa hiển thị cho người dùng tìm kiếm tại Việt Nam." }
     ],
     plans: [
       { name: "Tên Miền .com.vn", cpu: "VNNIC", ram: "Doanh nghiệp", storage: "Bảo hộ", bandwidth: "Việt Nam", price: "350.000đ/năm" },
@@ -234,7 +235,7 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "Tặng Thêm 1 Năm Duy Trì & Hỗ Trợ 24/7",
     priceStarting: "Theo giá gia hạn",
     features: [
-      { icon: "🔄", title: "Không gián đoạn website", desc: "Hệ thống giữ nguyên toàn bộ bản ghi DNS trong quá trình chuyển đổi." }
+      { title: "Không gián đoạn website", desc: "Hệ thống giữ nguyên toàn bộ bản ghi DNS trong quá trình chuyển đổi." }
     ],
     plans: [
       { name: "Chuyển .com", cpu: "Transfer", ram: "Tặng 1 năm", storage: "DNS Giữ nguyên", bandwidth: "Toàn cầu", price: "249.000đ" },
@@ -252,9 +253,9 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "Hạ Tầng Mail Cluster & Tỷ Lệ Inbox 99.9%",
     priceStarting: "99.000đ/tháng",
     features: [
-      { icon: "✉️", title: "Địa chỉ Email theo tên miền", desc: "Tạo sự chuyên nghiệp khi giao dịch với đối tác (VD: ceo@tenmien.vn)." },
-      { icon: "🛡️", title: "Bộ lọc Antispam & Antivirus kép", desc: "Ngăn chặn 99.9% thư rác, email lừa đảo phishing và mã độc tống tiền." },
-      { icon: "📱", title: "Đồng bộ đa thiết bị mượt mà", desc: "Tương thích 100% với Outlook, Gmail App, Apple Mail trên điện thoại và máy tính." }
+      { title: "Địa chỉ Email theo tên miền", desc: "Tạo sự chuyên nghiệp khi giao dịch với đối tác (VD: ceo@tenmien.vn)." },
+      { title: "Bộ lọc Antispam & Antivirus kép", desc: "Ngăn chặn 99.9% thư rác, email lừa đảo phishing và mã độc tống tiền." },
+      { title: "Đồng bộ đa thiết bị mượt mà", desc: "Tương thích 100% với Outlook, Gmail App, Apple Mail trên điện thoại và máy tính." }
     ],
     plans: [
       { name: "Mail Starter", cpu: "5 Hòm thư", ram: "10 GB Dung lượng", storage: "Webmail Pro", bandwidth: "Không giới hạn gửi", price: "99.000đ/th" },
@@ -273,8 +274,8 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "Bảo Hiểm Quốc Tế Lên Đến $1,750,000",
     priceStarting: "199.000đ/năm",
     features: [
-      { icon: "🔒", title: "Mã hóa đường truyền 256-bit", desc: "Ngăn chặn hacker đánh cắp mật khẩu và thông tin thẻ tín dụng của khách hàng." },
-      { icon: "🌐", title: "Hỗ trợ Wildcard SSL", desc: "Bảo vệ không giới hạn tất cả các subdomain (*.tenmien.vn)." }
+      { title: "Mã hóa đường truyền 256-bit", desc: "Ngăn chặn hacker đánh cắp mật khẩu và thông tin thẻ tín dụng của khách hàng." },
+      { title: "Hỗ trợ Wildcard SSL", desc: "Bảo vệ không giới hạn tất cả các subdomain (*.tenmien.vn)." }
     ],
     plans: [
       { name: "Sectigo PositiveSSL", cpu: "1 Tên miền", ram: "Xác thực Domain (DV)", storage: "Mã hóa 256-bit", bandwidth: "Bảo hiểm $10,000", price: "199.000đ/năm" },
@@ -293,9 +294,9 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "Dung Lượng Lọc 100Gbps+ & Độ Trễ < 2ms",
     priceStarting: "350.000đ/tháng",
     features: [
-      { icon: "🛡️", title: "Bảo vệ Layer 3 & 4 (Network)", desc: "Lọc sạch lưu lượng tấn công mạng băng thông lớn lên đến 100Gbps+." },
-      { icon: "🤖", title: "Bảo vệ Layer 7 WAF (Application)", desc: "Chống spam form, cào dữ liệu trái phép (Bot Scraping) và HTTP Request Flood." },
-      { icon: "📊", title: "Giám sát thời gian thực", desc: "Cung cấp bảng biểu đồ lưu lượng và chi tiết các đợt tấn công bị triệt tiêu." }
+      { title: "Bảo vệ Layer 3 & 4 (Network)", desc: "Lọc sạch lưu lượng tấn công mạng băng thông lớn lên đến 100Gbps+." },
+      { title: "Bảo vệ Layer 7 WAF (Application)", desc: "Chống spam form, cào dữ liệu trái phép (Bot Scraping) và HTTP Request Flood." },
+      { title: "Giám sát thời gian thực", desc: "Cung cấp bảng biểu đồ lưu lượng và chi tiết các đợt tấn công bị triệt tiêu." }
     ],
     plans: [
       { name: "Firewall Standard", cpu: "30 Gbps Capacity", ram: "Layer 3/4 Protection", storage: "Phản hồi < 1s", bandwidth: "1 Dedicated IP", price: "350.000đ/th" },
@@ -314,9 +315,9 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "Dell PowerEdge / HP Enterprise & 10Gbps Uplink",
     priceStarting: "1.850.000đ/tháng",
     features: [
-      { icon: "🖥️", title: "100% Phần cứng vật lý riêng", desc: "Không chia sẻ tài nguyên với bất kỳ ai, tối đa hóa sức mạnh xử lý." },
-      { icon: "🌐", title: "Đường truyền mạng 10Gbps", desc: "Băng thông trong nước tốc độ cao không giới hạn lưu lượng truyền tải." },
-      { icon: "🛠️", title: "Thay thế linh kiện trong 30 phút", desc: "Cam kết xử lý sự cố phần cứng tức thì bởi kỹ sư thường trực tại Datacenter." }
+      { title: "100% Phần cứng vật lý riêng", desc: "Không chia sẻ tài nguyên với bất kỳ ai, tối đa hóa sức mạnh xử lý." },
+      { title: "Đường truyền mạng 10Gbps", desc: "Băng thông trong nước tốc độ cao không giới hạn lưu lượng truyền tải." },
+      { title: "Thay thế linh kiện trong 30 phút", desc: "Cam kết xử lý sự cố phần cứng tức thì bởi kỹ sư thường trực tại Datacenter." }
     ],
     plans: [
       { name: "Server Dell E5-2680", cpu: "2x Intel Xeon E5 (28 Cores)", ram: "64 GB RAM ECC", storage: "2x 480 GB SSD Enterprise", bandwidth: "1 Gbps Port", price: "1.850.000đ/th" },
@@ -335,8 +336,8 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "Datacenter Tier 3 Quốc Tế & Nguồn Điện N+1",
     priceStarting: "1.200.000đ/tháng",
     features: [
-      { icon: "🏢", title: "Hạ tầng Datacenter Tier 3", desc: "Hệ thống làm mát chính xác, PUE thấp, nguồn điện kép UPS và máy phát dự phòng." },
-      { icon: "🔒", title: "Kiểm soát an ninh 6 lớp", desc: "Camera giám sát, nhận diện vân tay/khuôn mặt và bảo vệ túc trực 24/7." }
+      { title: "Hạ tầng Datacenter Tier 3", desc: "Hệ thống làm mát chính xác, PUE thấp, nguồn điện kép UPS và máy phát dự phòng." },
+      { title: "Kiểm soát an ninh 6 lớp", desc: "Camera giám sát, nhận diện vân tay/khuôn mặt và bảo vệ túc trực 24/7." }
     ],
     plans: [
       { name: "Chỗ đặt 1U Rack", cpu: "1U Server Space", ram: "Công suất điện 350W", storage: "1 IP Tĩnh", bandwidth: "1 Gbps Shared", price: "1.200.000đ/th" },
@@ -355,8 +356,8 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "Kiến Trúc Multi-Cloud & Cam Kết SLA 99.99%",
     priceStarting: "Liên hệ tư vấn",
     features: [
-      { icon: "☁️", title: "Private Cloud Độc Quyền", desc: "Xây dựng hạ tầng đám mây riêng biệt hoàn toàn theo yêu cầu doanh nghiệp." },
-      { icon: "📈", title: "Tự động co giãn (Auto Scaling)", desc: "Hệ thống tự động tăng giảm tài nguyên máy chủ theo lưu lượng truy cập thực tế." }
+      { title: "Private Cloud Độc Quyền", desc: "Xây dựng hạ tầng đám mây riêng biệt hoàn toàn theo yêu cầu doanh nghiệp." },
+      { title: "Tự động co giãn (Auto Scaling)", desc: "Hệ thống tự động tăng giảm tài nguyên máy chủ theo lưu lượng truy cập thực tế." }
     ],
     plans: [
       { name: "Cloud Cluster Cơ Bản", cpu: "Multi-Node Setup", ram: "Auto-Failover", storage: "Ceph Storage NVMe", bandwidth: "Dedicated VLAN", price: "2.500.000đ/th" },
@@ -374,8 +375,8 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "Tương Thích 100% AWS S3 API & Chi Phí Cực Rẻ",
     priceStarting: "150.000đ/tháng",
     features: [
-      { icon: "📦", title: "Chuẩn giao thức S3 API", desc: "Dễ dàng tích hợp với WordPress, NextCloud, Cyberduck, AWS CLI và các SDK." },
-      { icon: "🛡️", title: "Độ bền dữ liệu 99.999999999%", desc: "Cơ chế nhân bản dữ liệu 3 vùng an toàn tuyệt đối trước mọi sự cố phần cứng." }
+      { title: "Chuẩn giao thức S3 API", desc: "Dễ dàng tích hợp với WordPress, NextCloud, Cyberduck, AWS CLI và các SDK." },
+      { title: "Độ bền dữ liệu 99.999999999%", desc: "Cơ chế nhân bản dữ liệu 3 vùng an toàn tuyệt đối trước mọi sự cố phần cứng." }
     ],
     plans: [
       { name: "S3 Storage 250GB", cpu: "S3 API", ram: "Băng thông 500GB", storage: "250 GB Storage", bandwidth: "Độ bền 11 số 9", price: "150.000đ/th" },
@@ -386,18 +387,164 @@ export const SERVICE_DETAILS_DATA: Record<string, {
   }
 };
 
+import { useState, useEffect } from "react";
+import { apiFetch } from "@/utils/api";
+import { dataSyncService } from "@/utils/signalr";
+
 export default function ServiceDetailPage() {
   const params = useParams();
   const slug = (params?.slug as string) || "";
-  const service = SERVICE_DETAILS_DATA[slug];
+  const staticData = SERVICE_DETAILS_DATA[slug];
 
-  if (!service) {
-    // Fallback to MaxSpeed hosting if unknown
-    const fallback = SERVICE_DETAILS_DATA["maxspeed-hosting"];
-    return <ServiceDetailView service={fallback} slug="maxspeed-hosting" />;
+  const [category, setCategory] = useState<any | null>(null);
+  const [dbPlans, setDbPlans] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchCategoryAndPlans = async () => {
+    try {
+      setLoading(true);
+      const [catRes, planRes] = await Promise.all([
+        apiFetch("/api/service-categories?includeInactive=false"),
+        apiFetch("/api/service-plans?pageSize=100&includeInactive=false")
+      ]);
+
+      let matchedCat: any = null;
+      if (catRes.ok) {
+        const catData = await catRes.json();
+        const cats = catData.items || catData;
+        if (Array.isArray(cats)) {
+          matchedCat = cats.find((c: any) => 
+            (c.slug && c.slug.toLowerCase() === slug.toLowerCase()) ||
+            (c.name && c.name.toLowerCase().replace(/\s+/g, "-") === slug.toLowerCase())
+          );
+          if (matchedCat) setCategory(matchedCat);
+        }
+      }
+
+      if (planRes.ok) {
+        const planData = await planRes.json();
+        const allPlans = planData.items || planData;
+        if (Array.isArray(allPlans)) {
+          let plansForCat: any[] = [];
+          if (matchedCat) {
+            plansForCat = allPlans.filter((p: any) => p.categoryId === matchedCat.id && p.isActive !== false);
+          }
+          if (plansForCat.length === 0) {
+            // Match by slug or keyword
+            const keyword = slug.replace("-hosting", "").replace("vps-", "").replace("-", " ");
+            plansForCat = allPlans.filter((p: any) => 
+              p.isActive !== false &&
+              ((p.categoryName && p.categoryName.toLowerCase().includes(keyword)) ||
+               (p.name && p.name.toLowerCase().includes(keyword)))
+            );
+          }
+
+          if (plansForCat.length > 0) {
+            const formatted = plansForCat.map((p: any, idx: number) => {
+              const activePrice = (p.prices && p.prices.length > 0) ? p.prices[0] : null;
+              const formattedPrice = activePrice
+                ? new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(activePrice.price)
+                : "Liên hệ";
+              return {
+                id: p.id,
+                name: p.name,
+                cpu: p.cpu || "Tối ưu hóa",
+                ram: p.ram || "Tự động co giãn",
+                storage: p.storage || "NVMe Enterprise",
+                bandwidth: p.bandwidth || "Không giới hạn",
+                price: formattedPrice,
+                popular: idx === 1
+              };
+            });
+            setDbPlans(formatted);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Lỗi tải dữ liệu dịch vụ từ CSDL:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategoryAndPlans();
+
+    const unsubscribe = dataSyncService.subscribe((entity) => {
+      if (entity === "plan" || entity === "category" || entity === "price" || entity === "all") {
+        fetchCategoryAndPlans();
+      }
+    });
+
+    return () => unsubscribe();
+  }, [slug]);
+
+  // Combine static rich info or dynamic DB category info
+  const effectiveCategory = category ? category.name : (staticData ? staticData.category : "Dịch Vụ Cloud");
+  const effectiveName = category ? category.name : (staticData ? staticData.name : slug.replace(/-/g, " ").toUpperCase());
+  const effectiveDescription = category?.description || staticData?.description || "Giải pháp hạ tầng điện toán đám mây tốc độ cao, đạt chuẩn quốc tế Datacenter Tier 3 với cam kết SLA 99.99%.";
+  const effectiveBadge = staticData?.badge || "Tiêu Chuẩn Tier 3";
+  const effectiveTagline = staticData?.tagline || `Dịch vụ ${effectiveName} chất lượng cao, an toàn và tối ưu chi phí`;
+  const effectiveHighlightChip = staticData?.highlightChip || "Tự Động Kích Hoạt & Uptime 99.99%";
+  const effectiveFeatures = staticData?.features || [
+    { title: "Hạ Tầng Datacenter Tier 3", desc: "Máy chủ đặt tại các trung tâm dữ liệu hàng đầu với nguồn điện kép và hệ thống làm mát tối ưu." },
+    { title: "Bảo Vệ Anti-DDoS Độc Quyền", desc: "Tường lửa đa tầng tự động ngăn chặn các cuộc tấn công mạng Layer 3, 4 và Layer 7." },
+    { title: "Kích Hoạt Tức Thì", desc: "Hệ thống tự động thiết lập và bàn giao thông tin quản trị dịch vụ trong vòng 60 giây." },
+    { title: "Hỗ Trợ Kỹ Thuật 24/7", desc: "Đội ngũ kỹ sư túc trực 24/7/365 sẵn sàng giải quyết mọi vấn đề của quý khách hàng." }
+  ];
+
+  const effectivePlans = dbPlans.length > 0 ? dbPlans : (staticData?.plans || []);
+  const effectivePriceStarting = effectivePlans.length > 0 ? `${effectivePlans[0].price} / tháng` : (staticData?.priceStarting || "Liên hệ");
+  const effectiveFaqs = staticData?.faqs || [
+    { q: `Dịch vụ ${effectiveName} có được dùng thử miễn phí không?`, a: "Quý khách hàng được hưởng chính sách hoàn tiền 100% trong vòng 30 ngày nếu chất lượng không đáp ứng kỳ vọng." },
+    { q: "Tôi có được hỗ trợ chuyển đổi dữ liệu không?", a: "Đội ngũ kỹ thuật của chúng tôi sẽ hỗ trợ di chuyển toàn bộ dữ liệu của bạn hoàn toàn miễn phí và không gây gián đoạn hoạt động." }
+  ];
+
+  const servicePayload = {
+    category: effectiveCategory,
+    badge: effectiveBadge,
+    name: effectiveName,
+    tagline: effectiveTagline,
+    description: effectiveDescription,
+    speedRating: staticData?.speedRating || 5,
+    highlightChip: effectiveHighlightChip,
+    priceStarting: effectivePriceStarting,
+    features: effectiveFeatures,
+    plans: effectivePlans,
+    faqs: effectiveFaqs
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+        <div className="text-center">
+          <span className="w-10 h-10 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin inline-block mb-3"></span>
+          <p className="text-xs text-slate-500 font-medium">Đang tải thông tin gói cước từ cơ sở dữ liệu...</p>
+        </div>
+      </div>
+    );
   }
 
-  return <ServiceDetailView service={service} slug={slug} />;
+  return <ServiceDetailView service={servicePayload} slug={slug} />;
+}
+
+function ServiceFeatureIcon({ index }: { index: number }) {
+  const iconSVGs = [
+    <svg key="0" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+    </svg>,
+    <svg key="1" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+    </svg>,
+    <svg key="2" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>,
+    <svg key="3" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+    </svg>
+  ];
+  return iconSVGs[index % iconSVGs.length];
 }
 
 function ServiceDetailView({ service, slug }: { service: typeof SERVICE_DETAILS_DATA[string]; slug: string }) {
@@ -405,7 +552,7 @@ function ServiceDetailView({ service, slug }: { service: typeof SERVICE_DETAILS_
     <div className="min-h-screen bg-slate-50 text-slate-800 selection:bg-blue-600 selection:text-white">
       
       {/* 1. HERO HEADER (Giao diện sáng, màu chủ đạo Xanh Biển) */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 via-white to-slate-50 pt-28 pb-16 border-b border-blue-100">
+      <section className="relative overflow-hidden bg-gradient-to-b from-blue-50/50 via-white to-slate-50 pt-28 pb-16 border-b border-slate-200">
         <div className="max-w-6xl mx-auto px-6">
           
           {/* Breadcrumb */}
@@ -419,8 +566,9 @@ function ServiceDetailView({ service, slug }: { service: typeof SERVICE_DETAILS_
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             <div className="lg:col-span-8">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200 mb-4">
-                ✨ {service.badge}
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 mb-4">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                <span>{service.badge}</span>
               </div>
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-4 leading-tight">
                 {service.name}
@@ -433,18 +581,21 @@ function ServiceDetailView({ service, slug }: { service: typeof SERVICE_DETAILS_
               </p>
 
               {/* Speed Rating Bar & Chip */}
-              <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-slate-600 mb-8 p-3.5 rounded-xl bg-white border border-blue-100 shadow-sm max-w-xl">
+              <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-slate-600 mb-8 p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs max-w-xl">
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-slate-800">Tốc độ:</span>
-                  <div className="w-24 h-2.5 rounded-full bg-blue-100 overflow-hidden flex">
+                  <div className="w-24 h-2.5 rounded-full bg-slate-100 overflow-hidden flex">
                     <div
-                      className="bg-gradient-to-r from-blue-500 to-teal-400 h-full rounded-full animate-pulse"
+                      className="bg-blue-600 h-full rounded-full"
                       style={{ width: `${(service.speedRating / 5) * 100}%` }}
                     ></div>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 text-blue-600 font-bold">
-                  <span>⚡</span> {service.highlightChip}
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span>{service.highlightChip}</span>
                 </div>
               </div>
 
@@ -457,7 +608,7 @@ function ServiceDetailView({ service, slug }: { service: typeof SERVICE_DETAILS_
                 </a>
                 <Link
                   href={`/order?plan=${slug}`}
-                  className="px-8 py-3.5 rounded-xl bg-white hover:bg-blue-50 border border-blue-300 text-blue-700 font-bold text-sm transition-all shadow-sm"
+                  className="px-8 py-3.5 rounded-xl bg-white hover:bg-blue-50 border border-slate-200 text-blue-700 font-bold text-sm transition-all shadow-xs"
                 >
                   Đăng Ký Khởi Tạo Ngay →
                 </Link>
@@ -465,29 +616,40 @@ function ServiceDetailView({ service, slug }: { service: typeof SERVICE_DETAILS_
             </div>
 
             {/* Right Card Summary */}
-            <div className="lg:col-span-4 p-6 rounded-2xl bg-white border border-blue-200 shadow-xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-bl-full pointer-events-none"></div>
+            <div className="lg:col-span-4 p-6 rounded-3xl bg-white border border-slate-200 shadow-xl relative overflow-hidden">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Giá khởi điểm từ</span>
               <div className="text-3xl font-black text-blue-600 mb-4">{service.priceStarting}</div>
               <ul className="space-y-3 text-xs text-slate-600 mb-6">
                 <li className="flex items-center gap-2">
-                  <span className="text-emerald-500 font-bold">✓</span> Kích hoạt tự động tức thì
+                  <svg className="w-4 h-4 text-emerald-500 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Kích hoạt tự động tức thì
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-emerald-500 font-bold">✓</span> Miễn phí chuyển dữ liệu
+                  <svg className="w-4 h-4 text-emerald-500 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Miễn phí chuyển dữ liệu
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-emerald-500 font-bold">✓</span> Cam kết hoàn tiền 30 ngày
+                  <svg className="w-4 h-4 text-emerald-500 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Cam kết hoàn tiền 30 ngày
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-emerald-500 font-bold">✓</span> Hỗ trợ kỹ thuật 24/7/365
+                  <svg className="w-4 h-4 text-emerald-500 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Hỗ trợ kỹ thuật 24/7/365
                 </li>
               </ul>
               <Link
                 href={`/order?plan=${slug}`}
-                className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center transition-colors shadow-sm"
+                className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center transition-colors shadow-md shadow-blue-500/20"
               >
-                Tiến Hành Đặt Hàng
+                Tiến Hành Đặt Hàng →
               </Link>
             </div>
           </div>
@@ -506,9 +668,11 @@ function ServiceDetailView({ service, slug }: { service: typeof SERVICE_DETAILS_
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {service.features.map((f, i) => (
-            <div key={i} className="p-6 rounded-2xl bg-white border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all">
-              <div className="text-3xl mb-3">{f.icon}</div>
-              <h3 className="text-sm font-bold text-slate-900 mb-2">{f.title}</h3>
+            <div key={i} className="p-6 rounded-2xl bg-white border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all group shadow-xs">
+              <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-200">
+                <ServiceFeatureIcon index={i} />
+              </div>
+              <h3 className="text-sm font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">{f.title}</h3>
               <p className="text-xs text-slate-600 leading-relaxed">{f.desc}</p>
             </div>
           ))}
@@ -532,8 +696,8 @@ function ServiceDetailView({ service, slug }: { service: typeof SERVICE_DETAILS_
                 key={idx}
                 className={`p-6 rounded-2xl border flex flex-col justify-between relative transition-all ${
                   p.popular
-                    ? "bg-blue-50/50 border-blue-500 shadow-xl shadow-blue-500/10 ring-2 ring-blue-500/20"
-                    : "bg-slate-50/60 border-slate-200 hover:border-blue-300"
+                    ? "bg-blue-50/40 border-blue-500 shadow-xl shadow-blue-500/10 ring-2 ring-blue-500/20"
+                    : "bg-white border-slate-200 hover:border-blue-300 hover:shadow-md"
                 }`}
               >
                 {p.popular && (
@@ -546,32 +710,51 @@ function ServiceDetailView({ service, slug }: { service: typeof SERVICE_DETAILS_
                   <div className="text-2xl font-black text-blue-600 mb-4">
                     {p.price} <span className="text-xs text-slate-500 font-normal">/ tháng</span>
                   </div>
-                  <div className="h-[1px] bg-slate-200 mb-4"></div>
-                  <ul className="space-y-2.5 text-xs text-slate-700 mb-6">
-                    <li className="flex items-center gap-2">
-                      <span className="text-blue-600 font-bold">⚡ CPU:</span> {p.cpu}
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="text-blue-600 font-bold">💾 RAM:</span> {p.ram}
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="text-blue-600 font-bold">💽 Ổ cứng:</span> {p.storage}
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="text-blue-600 font-bold">🚀 Băng thông:</span> {p.bandwidth}
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="text-emerald-600 font-bold">🛡️ Tường lửa:</span> Anti-DDoS WAF
-                    </li>
-                  </ul>
+                  
+                  {/* Clean Specs Table */}
+                  <div className="py-3 my-4 border-t border-b border-slate-100 space-y-2 text-xs">
+                    {p.cpu && (
+                      <div className="flex justify-between items-center text-slate-600">
+                        <span className="text-slate-500 font-medium">Vi xử lý</span>
+                        <span className="font-semibold text-slate-900 font-mono text-[11px]">{p.cpu}</span>
+                      </div>
+                    )}
+                    {p.ram && (
+                      <div className="flex justify-between items-center text-slate-600">
+                        <span className="text-slate-500 font-medium">Bộ nhớ</span>
+                        <span className="font-semibold text-slate-900 font-mono text-[11px]">{p.ram}</span>
+                      </div>
+                    )}
+                    {p.storage && (
+                      <div className="flex justify-between items-center text-slate-600">
+                        <span className="text-slate-500 font-medium">Ổ cứng</span>
+                        <span className="font-semibold text-slate-900 font-mono text-[11px]">{p.storage}</span>
+                      </div>
+                    )}
+                    {p.bandwidth && (
+                      <div className="flex justify-between items-center text-slate-600">
+                        <span className="text-slate-500 font-medium">Băng thông</span>
+                        <span className="font-semibold text-slate-900">{p.bandwidth}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center text-slate-600 pt-0.5">
+                      <span className="text-slate-500 font-medium">Tường lửa</span>
+                      <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 text-[11px]">
+                        <svg className="w-3.5 h-3.5 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                        Anti-DDoS WAF
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
                 <Link
-                  href={`/order?plan=${slug}&subplan=${encodeURIComponent(p.name)}`}
+                  href={p.id ? `/order?planId=${p.id}` : `/order?plan=${slug}&subplan=${encodeURIComponent(p.name)}`}
                   className={`w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center transition-all ${
                     p.popular
-                      ? "bg-blue-600 hover:bg-blue-700 text-white shadow-md"
-                      : "bg-white hover:bg-blue-600 hover:text-white text-blue-600 border border-blue-300"
+                      ? "bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20"
+                      : "bg-white hover:bg-blue-600 hover:text-white text-blue-600 border border-slate-200 hover:border-blue-600"
                   }`}
                 >
                   Đăng Ký Gói Này →

@@ -13,21 +13,25 @@ namespace CloudService.WebApi.Controllers
     public class NewsController : ControllerBase
     {
         private readonly INewsArticleService _newsArticleService;
+        private readonly IAuditLogService _auditLogService;
 
-        public NewsController(INewsArticleService newsArticleService)
+        public NewsController(INewsArticleService newsArticleService, IAuditLogService auditLogService)
         {
             _newsArticleService = newsArticleService;
+            _auditLogService = auditLogService;
         }
 
         [HttpGet]
         public async Task<ActionResult<PagedNewsResult>> GetAll(
-            int page = 1,
-            int pageSize = 10,
-            string? search = null,
-            bool includeInactive = false)
+            [FromQuery] int page = 1,
+            [FromQuery] int pageNumber = 0,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? search = null,
+            [FromQuery] bool includeInactive = false)
         {
+            int targetPage = pageNumber > 0 ? pageNumber : page;
             var articles = await _newsArticleService.GetAllAsync(
-                page,
+                targetPage,
                 pageSize,
                 search,
                 includeInactive);
@@ -62,7 +66,8 @@ namespace CloudService.WebApi.Controllers
         public async Task<ActionResult<NewsArticleDto>> Create(
             [FromBody] CreateNewsArticleRequest request)
         {
-            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var actor = User?.Identity?.Name ?? "Editor";
+            var userIdClaim = User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (int.TryParse(userIdClaim, out var userId))
             {
                 request.AuthorId = userId;
@@ -73,6 +78,7 @@ namespace CloudService.WebApi.Controllers
             }
 
             var article = await _newsArticleService.CreateAsync(request);
+            await _auditLogService.LogAsync(actor, "Đăng bài viết mới", $"Đăng bài: '{article.Title}' (slug: {article.Slug})", userId);
 
             return CreatedAtAction(
                 nameof(GetById),
@@ -81,28 +87,32 @@ namespace CloudService.WebApi.Controllers
         }
 
         [HttpPut("{id}")]
-[Authorize(Roles = "Admin,Editor")]
-public async Task<ActionResult<NewsArticleDto>> Update(
+        [Authorize(Roles = "Admin,Editor")]
+        public async Task<ActionResult<NewsArticleDto>> Update(
             int id,
             [FromBody] UpdateNewsArticleRequest request)
         {
+            var actor = User?.Identity?.Name ?? "Editor";
             var article = await _newsArticleService.UpdateAsync(id, request);
 
             if (article == null)
                 return NotFound();
 
+            await _auditLogService.LogAsync(actor, "Cập nhật bài viết", $"Chỉnh sửa bài viết #{id}: '{article.Title}'");
             return Ok(article);
         }
 
         [HttpDelete("{id}")]
-[Authorize(Roles = "Admin,Editor")]
+        [Authorize(Roles = "Admin,Editor")]
         public async Task<IActionResult> Delete(int id)
         {
+            var actor = User?.Identity?.Name ?? "Editor";
             var result = await _newsArticleService.DeleteAsync(id);
 
             if (!result)
                 return NotFound();
 
+            await _auditLogService.LogAsync(actor, "Xóa bài viết", $"Đã xóa bài viết tin tức #{id}");
             return NoContent();
         }
     }

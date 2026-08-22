@@ -408,9 +408,16 @@ function OrderFormContent() {
             if (payRes.ok) {
               const payData = await payRes.json();
               setPayosData(payData);
+              setPaymentError(null);
+            } else {
+              const errData = await payRes.json().catch(() => ({}));
+              const msg = errData.message || "Cổng thanh toán PayOS chưa được cấu hình API Key trên máy chủ backend.";
+              console.warn("PayOS Link Generation Warning:", msg);
+              setPaymentError(msg);
             }
-          } catch (payErr) {
+          } catch (payErr: any) {
             console.warn("PayOS Link Generation Warning:", payErr);
+            setPaymentError(payErr?.message || "Không thể kết nối cổng PayOS.");
           }
         }
       } else {
@@ -440,7 +447,11 @@ function OrderFormContent() {
   if (!plan) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-4 py-20 text-center">
-        <div className="text-5xl mb-4">📦</div>
+        <div className="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4">
+          <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+        </div>
         <h1 className="text-xl font-bold text-slate-900 mb-2">Không Tìm Thấy Gói Dịch Vụ</h1>
         <p className="text-xs text-slate-500 max-w-sm mb-6">
           Gói dịch vụ bạn chọn không tồn tại hoặc đã tạm ngưng cung cấp.
@@ -513,7 +524,11 @@ function OrderFormContent() {
               {!isLoggedIn && (
                 <div className="p-5 bg-amber-50 border border-amber-200 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">👤</span>
+                    <div className="w-10 h-10 rounded-2xl bg-amber-100/70 text-amber-700 flex items-center justify-center shrink-0">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
                     <div>
                       <h4 className="text-xs font-bold text-amber-900">Bạn chưa đăng nhập tài khoản</h4>
                       <p className="text-[11px] text-amber-700 mt-0.5">
@@ -532,7 +547,9 @@ function OrderFormContent() {
 
               {validationError && (
                 <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold rounded-2xl flex items-center gap-2">
-                  <span>⚠️</span>
+                  <svg className="w-4 h-4 text-rose-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
                   <span>{validationError}</span>
                 </div>
               )}
@@ -542,7 +559,9 @@ function OrderFormContent() {
                 {/* 1. Chu kỳ thanh toán */}
                 <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
                   <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <span>⏱️</span>
+                    <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                     <span>Chu Kỳ Thanh Toán</span>
                   </h3>
 
@@ -577,7 +596,9 @@ function OrderFormContent() {
                 {/* 2. Thông tin khách hàng */}
                 <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
                   <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <span>📝</span>
+                    <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
                     <span>Thông Tin Người Đăng Ký</span>
                   </h3>
 
@@ -646,7 +667,9 @@ function OrderFormContent() {
                 <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-3">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                      <span>🎁</span>
+                      <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                      </svg>
                       <span>Mã Ưu Đãi / Khuyến Mãi</span>
                     </h3>
                     {discountPercent > 0 && (
@@ -700,7 +723,15 @@ function OrderFormContent() {
                           : "bg-rose-50 text-rose-700 border border-rose-200"
                       }`}
                     >
-                      <span>{promoMessage.type === "success" ? "✓" : "⚠️"}</span>
+                      {promoMessage.type === "success" ? (
+                        <svg className="w-4 h-4 text-emerald-600 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4 text-rose-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      )}
                       <span>{promoMessage.text}</span>
                     </div>
                   )}
@@ -730,32 +761,37 @@ function OrderFormContent() {
                 {/* Thông số kỹ thuật */}
                 <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-2.5 text-xs">
                   {plan.cpu && (
-                    <div className="flex justify-between text-slate-700">
-                      <span className="text-slate-500">⚡ Vi xử lý (CPU):</span>
-                      <span className="font-bold">{plan.cpu}</span>
+                    <div className="flex justify-between items-center text-slate-700">
+                      <span className="text-slate-500 font-medium">Vi xử lý (CPU):</span>
+                      <span className="font-semibold text-slate-900 font-mono text-[11px]">{plan.cpu}</span>
                     </div>
                   )}
                   {plan.ram && (
-                    <div className="flex justify-between text-slate-700">
-                      <span className="text-slate-500">💾 Bộ nhớ (RAM):</span>
-                      <span className="font-bold">{plan.ram}</span>
+                    <div className="flex justify-between items-center text-slate-700">
+                      <span className="text-slate-500 font-medium">Bộ nhớ (RAM):</span>
+                      <span className="font-semibold text-slate-900 font-mono text-[11px]">{plan.ram}</span>
                     </div>
                   )}
                   {plan.storage && (
-                    <div className="flex justify-between text-slate-700">
-                      <span className="text-slate-500">💽 Ổ cứng lưu trữ:</span>
-                      <span className="font-bold">{plan.storage}</span>
+                    <div className="flex justify-between items-center text-slate-700">
+                      <span className="text-slate-500 font-medium">Lưu trữ:</span>
+                      <span className="font-semibold text-slate-900 font-mono text-[11px]">{plan.storage}</span>
                     </div>
                   )}
                   {plan.bandwidth && (
-                    <div className="flex justify-between text-slate-700">
-                      <span className="text-slate-500">🚀 Băng thông:</span>
-                      <span className="font-bold">{plan.bandwidth}</span>
+                    <div className="flex justify-between items-center text-slate-700">
+                      <span className="text-slate-500 font-medium">Băng thông:</span>
+                      <span className="font-semibold text-slate-900">{plan.bandwidth}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-slate-700">
-                    <span className="text-slate-500">🛡️ Tường lửa:</span>
-                    <span className="font-bold text-emerald-600">Anti-DDoS 100Gbps</span>
+                  <div className="flex justify-between items-center text-slate-700 pt-0.5">
+                    <span className="text-slate-500 font-medium">Tường lửa:</span>
+                    <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 text-[11px]">
+                      <svg className="w-3.5 h-3.5 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Anti-DDoS 100Gbps
+                    </span>
                   </div>
                 </div>
 
@@ -821,9 +857,12 @@ function OrderFormContent() {
                       setIsExpired(false);
                       setStep(1);
                     }}
-                    className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-2xl shadow-md transition-all inline-block hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                    className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-2xl shadow-md transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                   >
-                    🔄 Đặt Hàng Lại Gói Này
+                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span>Đặt Hàng Lại Gói Này</span>
                   </button>
                   <Link
                     href="/pricing"
@@ -863,8 +902,10 @@ function OrderFormContent() {
                     </div>
                     {/* Đồng hồ đếm ngược 5 phút */}
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-blue-200 rounded-full font-mono text-xs font-bold text-rose-600 shadow-xs">
-                      <span>⏱️ Hết hạn sau:</span>
-                      <span>{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, "0")}</span>
+                      <svg className="w-3.5 h-3.5 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>Hết hạn sau: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, "0")}</span>
                     </div>
                   </div>
                   <p className="text-[11px] text-slate-500 text-left sm:text-center">
@@ -891,61 +932,98 @@ function OrderFormContent() {
                   {/* KHUNG HIỂN THỊ MÃ QR TRỰC TIẾP TRÊN TRANG */}
                   <div className="p-6 bg-slate-50 rounded-3xl border border-slate-200 text-center space-y-4">
                     
-                    {/* Khung chứa ảnh QR Code */}
-                    <div className="inline-block p-4 bg-white border border-slate-200 rounded-3xl shadow-sm relative group">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={
-                          payosData?.qrCode
-                            ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(payosData.qrCode)}`
-                            : `https://img.vietqr.io/image/MB-0333336666-compact2.png?amount=${createdOrder.totalAmount}&addInfo=${encodeURIComponent(payosData?.description || createdOrder.orderCode)}&accountName=CONG%20TY%20CLOUDSERVICE`
-                        }
-                        alt="Payment QR Code"
-                        className="w-56 h-56 mx-auto object-contain rounded-xl"
-                      />
-                      <div className="text-[10px] text-slate-400 font-bold uppercase mt-2 tracking-wider">
-                        ⚡ VietQR Chuyển Khoản Tự Động 24/7
-                      </div>
-                    </div>
-
-                    {/* Bảng Chi Tiết Thông Tin Chuyển Khoản Trực Tiếp */}
-                    <div className="max-w-md mx-auto bg-white p-4 rounded-2xl border border-slate-200 text-xs text-left space-y-2.5">
-                      <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-                        <span className="text-slate-500">Chủ tài khoản:</span>
-                        <span className="font-bold text-slate-900 uppercase">
-                          {payosData?.accountName || "CONG TY CLOUDSERVICE"}
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-                        <span className="text-slate-500">Số tài khoản:</span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-blue-600 text-sm">
-                            {payosData?.accountNumber || "0333336666"}
-                          </span>
+                    {payosData?.qrCode ? (
+                      <>
+                        {/* Khung chứa ảnh QR Code thật từ PayOS */}
+                        <div className="inline-block p-4 bg-white border border-slate-200 rounded-3xl shadow-sm relative group">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(payosData.qrCode)}`}
+                            alt="PayOS Payment QR Code"
+                            className="w-56 h-56 mx-auto object-contain rounded-xl"
+                          />
+                          <div className="text-[10px] text-slate-500 font-bold uppercase mt-2.5 tracking-wider flex items-center justify-center gap-1.5">
+                            <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            <span>VietQR PayOS Tự Động 24/7</span>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-                        <span className="text-slate-500">Số tiền:</span>
-                        <span className="font-black text-rose-600">
-                          {new Intl.NumberFormat("vi-VN").format(createdOrder.totalAmount)} đ
-                        </span>
-                      </div>
+                        {/* Bảng Chi Tiết Thông Tin Chuyển Khoản Trực Tiếp */}
+                        <div className="max-w-md mx-auto bg-white p-4 rounded-2xl border border-slate-200 text-xs text-left space-y-2.5">
+                          {payosData.accountName && (
+                            <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                              <span className="text-slate-500">Chủ tài khoản:</span>
+                              <span className="font-bold text-slate-900 uppercase">
+                                {payosData.accountName}
+                              </span>
+                            </div>
+                          )}
 
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-500">Nội dung chuyển khoản:</span>
-                        <span className="font-mono font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">
-                          {payosData?.description || createdOrder.orderCode}
-                        </span>
-                      </div>
-                    </div>
+                          {payosData.accountNumber && (
+                            <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                              <span className="text-slate-500">Số tài khoản:</span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono font-bold text-blue-600 text-sm">
+                                  {payosData.accountNumber}
+                                </span>
+                              </div>
+                            </div>
+                          )}
 
-                    {/* Thông báo kết quả kiểm tra thanh toán thủ công */}
-                    {paymentError && (
+                          <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                            <span className="text-slate-500">Số tiền:</span>
+                            <span className="font-black text-rose-600">
+                              {new Intl.NumberFormat("vi-VN").format(createdOrder.totalAmount)} đ
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between items-center">
+                            <span className="text-slate-500">Nội dung chuyển khoản:</span>
+                            <span className="font-mono font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">
+                              {payosData.description || createdOrder.orderCode}
+                            </span>
+                          </div>
+                        </div>
+
+                        {payosData.checkoutUrl && (
+                          <div className="max-w-md mx-auto pt-1">
+                            <a
+                              href={payosData.checkoutUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition-all"
+                            >
+                              <span>Mở Trang Thanh Toán PayOS (Thẻ / VietQR) ↗</span>
+                            </a>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      /* Trường hợp chưa nhận được PayOS Data do chưa cấu hình key trên server */
+                      <div className="p-6 bg-amber-50 border border-amber-200 rounded-2xl text-center space-y-3">
+                        <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
+                          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                        </div>
+                        <h4 className="text-xs font-bold text-amber-900">
+                          Chưa Khởi Tạo Được Cổng Thanh Toán PayOS
+                        </h4>
+                        <p className="text-[11px] text-amber-700 max-w-md mx-auto leading-relaxed">
+                          {paymentError || "Hệ thống máy chủ chưa cấu hình bộ khóa API (ClientId, ApiKey, ChecksumKey) cho cổng thanh toán PayOS."}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Thông báo lỗi khi kiểm tra giao dịch */}
+                    {paymentError && payosData && (
                       <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-700 font-medium flex items-center justify-between gap-3 text-left">
                         <div className="flex items-center gap-2">
-                          <span className="text-base">⚠️</span>
+                          <svg className="w-4 h-4 text-rose-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
                           <span>{paymentError}</span>
                         </div>
                       </div>
@@ -966,7 +1044,9 @@ function OrderFormContent() {
                           </>
                         ) : (
                           <>
-                            <span>🔄</span>
+                            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
                             <span>Tôi Đã Chuyển Khoản Thành Công - Kiểm Tra Kết Quả Giao Dịch</span>
                           </>
                         )}

@@ -15,6 +15,14 @@ export default function AffiliatePage() {
   const [registered, setRegistered] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
+  // Calculator State
+  const [clientCount, setClientCount] = useState(15);
+  const [averageSpend, setAverageSpend] = useState(350000);
+
+  const firstMonthCommission = clientCount * averageSpend * 0.2;
+  const recurringMonthlyCommission = clientCount * averageSpend * 0.1;
+  const estimatedYearlyTotal = firstMonthCommission + recurringMonthlyCommission * 11;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
@@ -73,26 +81,64 @@ export default function AffiliatePage() {
 
   const commissionPolicies = [
     {
-      icon: "💰",
+      iconType: "dollar",
       title: "20% Hoa Hồng Đầu",
       desc: "Nhận ngay 20% giá trị hợp đồng thanh toán lần đầu tiên của tất cả khách hàng mới do bạn giới thiệu."
     },
     {
-      icon: "🔄",
+      iconType: "refresh",
       title: "10% Trọn Đời",
       desc: "Tiếp tục nhận 10% giá trị các lần gia hạn thanh toán tiếp theo trọn đời của khách hàng đó."
     },
     {
-      icon: "⚡",
+      iconType: "bolt",
       title: "Hạn Mức Rút Thấp",
       desc: "Yêu cầu rút tiền tối thiểu chỉ từ 200.000đ. Hệ thống đối soát tự động, minh bạch."
     },
     {
-      icon: "📅",
+      iconType: "calendar",
       title: "Thanh Toán Đúng Hạn",
       desc: "Chi trả hoa hồng tự động qua tài khoản ngân hàng từ ngày 5 đến ngày 10 hằng tháng."
     }
   ];
+
+  function PolicyIcon({ type }: { type: string }) {
+    switch (type) {
+      case "dollar":
+        return (
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        );
+      case "refresh":
+        return (
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </div>
+        );
+      case "bolt":
+        return (
+          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+        );
+      case "calendar":
+      default:
+        return (
+          <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+        );
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 py-16 px-6">
@@ -124,7 +170,7 @@ export default function AffiliatePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {commissionPolicies.map((policy, idx) => (
               <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:border-blue-300 transition-all">
-                <span className="text-2xl block mb-2">{policy.icon}</span>
+                <PolicyIcon type={policy.iconType} />
                 <h3 className="text-sm font-bold text-slate-900 mb-2">{policy.title}</h3>
                 <p className="text-xs text-slate-600 leading-relaxed">{policy.desc}</p>
               </div>
@@ -132,8 +178,113 @@ export default function AffiliatePage() {
           </div>
         </section>
 
+        {/* INTERACTIVE COMMISSION CALCULATOR */}
+        <section className="mb-16 bg-white border border-blue-200 rounded-3xl p-6 sm:p-10 shadow-lg relative overflow-hidden">
+          <div className="text-center max-w-2xl mx-auto mb-8">
+            <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block mb-1">Công Cụ Ước Tính</span>
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              Dự Tính Thu Nhập Thụ Động Của Bạn
+            </h2>
+            <p className="text-xs text-slate-500 mt-2">
+              Kéo thanh trượt để xem bạn có thể kiếm được bao nhiêu thu nhập hàng tháng khi giới thiệu khách hàng.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+            {/* Sliders */}
+            <div className="space-y-6 bg-slate-50 p-6 rounded-2xl border border-slate-200">
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-xs font-bold text-slate-700">Số khách hàng giới thiệu / tháng:</label>
+                  <span className="text-sm font-black text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-lg border border-blue-200">
+                    {clientCount} khách hàng
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={1}
+                  max={100}
+                  value={clientCount}
+                  onChange={(e) => setClientCount(Number(e.target.value))}
+                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                />
+                <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                  <span>1</span>
+                  <span>25</span>
+                  <span>50</span>
+                  <span>75</span>
+                  <span>100+</span>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-xs font-bold text-slate-700">Giá trị đơn hàng trung bình / tháng:</label>
+                  <span className="text-sm font-black text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-lg border border-blue-200">
+                    {new Intl.NumberFormat("vi-VN").format(averageSpend)}đ
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={100000}
+                  max={2000000}
+                  step={50000}
+                  value={averageSpend}
+                  onChange={(e) => setAverageSpend(Number(e.target.value))}
+                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                />
+                <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                  <span>100K (Hosting)</span>
+                  <span>500K (VPS Pro)</span>
+                  <span>2M (Dedicated)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Calculated Output Display */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-5 rounded-2xl bg-blue-50/80 border border-blue-200">
+                <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider block mb-1">
+                  Hoa hồng tháng đầu (20%)
+                </span>
+                <div className="text-2xl font-black text-blue-600">
+                  {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(firstMonthCommission)}
+                </div>
+                <p className="text-[10px] text-blue-600/80 mt-1">Thanh toán ngay khi khách kích hoạt</p>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-emerald-50/80 border border-emerald-200">
+                <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block mb-1">
+                  Hoa hồng duy trì / tháng (10%)
+                </span>
+                <div className="text-2xl font-black text-emerald-600">
+                  {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(recurringMonthlyCommission)}
+                </div>
+                <p className="text-[10px] text-emerald-600/80 mt-1">Thu nhập thụ động trọn đời</p>
+              </div>
+
+              <div className="sm:col-span-2 p-5 rounded-2xl bg-slate-900 text-white shadow-md">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                  <div>
+                    <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">Ước tính thu nhập năm đầu</span>
+                    <div className="text-3xl font-black text-white mt-0.5">
+                      {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(estimatedYearlyTotal)}
+                    </div>
+                  </div>
+                  <a
+                    href="#register-form"
+                    className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs text-center transition-colors shadow-md"
+                  >
+                    Bắt Đầu Ngay →
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Info & Form */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start mb-16">
+        <div id="register-form" className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start mb-16">
           
           {/* Rules & Guidelines */}
           <div className="bg-white border border-slate-200 rounded-2xl p-8 space-y-6 shadow-sm">
@@ -191,8 +342,11 @@ export default function AffiliatePage() {
                 <p className="text-xs text-slate-500 mb-4">Vui lòng điền chính xác thông tin nhận tiền hoa hồng.</p>
 
                 {formError && (
-                  <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
-                    ⚠️ {formError}
+                  <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center gap-2">
+                    <svg className="w-4 h-4 text-rose-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>{formError}</span>
                   </div>
                 )}
 

@@ -4,15 +4,55 @@ import Link from "next/link";
 import { apiFetch } from "@/utils/api";
 import { dataSyncService } from "@/utils/signalr";
 
-function getCategoryIcon(name: string = ""): string {
+function CategoryIcon({ name = "", className = "w-6 h-6" }: { name?: string; className?: string }) {
   const lower = name.toLowerCase();
-  if (lower.includes("vps") || lower.includes("máy chủ")) return "⚡";
-  if (lower.includes("host") || lower.includes("web")) return "🌐";
-  if (lower.includes("domain") || lower.includes("miền")) return "🏷️";
-  if (lower.includes("mail") || lower.includes("thư")) return "✉️";
-  if (lower.includes("ssl") || lower.includes("chứng chỉ")) return "🔒";
-  if (lower.includes("firewall") || lower.includes("ddos") || lower.includes("bảo mật")) return "🛡️";
-  return "📦";
+  if (lower.includes("vps") || lower.includes("máy chủ")) {
+    return (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+      </svg>
+    );
+  }
+  if (lower.includes("host") || lower.includes("web")) {
+    return (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+      </svg>
+    );
+  }
+  if (lower.includes("domain") || lower.includes("miền")) {
+    return (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+      </svg>
+    );
+  }
+  if (lower.includes("mail") || lower.includes("thư")) {
+    return (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      </svg>
+    );
+  }
+  if (lower.includes("ssl") || lower.includes("chứng chỉ")) {
+    return (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+      </svg>
+    );
+  }
+  if (lower.includes("firewall") || lower.includes("ddos") || lower.includes("bảo mật")) {
+    return (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+      </svg>
+    );
+  }
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+    </svg>
+  );
 }
 
 export default function ServicesPage() {
@@ -85,7 +125,11 @@ export default function ServicesPage() {
           </div>
         ) : categories.length === 0 ? (
           <div className="text-center py-20 text-slate-400 text-sm bg-white rounded-3xl border border-slate-200 p-8 max-w-lg mx-auto">
-            <div className="text-4xl mb-3">📦</div>
+            <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+            </div>
             <h3 className="text-base font-bold text-slate-900 mb-1">Chưa có danh mục dịch vụ nào</h3>
             <p className="text-xs text-slate-500">
               Vui lòng truy cập trang quản trị Admin để thêm danh mục và gói dịch vụ vào hệ thống.
@@ -104,7 +148,9 @@ export default function ServicesPage() {
                 >
                   <div>
                     <div className="flex justify-between items-start mb-4">
-                      <span className="text-3xl">{getCategoryIcon(cat.name)}</span>
+                      <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors duration-200">
+                        <CategoryIcon name={cat.name} className="w-6 h-6" />
+                      </div>
                       <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                         {catPlans.length} gói cước
                       </span>

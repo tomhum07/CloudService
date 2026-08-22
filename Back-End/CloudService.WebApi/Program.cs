@@ -6,9 +6,29 @@ using System.Text;
 using CloudService.Infrastructure.Data;
 using CloudService.Application.Interfaces;
 using CloudService.Infrastructure.Services;
-using Resend;
+using Serilog;
+
+// Cấu hình Serilog Logger (Ghi log Console và File theo ngày)
+Serilog.Log.Logger = new Serilog.LoggerConfiguration()
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.Hosting.Lifetime", Serilog.Events.LogEventLevel.Information)
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore", Serilog.Events.LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .WriteTo.File(
+        path: "logs/cloudservice-.log",
+        rollingInterval: Serilog.RollingInterval.Day,
+        retainedFileCountLimit: 14,
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .CreateLogger();
+
+Serilog.Log.Information(">>> CloudService WebAPI Server đang khởi động...");
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Tích hợp Serilog vào Host
+builder.Host.UseSerilog();
 
 // Add services to the container.
 
@@ -129,6 +149,9 @@ builder.Services.AddOpenApi(options =>
 
 var app = builder.Build();
 
+// Tích hợp Serilog HTTP Request Logging
+app.UseSerilogRequestLogging();
+
 // Khởi chạy Migrations và Seed Dữ liệu tự động lúc khởi động
 using (var scope = app.Services.CreateScope())
 {
@@ -161,5 +184,12 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<CloudService.WebApi.Hubs.DataSyncHub>("/hubs/datasync");
+
+Serilog.Log.Information("==================================================================");
+Serilog.Log.Information("  CloudService WebAPI Backend Đã Sẵn Sàng!");
+Serilog.Log.Information("  - HTTP URL:    http://localhost:5074");
+Serilog.Log.Information("  - HTTPS URL:   https://localhost:7108");
+Serilog.Log.Information("  - Swagger API: http://localhost:5074/scalar/v1");
+Serilog.Log.Information("==================================================================");
 
 app.Run();
