@@ -25,22 +25,21 @@ namespace CloudService.WebApi.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            var ipAddress = HttpContext?.Connection?.RemoteIpAddress?.ToString() ?? "127.0.0.1";
             try
             {
                 var response = await _authService.LoginAsync(request, token => SetRefreshTokenCookie(token));
                 if (response == null)
                 {
-                    await _auditLogService.LogAsync(request.Username, "Đăng nhập thất bại", $"Sai tài khoản hoặc mật khẩu từ IP {ipAddress}");
+                    await _auditLogService.LogAsync(request.Username, "Đăng nhập thất bại", "Sai tài khoản hoặc mật khẩu");
                     return Unauthorized(new { message = "Tài khoản hoặc mật khẩu không chính xác." });
                 }
 
-                await _auditLogService.LogAsync(response.Username, "Đăng nhập hệ thống", $"Đăng nhập thành công [{response.Role}] từ IP {ipAddress}");
+                await _auditLogService.LogAsync(response.Username, "Đăng nhập hệ thống", $"Đăng nhập thành công với vai trò [{response.Role}]");
                 return Ok(response);
             }
             catch (Exception ex) when (ex.Message == "LockedAccount")
             {
-                await _auditLogService.LogAsync(request.Username, "Đăng nhập thất bại", $"Tài khoản bị khóa đăng nhập từ IP {ipAddress}");
+                await _auditLogService.LogAsync(request.Username, "Đăng nhập thất bại", "Tài khoản bị khóa");
                 return Unauthorized(new { message = "Tài khoản của bạn đã bị khóa." });
             }
         }

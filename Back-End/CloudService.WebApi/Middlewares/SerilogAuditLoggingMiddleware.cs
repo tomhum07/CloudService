@@ -20,7 +20,7 @@ namespace CloudService.WebApi.Middlewares
         {
             var path = context.Request.Path.Value ?? "";
             
-            // Bỏ qua các static file và swagger docs để log gọn gàng
+            // Bỏ qua các static file, swagger docs, root để log siêu sạch
             if (path.StartsWith("/swagger") || path.StartsWith("/scalar") || path.StartsWith("/favicon.ico") || path == "/")
             {
                 await _next(context);
@@ -40,7 +40,7 @@ namespace CloudService.WebApi.Middlewares
                 var statusCode = context.Response.StatusCode;
                 var method = context.Request.Method;
 
-                // 1. Trích xuất User và Role
+                // 1. Trích xuất danh tính User & Role
                 string userDisplay = "Khách (N/A)";
                 if (context.User.Identity?.IsAuthenticated == true)
                 {
@@ -53,40 +53,36 @@ namespace CloudService.WebApi.Middlewares
                     userDisplay = $"{username} ({role})";
                 }
 
-                // 2. Lấy IP
-                var ip = context.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
-                if (ip == "::1") ip = "127.0.0.1";
-
-                // 3. Phân giải hành động tiếng Việt
+                // 2. Phân giải hành động nghiệp vụ tiếng Việt
                 var action = ResolveAction(method, path);
 
-                // 4. Xuất log ngắn gọn trên 1 dòng duy nhất, không bị rớt dòng (Clean Single-Line Log)
+                // 3. Xuất log chuẩn Single-Line không kèm IP rác
                 if (method == "GET" || method == "OPTIONS")
                 {
-                    // Đối với request truy vấn (GET / OPTIONS): hiển thị siêu gọn
+                    // Đối với request truy vấn (GET / OPTIONS)
                     if (statusCode >= 400)
                     {
-                        Log.Warning("[{Method} {Status}] {Path} ({Duration}ms) | {User} | IP: {IP}", method, statusCode, path, duration, userDisplay, ip);
+                        Log.Warning("[{Method} {Status}] {Path} ({Duration}ms) | {User}", method, statusCode, path, duration, userDisplay);
                     }
                     else
                     {
-                        Log.Information("[{Method} {Status}] {Path} ({Duration}ms) | {User} | IP: {IP}", method, statusCode, path, duration, userDisplay, ip);
+                        Log.Information("[{Method} {Status}] {Path} ({Duration}ms) | {User}", method, statusCode, path, duration, userDisplay);
                     }
                 }
                 else
                 {
-                    // Đối với thao tác nghiệp vụ (POST, PUT, DELETE, PATCH): hiển thị rõ hành động
+                    // Đối với thao tác nghiệp vụ (POST, PUT, DELETE, PATCH)
                     if (statusCode >= 500)
                     {
-                        Log.Error("[{Method} {Status}] {Action} -> {Path} ({Duration}ms) | {User} | IP: {IP}", method, statusCode, action, path, duration, userDisplay, ip);
+                        Log.Error("[{Method} {Status}] {Action} -> {Path} ({Duration}ms) | {User}", method, statusCode, action, path, duration, userDisplay);
                     }
                     else if (statusCode >= 400)
                     {
-                        Log.Warning("[{Method} {Status}] {Action} -> {Path} ({Duration}ms) | {User} | IP: {IP}", method, statusCode, action, path, duration, userDisplay, ip);
+                        Log.Warning("[{Method} {Status}] {Action} -> {Path} ({Duration}ms) | {User}", method, statusCode, action, path, duration, userDisplay);
                     }
                     else
                     {
-                        Log.Information("[{Method} {Status}] {Action} -> {Path} ({Duration}ms) | {User} | IP: {IP}", method, statusCode, action, path, duration, userDisplay, ip);
+                        Log.Information("[{Method} {Status}] {Action} -> {Path} ({Duration}ms) | {User}", method, statusCode, action, path, duration, userDisplay);
                     }
                 }
             }
