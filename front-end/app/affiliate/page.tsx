@@ -81,26 +81,64 @@ export default function AffiliatePage() {
 
   const commissionPolicies = [
     {
-      icon: "💰",
+      iconType: "dollar",
       title: "20% Hoa Hồng Đầu",
       desc: "Nhận ngay 20% giá trị hợp đồng thanh toán lần đầu tiên của tất cả khách hàng mới do bạn giới thiệu."
     },
     {
-      icon: "🔄",
+      iconType: "refresh",
       title: "10% Trọn Đời",
       desc: "Tiếp tục nhận 10% giá trị các lần gia hạn thanh toán tiếp theo trọn đời của khách hàng đó."
     },
     {
-      icon: "⚡",
+      iconType: "bolt",
       title: "Hạn Mức Rút Thấp",
       desc: "Yêu cầu rút tiền tối thiểu chỉ từ 200.000đ. Hệ thống đối soát tự động, minh bạch."
     },
     {
-      icon: "📅",
+      iconType: "calendar",
       title: "Thanh Toán Đúng Hạn",
       desc: "Chi trả hoa hồng tự động qua tài khoản ngân hàng từ ngày 5 đến ngày 10 hằng tháng."
     }
   ];
+
+  function PolicyIcon({ type }: { type: string }) {
+    switch (type) {
+      case "dollar":
+        return (
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        );
+      case "refresh":
+        return (
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </div>
+        );
+      case "bolt":
+        return (
+          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+        );
+      case "calendar":
+      default:
+        return (
+          <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+        );
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 py-16 px-6">
@@ -132,7 +170,7 @@ export default function AffiliatePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {commissionPolicies.map((policy, idx) => (
               <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:border-blue-300 transition-all">
-                <span className="text-2xl block mb-2">{policy.icon}</span>
+                <PolicyIcon type={policy.iconType} />
                 <h3 className="text-sm font-bold text-slate-900 mb-2">{policy.title}</h3>
                 <p className="text-xs text-slate-600 leading-relaxed">{policy.desc}</p>
               </div>

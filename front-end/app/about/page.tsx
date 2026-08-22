@@ -93,7 +93,10 @@ export default function AboutPage() {
                   </span>
                 </div>
                 <div className="text-xs text-blue-600 font-semibold mb-3 flex items-center gap-1.5">
-                  <span>🚀</span> Băng thông kết nối: {dc.bandwidth}
+                  <svg className="w-4 h-4 text-blue-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span>Băng thông kết nối: {dc.bandwidth}</span>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
                   {dc.features}
@@ -105,8 +108,11 @@ export default function AboutPage() {
 
         {/* Cam kết SLA */}
         <section className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm mb-12">
-          <h2 className="text-xl font-bold text-slate-900 mb-2 flex items-center gap-2">
-            <span>📜</span> Chính Sách Cam Kết Uptime & Bồi Thường SLA
+          <h2 className="text-xl font-bold text-slate-900 mb-2 flex items-center gap-2.5">
+            <svg className="w-5 h-5 text-blue-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+            <span>Chính Sách Cam Kết Uptime & Bồi Thường SLA</span>
           </h2>
           <p className="text-xs text-slate-500 mb-6">
             Cam kết chất lượng dịch vụ (Service Level Agreement) minh bạch và uy tín tuyệt đối với khách hàng.

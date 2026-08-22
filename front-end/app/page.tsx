@@ -407,7 +407,7 @@ export default function Home() {
                 {plan.qrCodeUrl && (
                   <div
                     onClick={() => setSelectedQrPlan(plan)}
-                    className="p-3 bg-slate-50 hover:bg-blue-50/60 border border-slate-200 hover:border-blue-300 rounded-2xl mb-5 flex items-center gap-3.5 cursor-pointer transition-all duration-200 group/qr shadow-xs"
+                    className="p-3 bg-slate-50 hover:bg-blue-50/60 border border-slate-200 hover:border-blue-300 rounded-2xl mb-4 flex items-center gap-3.5 cursor-pointer transition-all duration-200 group/qr shadow-xs"
                     title="Bấm để phóng to mã QR quét trên điện thoại"
                   >
                     <div className="relative shrink-0 bg-white p-1.5 rounded-xl border border-slate-200 shadow-xs">
@@ -415,50 +415,64 @@ export default function Home() {
                       <img
                         src={plan.qrCodeUrl}
                         alt={`QR Code ${plan.name}`}
-                        className="w-16 h-16 object-contain rounded-lg group-hover/qr:scale-105 transition-transform"
+                        className="w-14 h-14 object-contain rounded-lg group-hover/qr:scale-105 transition-transform"
                       />
                       <div className="absolute inset-0 bg-blue-600/10 rounded-xl opacity-0 group-hover/qr:opacity-100 transition-opacity flex items-center justify-center">
-                        <span className="text-xs">🔍</span>
+                        <svg className="w-3.5 h-3.5 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                        </svg>
                       </div>
                     </div>
                     <div className="text-left flex-1 min-w-0">
-                      <div className="flex items-center gap-1 text-[11px] font-bold text-slate-900 group-hover/qr:text-blue-600 transition-colors">
-                        <span>📱 Quét QR Thanh Toán</span>
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-900 group-hover/qr:text-blue-600 transition-colors">
+                        <svg className="w-3.5 h-3.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        <span>Quét QR Thanh Toán</span>
                       </div>
-                      <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5 leading-snug">
-                        Chạm để phóng to & quét đặt mua nhanh
+                      <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5 leading-snug">
+                        Chạm để phóng to mã QR
                       </p>
                     </div>
                   </div>
                 )}
 
-                <div className="h-[1px] bg-slate-100 mb-4"></div>
-
-                <ul className="space-y-2.5 text-xs text-slate-700 mb-6">
+                {/* Clean Professional Specs Table */}
+                <div className="py-3.5 my-4 border-t border-b border-slate-100 space-y-2.5 text-xs">
                   {plan.cpu && (
-                    <li className="flex items-center gap-2">
-                      <span className="text-blue-600 font-bold">⚡ CPU:</span> {plan.cpu}
-                    </li>
+                    <div className="flex justify-between items-center text-slate-600">
+                      <span className="text-slate-500 font-medium">Vi xử lý (CPU)</span>
+                      <span className="font-semibold text-slate-900 font-mono text-[11px]">{plan.cpu}</span>
+                    </div>
                   )}
                   {plan.ram && (
-                    <li className="flex items-center gap-2">
-                      <span className="text-blue-600 font-bold">💾 RAM:</span> {plan.ram}
-                    </li>
+                    <div className="flex justify-between items-center text-slate-600">
+                      <span className="text-slate-500 font-medium">Bộ nhớ (RAM)</span>
+                      <span className="font-semibold text-slate-900 font-mono text-[11px]">{plan.ram}</span>
+                    </div>
                   )}
                   {plan.storage && (
-                    <li className="flex items-center gap-2">
-                      <span className="text-blue-600 font-bold">💽 Ổ cứng:</span> {plan.storage}
-                    </li>
+                    <div className="flex justify-between items-center text-slate-600">
+                      <span className="text-slate-500 font-medium">Lưu trữ (Disk)</span>
+                      <span className="font-semibold text-slate-900 font-mono text-[11px]">{plan.storage}</span>
+                    </div>
                   )}
                   {plan.bandwidth && (
-                    <li className="flex items-center gap-2">
-                      <span className="text-blue-600 font-bold">🚀 Băng thông:</span> {plan.bandwidth}
-                    </li>
+                    <div className="flex justify-between items-center text-slate-600">
+                      <span className="text-slate-500 font-medium">Băng thông</span>
+                      <span className="font-semibold text-slate-900">{plan.bandwidth}</span>
+                    </div>
                   )}
-                  <li className="flex items-center gap-2">
-                    <span className="text-emerald-600 font-bold">🛡️ Tường lửa:</span> Anti-DDoS 100Gbps
-                  </li>
-                </ul>
+                  <div className="flex justify-between items-center text-slate-600 pt-0.5">
+                    <span className="text-slate-500 font-medium">Tường lửa</span>
+                    <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 text-[11px]">
+                      <svg className="w-3.5 h-3.5 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Anti-DDoS 100Gbps
+                    </span>
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -544,8 +558,11 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-600 border border-rose-200 mb-4">
-                🛡️ CÔNG NGHỆ BẢO MẬT ĐỘC QUYỀN
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-600 border border-rose-200 mb-4">
+                <svg className="w-3.5 h-3.5 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <span>CÔNG NGHỆ BẢO MẬT ĐỘC QUYỀN</span>
               </div>
               <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mb-6 leading-tight">
                 Tường Lửa Anti-DDoS Đa Tầng <br />

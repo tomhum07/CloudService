@@ -400,12 +400,31 @@ export default function ServiceDetailPage() {
   return <ServiceDetailView service={service} slug={slug} />;
 }
 
+function ServiceFeatureIcon({ index }: { index: number }) {
+  const iconSVGs = [
+    <svg key="0" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+    </svg>,
+    <svg key="1" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+    </svg>,
+    <svg key="2" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>,
+    <svg key="3" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+    </svg>
+  ];
+  return iconSVGs[index % iconSVGs.length];
+}
+
 function ServiceDetailView({ service, slug }: { service: typeof SERVICE_DETAILS_DATA[string]; slug: string }) {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 selection:bg-blue-600 selection:text-white">
       
       {/* 1. HERO HEADER (Giao diện sáng, màu chủ đạo Xanh Biển) */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 via-white to-slate-50 pt-28 pb-16 border-b border-blue-100">
+      <section className="relative overflow-hidden bg-gradient-to-b from-blue-50/50 via-white to-slate-50 pt-28 pb-16 border-b border-slate-200">
         <div className="max-w-6xl mx-auto px-6">
           
           {/* Breadcrumb */}
@@ -419,8 +438,9 @@ function ServiceDetailView({ service, slug }: { service: typeof SERVICE_DETAILS_
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             <div className="lg:col-span-8">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200 mb-4">
-                ✨ {service.badge}
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 mb-4">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                <span>{service.badge}</span>
               </div>
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-4 leading-tight">
                 {service.name}
@@ -433,18 +453,21 @@ function ServiceDetailView({ service, slug }: { service: typeof SERVICE_DETAILS_
               </p>
 
               {/* Speed Rating Bar & Chip */}
-              <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-slate-600 mb-8 p-3.5 rounded-xl bg-white border border-blue-100 shadow-sm max-w-xl">
+              <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-slate-600 mb-8 p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs max-w-xl">
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-slate-800">Tốc độ:</span>
-                  <div className="w-24 h-2.5 rounded-full bg-blue-100 overflow-hidden flex">
+                  <div className="w-24 h-2.5 rounded-full bg-slate-100 overflow-hidden flex">
                     <div
-                      className="bg-gradient-to-r from-blue-500 to-teal-400 h-full rounded-full animate-pulse"
+                      className="bg-blue-600 h-full rounded-full"
                       style={{ width: `${(service.speedRating / 5) * 100}%` }}
                     ></div>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 text-blue-600 font-bold">
-                  <span>⚡</span> {service.highlightChip}
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span>{service.highlightChip}</span>
                 </div>
               </div>
 
@@ -457,7 +480,7 @@ function ServiceDetailView({ service, slug }: { service: typeof SERVICE_DETAILS_
                 </a>
                 <Link
                   href={`/order?plan=${slug}`}
-                  className="px-8 py-3.5 rounded-xl bg-white hover:bg-blue-50 border border-blue-300 text-blue-700 font-bold text-sm transition-all shadow-sm"
+                  className="px-8 py-3.5 rounded-xl bg-white hover:bg-blue-50 border border-slate-200 text-blue-700 font-bold text-sm transition-all shadow-xs"
                 >
                   Đăng Ký Khởi Tạo Ngay →
                 </Link>
@@ -465,29 +488,40 @@ function ServiceDetailView({ service, slug }: { service: typeof SERVICE_DETAILS_
             </div>
 
             {/* Right Card Summary */}
-            <div className="lg:col-span-4 p-6 rounded-2xl bg-white border border-blue-200 shadow-xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-bl-full pointer-events-none"></div>
+            <div className="lg:col-span-4 p-6 rounded-3xl bg-white border border-slate-200 shadow-xl relative overflow-hidden">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Giá khởi điểm từ</span>
               <div className="text-3xl font-black text-blue-600 mb-4">{service.priceStarting}</div>
               <ul className="space-y-3 text-xs text-slate-600 mb-6">
                 <li className="flex items-center gap-2">
-                  <span className="text-emerald-500 font-bold">✓</span> Kích hoạt tự động tức thì
+                  <svg className="w-4 h-4 text-emerald-500 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Kích hoạt tự động tức thì
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-emerald-500 font-bold">✓</span> Miễn phí chuyển dữ liệu
+                  <svg className="w-4 h-4 text-emerald-500 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Miễn phí chuyển dữ liệu
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-emerald-500 font-bold">✓</span> Cam kết hoàn tiền 30 ngày
+                  <svg className="w-4 h-4 text-emerald-500 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Cam kết hoàn tiền 30 ngày
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-emerald-500 font-bold">✓</span> Hỗ trợ kỹ thuật 24/7/365
+                  <svg className="w-4 h-4 text-emerald-500 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Hỗ trợ kỹ thuật 24/7/365
                 </li>
               </ul>
               <Link
                 href={`/order?plan=${slug}`}
-                className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center transition-colors shadow-sm"
+                className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center transition-colors shadow-md shadow-blue-500/20"
               >
-                Tiến Hành Đặt Hàng
+                Tiến Hành Đặt Hàng →
               </Link>
             </div>
           </div>
@@ -506,9 +540,11 @@ function ServiceDetailView({ service, slug }: { service: typeof SERVICE_DETAILS_
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {service.features.map((f, i) => (
-            <div key={i} className="p-6 rounded-2xl bg-white border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all">
-              <div className="text-3xl mb-3">{f.icon}</div>
-              <h3 className="text-sm font-bold text-slate-900 mb-2">{f.title}</h3>
+            <div key={i} className="p-6 rounded-2xl bg-white border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all group shadow-xs">
+              <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-200">
+                <ServiceFeatureIcon index={i} />
+              </div>
+              <h3 className="text-sm font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">{f.title}</h3>
               <p className="text-xs text-slate-600 leading-relaxed">{f.desc}</p>
             </div>
           ))}
@@ -532,8 +568,8 @@ function ServiceDetailView({ service, slug }: { service: typeof SERVICE_DETAILS_
                 key={idx}
                 className={`p-6 rounded-2xl border flex flex-col justify-between relative transition-all ${
                   p.popular
-                    ? "bg-blue-50/50 border-blue-500 shadow-xl shadow-blue-500/10 ring-2 ring-blue-500/20"
-                    : "bg-slate-50/60 border-slate-200 hover:border-blue-300"
+                    ? "bg-blue-50/40 border-blue-500 shadow-xl shadow-blue-500/10 ring-2 ring-blue-500/20"
+                    : "bg-white border-slate-200 hover:border-blue-300 hover:shadow-md"
                 }`}
               >
                 {p.popular && (
@@ -546,32 +582,51 @@ function ServiceDetailView({ service, slug }: { service: typeof SERVICE_DETAILS_
                   <div className="text-2xl font-black text-blue-600 mb-4">
                     {p.price} <span className="text-xs text-slate-500 font-normal">/ tháng</span>
                   </div>
-                  <div className="h-[1px] bg-slate-200 mb-4"></div>
-                  <ul className="space-y-2.5 text-xs text-slate-700 mb-6">
-                    <li className="flex items-center gap-2">
-                      <span className="text-blue-600 font-bold">⚡ CPU:</span> {p.cpu}
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="text-blue-600 font-bold">💾 RAM:</span> {p.ram}
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="text-blue-600 font-bold">💽 Ổ cứng:</span> {p.storage}
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="text-blue-600 font-bold">🚀 Băng thông:</span> {p.bandwidth}
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="text-emerald-600 font-bold">🛡️ Tường lửa:</span> Anti-DDoS WAF
-                    </li>
-                  </ul>
+                  
+                  {/* Clean Specs Table */}
+                  <div className="py-3 my-4 border-t border-b border-slate-100 space-y-2 text-xs">
+                    {p.cpu && (
+                      <div className="flex justify-between items-center text-slate-600">
+                        <span className="text-slate-500 font-medium">Vi xử lý</span>
+                        <span className="font-semibold text-slate-900 font-mono text-[11px]">{p.cpu}</span>
+                      </div>
+                    )}
+                    {p.ram && (
+                      <div className="flex justify-between items-center text-slate-600">
+                        <span className="text-slate-500 font-medium">Bộ nhớ</span>
+                        <span className="font-semibold text-slate-900 font-mono text-[11px]">{p.ram}</span>
+                      </div>
+                    )}
+                    {p.storage && (
+                      <div className="flex justify-between items-center text-slate-600">
+                        <span className="text-slate-500 font-medium">Ổ cứng</span>
+                        <span className="font-semibold text-slate-900 font-mono text-[11px]">{p.storage}</span>
+                      </div>
+                    )}
+                    {p.bandwidth && (
+                      <div className="flex justify-between items-center text-slate-600">
+                        <span className="text-slate-500 font-medium">Băng thông</span>
+                        <span className="font-semibold text-slate-900">{p.bandwidth}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center text-slate-600 pt-0.5">
+                      <span className="text-slate-500 font-medium">Tường lửa</span>
+                      <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 text-[11px]">
+                        <svg className="w-3.5 h-3.5 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                        Anti-DDoS WAF
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
                 <Link
                   href={`/order?plan=${slug}&subplan=${encodeURIComponent(p.name)}`}
                   className={`w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center transition-all ${
                     p.popular
-                      ? "bg-blue-600 hover:bg-blue-700 text-white shadow-md"
-                      : "bg-white hover:bg-blue-600 hover:text-white text-blue-600 border border-blue-300"
+                      ? "bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20"
+                      : "bg-white hover:bg-blue-600 hover:text-white text-blue-600 border border-slate-200 hover:border-blue-600"
                   }`}
                 >
                   Đăng Ký Gói Này →

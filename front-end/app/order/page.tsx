@@ -440,7 +440,11 @@ function OrderFormContent() {
   if (!plan) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-4 py-20 text-center">
-        <div className="text-5xl mb-4">📦</div>
+        <div className="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4">
+          <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+        </div>
         <h1 className="text-xl font-bold text-slate-900 mb-2">Không Tìm Thấy Gói Dịch Vụ</h1>
         <p className="text-xs text-slate-500 max-w-sm mb-6">
           Gói dịch vụ bạn chọn không tồn tại hoặc đã tạm ngưng cung cấp.
@@ -730,32 +734,37 @@ function OrderFormContent() {
                 {/* Thông số kỹ thuật */}
                 <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-2.5 text-xs">
                   {plan.cpu && (
-                    <div className="flex justify-between text-slate-700">
-                      <span className="text-slate-500">⚡ Vi xử lý (CPU):</span>
-                      <span className="font-bold">{plan.cpu}</span>
+                    <div className="flex justify-between items-center text-slate-700">
+                      <span className="text-slate-500 font-medium">Vi xử lý (CPU):</span>
+                      <span className="font-semibold text-slate-900 font-mono text-[11px]">{plan.cpu}</span>
                     </div>
                   )}
                   {plan.ram && (
-                    <div className="flex justify-between text-slate-700">
-                      <span className="text-slate-500">💾 Bộ nhớ (RAM):</span>
-                      <span className="font-bold">{plan.ram}</span>
+                    <div className="flex justify-between items-center text-slate-700">
+                      <span className="text-slate-500 font-medium">Bộ nhớ (RAM):</span>
+                      <span className="font-semibold text-slate-900 font-mono text-[11px]">{plan.ram}</span>
                     </div>
                   )}
                   {plan.storage && (
-                    <div className="flex justify-between text-slate-700">
-                      <span className="text-slate-500">💽 Ổ cứng lưu trữ:</span>
-                      <span className="font-bold">{plan.storage}</span>
+                    <div className="flex justify-between items-center text-slate-700">
+                      <span className="text-slate-500 font-medium">Lưu trữ:</span>
+                      <span className="font-semibold text-slate-900 font-mono text-[11px]">{plan.storage}</span>
                     </div>
                   )}
                   {plan.bandwidth && (
-                    <div className="flex justify-between text-slate-700">
-                      <span className="text-slate-500">🚀 Băng thông:</span>
-                      <span className="font-bold">{plan.bandwidth}</span>
+                    <div className="flex justify-between items-center text-slate-700">
+                      <span className="text-slate-500 font-medium">Băng thông:</span>
+                      <span className="font-semibold text-slate-900">{plan.bandwidth}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-slate-700">
-                    <span className="text-slate-500">🛡️ Tường lửa:</span>
-                    <span className="font-bold text-emerald-600">Anti-DDoS 100Gbps</span>
+                  <div className="flex justify-between items-center text-slate-700 pt-0.5">
+                    <span className="text-slate-500 font-medium">Tường lửa:</span>
+                    <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 text-[11px]">
+                      <svg className="w-3.5 h-3.5 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Anti-DDoS 100Gbps
+                    </span>
                   </div>
                 </div>
 
@@ -903,8 +912,11 @@ function OrderFormContent() {
                         alt="Payment QR Code"
                         className="w-56 h-56 mx-auto object-contain rounded-xl"
                       />
-                      <div className="text-[10px] text-slate-400 font-bold uppercase mt-2 tracking-wider">
-                        ⚡ VietQR Chuyển Khoản Tự Động 24/7
+                      <div className="text-[10px] text-slate-500 font-bold uppercase mt-2.5 tracking-wider flex items-center justify-center gap-1.5">
+                        <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        <span>VietQR Chuyển Khoản Tự Động 24/7</span>
                       </div>
                     </div>
 
