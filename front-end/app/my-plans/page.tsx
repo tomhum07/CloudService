@@ -474,12 +474,6 @@ export default function MyPlansPage() {
                         Đơn hàng đã hết hạn giữ chỗ sau 30 phút và tự động hủy. Vui lòng tạo đơn mới để sử dụng dịch vụ.
                       </div>
                     )}
-
-                    {order.notes && (
-                      <div className="mt-3 p-3 rounded-2xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600">
-                        <span className="font-bold text-slate-800">Ghi chú:</span> {order.notes}
-                      </div>
-                    )}
                   </div>
 
                   {/* Hành Động Dưới Card */}
@@ -522,75 +516,75 @@ export default function MyPlansPage() {
           </div>
         )}
 
-        {/* MODAL QUÉT MÃ QR THANH TOÁN CHO ĐƠN TRONG 30 PHÚT */}
+        {/* MODAL QUÉT MÃ QR THANH TOÁN CHO ĐƠN TRONG 30 PHÚT (COMPACT & NO SCROLLBAR) */}
         {selectedPayOrder && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-xs animate-in fade-in duration-200">
-            <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/70 backdrop-blur-xs animate-in fade-in duration-200">
+            <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-3 relative overflow-hidden">
               
               {/* Nút đóng modal */}
               <button
                 type="button"
                 onClick={() => setSelectedPayOrder(null)}
-                className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-sm cursor-pointer"
+                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-xs cursor-pointer transition-colors"
               >
                 ✕
               </button>
 
               {paymentSuccess ? (
                 /* GIAO DIỆN THANH TOÁN THÀNH CÔNG */
-                <div className="text-center space-y-4 py-6 animate-in zoom-in-95">
-                  <div className="w-16 h-16 bg-emerald-600 text-white rounded-full flex items-center justify-center text-3xl mx-auto shadow-lg shadow-emerald-600/30">
+                <div className="text-center space-y-3 py-4 animate-in zoom-in-95">
+                  <div className="w-14 h-14 bg-emerald-600 text-white rounded-full flex items-center justify-center text-2xl mx-auto shadow-lg shadow-emerald-600/30">
                     ✓
                   </div>
-                  <h3 className="text-2xl font-black text-slate-900 tracking-tight">Thanh Toán Thành Công!</h3>
+                  <h3 className="text-xl font-black text-slate-900 tracking-tight">Thanh Toán Thành Công!</h3>
                   <p className="text-xs text-slate-600 max-w-xs mx-auto leading-relaxed">
                     Hệ thống đã xác nhận giao dịch thành công cho đơn hàng <strong>{selectedPayOrder.orderCode}</strong>. Gói cước đã chuyển sang trạng thái <strong>Đang Hoạt Động</strong>!
                   </p>
-                  <div className="pt-4">
+                  <div className="pt-2">
                     <button
                       type="button"
                       onClick={() => setSelectedPayOrder(null)}
-                      className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-2xl shadow-md transition-all cursor-pointer"
+                      className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition-all cursor-pointer"
                     >
                       Đóng & Trở Về Danh Sách Dịch Vụ
                     </button>
                   </div>
                 </div>
               ) : (
-                /* GIAO DIỆN QUÉT MÃ QR THANH TOÁN */
+                /* GIAO DIỆN QUÉT MÃ QR THANH TOÁN GỌN GÀNG */
                 <>
-                  <div className="text-center space-y-1">
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-[11px] font-bold text-amber-700 mb-1">
-                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                  <div className="text-center space-y-0.5">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-[10px] font-bold text-amber-700 mb-0.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
                       <span>CHỜ KÍCH HOẠT (THANH TOÁN)</span>
                     </div>
-                    <h3 className="text-xl font-black text-slate-900">
+                    <h3 className="text-lg font-black text-slate-900">
                       Mã QR Thanh Toán Gói Cước
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-[11px] text-slate-500">
                       Mã đơn: <strong className="text-blue-600 font-mono">{selectedPayOrder.orderCode}</strong> • {selectedPayOrder.planName}
                     </p>
                   </div>
 
                   {/* Đồng hồ đếm ngược 30 phút */}
-                  <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl text-center flex items-center justify-center gap-2">
-                    <svg className="w-4 h-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="py-2 px-3 bg-rose-50 border border-rose-200 rounded-xl text-center flex items-center justify-center gap-1.5">
+                    <svg className="w-3.5 h-3.5 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span className="text-xs font-bold text-rose-700">
-                      Hạn thanh toán còn lại: <strong className="font-mono text-sm">{Math.floor(modalTimeLeft / 60)}:{(modalTimeLeft % 60).toString().padStart(2, "0")}</strong>
+                    <span className="text-[11px] font-bold text-rose-700">
+                      Hạn thanh toán còn lại: <strong className="font-mono text-xs">{Math.floor(modalTimeLeft / 60)}:{(modalTimeLeft % 60).toString().padStart(2, "0")}</strong>
                     </span>
                   </div>
 
                   {/* Khung Mã QR PayOS Thật */}
                   {loadingQr ? (
-                    <div className="p-12 bg-slate-50 rounded-3xl border border-slate-200 text-center space-y-3">
-                      <div className="w-8 h-8 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+                    <div className="p-8 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-2">
+                      <div className="w-7 h-7 border-3 border-blue-600/30 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
                       <p className="text-xs text-slate-600 font-medium">Đang tải mã QR thanh toán PayOS...</p>
                     </div>
                   ) : (
-                    <div className="p-4 bg-slate-50 rounded-3xl border border-slate-200 text-center space-y-4">
-                      <div className="inline-block p-3 bg-white border border-slate-200 rounded-2xl shadow-sm">
+                    <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-2.5">
+                      <div className="inline-block p-2 bg-white border border-slate-200 rounded-xl shadow-xs">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={
@@ -601,10 +595,10 @@ export default function MyPlansPage() {
                               : `https://img.vietqr.io/image/970422-0987654321-compact2.png?amount=${Math.round(selectedPayOrder.price || selectedPayOrder.totalAmount || 0)}&addInfo=${encodeURIComponent(selectedPayOrder.orderCode)}`
                           }
                           alt="PayOS VietQR Payment Code"
-                          className="w-56 h-56 mx-auto object-contain rounded-xl"
+                          className="w-40 h-40 mx-auto object-contain rounded-lg"
                         />
-                        <div className="text-[10px] text-slate-500 font-bold uppercase mt-2 tracking-wider flex items-center justify-center gap-1.5">
-                          <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div className="text-[9px] text-slate-500 font-bold uppercase mt-1 tracking-wider flex items-center justify-center gap-1">
+                          <svg className="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                           </svg>
                           <span>Mã QR PayOS Tự Động 24/7 (Quét Bằng Mọi Ngân Hàng)</span>
@@ -612,17 +606,17 @@ export default function MyPlansPage() {
                       </div>
 
                       {/* Bảng Chi Tiết STK */}
-                      <div className="bg-white p-4 rounded-2xl border border-slate-200 text-xs text-left space-y-2.5">
+                      <div className="bg-white p-2.5 rounded-xl border border-slate-200 text-[11px] text-left space-y-1.5">
                         {payosData?.accountName && (
-                          <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                          <div className="flex justify-between items-center pb-1 border-b border-slate-100">
                             <span className="text-slate-500">Chủ tài khoản:</span>
                             <span className="font-bold text-slate-900 uppercase">{payosData.accountName}</span>
                           </div>
                         )}
-                        <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                        <div className="flex justify-between items-center pb-1 border-b border-slate-100">
                           <span className="text-slate-500">Số tài khoản:</span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono font-bold text-blue-600 text-sm">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono font-bold text-blue-600 text-xs">
                               {payosData?.accountNumber || "0987654321"}
                             </span>
                             <button
@@ -631,22 +625,22 @@ export default function MyPlansPage() {
                                 navigator.clipboard.writeText(payosData?.accountNumber || "0987654321");
                                 setCheckMessage({ type: "info", text: "Đã sao chép số tài khoản vào bộ nhớ tạm." });
                               }}
-                              className="text-[10px] px-2 py-0.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold cursor-pointer"
+                              className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold cursor-pointer"
                             >
                               Sao chép
                             </button>
                           </div>
                         </div>
-                        <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                        <div className="flex justify-between items-center pb-1 border-b border-slate-100">
                           <span className="text-slate-500">Số tiền:</span>
-                          <span className="font-black text-rose-600 text-sm">
+                          <span className="font-black text-rose-600 text-xs">
                             {formatPrice(payosData?.amount || selectedPayOrder.price || selectedPayOrder.totalAmount || 0)}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-slate-500">Nội dung chuyển khoản:</span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
                               {payosData?.description || selectedPayOrder.orderCode}
                             </span>
                             <button
@@ -655,7 +649,7 @@ export default function MyPlansPage() {
                                 navigator.clipboard.writeText(payosData?.description || selectedPayOrder.orderCode);
                                 setCheckMessage({ type: "info", text: "Đã sao chép nội dung chuyển khoản." });
                               }}
-                              className="text-[10px] px-2 py-0.5 rounded bg-rose-50 text-rose-600 hover:bg-rose-100 font-bold cursor-pointer"
+                              className="text-[9px] px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 hover:bg-rose-100 font-bold cursor-pointer"
                             >
                               Sao chép
                             </button>
@@ -668,7 +662,7 @@ export default function MyPlansPage() {
                   {/* Thông Báo Khi Kiểm Tra */}
                   {checkMessage && (
                     <div
-                      className={`p-3.5 rounded-2xl text-xs font-medium text-left ${
+                      className={`p-2.5 rounded-xl text-[11px] font-medium text-left ${
                         checkMessage.type === "success"
                           ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
                           : checkMessage.type === "error"
@@ -681,21 +675,21 @@ export default function MyPlansPage() {
                   )}
 
                   {/* Nút Hành Động */}
-                  <div className="space-y-2 pt-2">
+                  <div className="space-y-1.5 pt-1">
                     <button
                       type="button"
                       disabled={checkingPayment || modalTimeLeft <= 0}
                       onClick={handleManualCheckPayment}
-                      className="w-full py-3.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-xs rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       {checkingPayment ? (
                         <>
-                          <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                          <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                           <span>Đang Kiểm Tra Với Hệ Thống Ngân Hàng...</span>
                         </>
                       ) : (
                         <>
-                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                           </svg>
                           <span>Tôi Đã Chuyển Khoản - Kiểm Tra Kết Quả Giao Dịch</span>
@@ -705,7 +699,7 @@ export default function MyPlansPage() {
                     <button
                       type="button"
                       onClick={() => setSelectedPayOrder(null)}
-                      className="w-full py-2.5 text-xs text-slate-500 hover:text-slate-800 font-semibold cursor-pointer"
+                      className="w-full py-1 text-[11px] text-slate-500 hover:text-slate-800 font-semibold cursor-pointer"
                     >
                       Để Thanh Toán Sau (Trong Vòng 30 Phút)
                     </button>
