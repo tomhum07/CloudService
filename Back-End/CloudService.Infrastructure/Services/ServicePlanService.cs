@@ -213,10 +213,12 @@ namespace CloudService.Infrastructure.Services
             var plan = await _context.ServicePlans
                 .IgnoreQueryFilters()
                 .Include(p => p.Category)
+                .Include(p => p.Prices)
                 .FirstOrDefaultAsync(x => x.Id == id);
                 
             if (plan == null) return null;
 
+            bool wasInactive = !plan.IsActive;
             plan.Name = request.Name;
             plan.Description = request.Description;
             plan.Cpu = request.Cpu;
@@ -225,6 +227,23 @@ namespace CloudService.Infrastructure.Services
             plan.Bandwidth = request.Bandwidth;
             plan.IsActive = request.IsActive;
             plan.LastModifiedAt = DateTime.UtcNow;
+
+            // Nếu kích hoạt/hiện lại gói cước (từ false -> true), tự động khôi phục các mức giá thuộc gói
+            if (wasInactive && request.IsActive)
+            {
+                foreach (var price in plan.Prices)
+                {
+                    price.IsActive = true;
+                }
+            }
+            // Nếu ẩn gói cước (true -> false), cascade ẩn các mức giá thuộc gói
+            else if (!request.IsActive)
+            {
+                foreach (var price in plan.Prices)
+                {
+                    price.IsActive = false;
+                }
+            }
 
             await _context.SaveChangesAsync();
 

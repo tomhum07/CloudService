@@ -467,8 +467,11 @@ export default function PricesPage() {
                   required
                   min="0"
                   placeholder="VD: 150000"
-                  value={priceForm.price}
-                  onChange={(e) => setPriceForm({ ...priceForm, price: Number(e.target.value) })}
+                  value={priceForm.price === 0 ? "" : priceForm.price}
+                  onChange={(e) => {
+                    const val = e.target.value === "" ? 0 : Number(e.target.value);
+                    setPriceForm({ ...priceForm, price: val });
+                  }}
                   className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
                 />
               </div>
@@ -578,8 +581,11 @@ export default function PricesPage() {
                   min="1"
                   max="100"
                   placeholder="VD: 20"
-                  value={promoForm.discountPercentage}
-                  onChange={(e) => setPromoForm({ ...promoForm, discountPercentage: Number(e.target.value) })}
+                  value={promoForm.discountPercentage === 0 ? "" : promoForm.discountPercentage}
+                  onChange={(e) => {
+                    const val = e.target.value === "" ? 0 : Number(e.target.value);
+                    setPromoForm({ ...promoForm, discountPercentage: val });
+                  }}
                   className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
                 />
               </div>
