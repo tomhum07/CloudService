@@ -62,6 +62,15 @@ namespace CloudService.UnitTests.WebApi.Controllers
             public Task<(bool Success, string Message)> ResetPasswordWithOtpAsync(VerifyResetOtpRequest request) => Task.FromResult((true, "Thành công"));
         }
 
+        private class FakeAuditLogService : IAuditLogService
+        {
+            public Task<CloudService.Application.DTOs.Common.PagedResult<CloudService.Application.DTOs.Audit.AuditLogDto>> GetLogsAsync(int pageNumber = 1, int pageSize = 15, string? search = null, string? type = null)
+                => Task.FromResult(new CloudService.Application.DTOs.Common.PagedResult<CloudService.Application.DTOs.Audit.AuditLogDto>());
+
+            public Task<CloudService.Application.DTOs.Audit.AuditLogDto> LogAsync(string username, string action, string? payload = null, int? userId = null)
+                => Task.FromResult(new CloudService.Application.DTOs.Audit.AuditLogDto());
+        }
+
 
         [Fact]
         public async Task Login_ValidCredentials_ReturnsOkAndSetsCookie()
@@ -83,7 +92,7 @@ namespace CloudService.UnitTests.WebApi.Controllers
                 }
             };
 
-            var controller = new AuthController(fakeService);
+            var controller = new AuthController(fakeService, new FakeAuditLogService());
             var httpContext = new DefaultHttpContext();
             controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
 
@@ -113,7 +122,7 @@ namespace CloudService.UnitTests.WebApi.Controllers
                 LoginHandler = (req, setCookie) => Task.FromResult<AuthResponse?>(null)
             };
 
-            var controller = new AuthController(fakeService);
+            var controller = new AuthController(fakeService, new FakeAuditLogService());
             controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
 
             // Act
@@ -129,7 +138,7 @@ namespace CloudService.UnitTests.WebApi.Controllers
         {
             // Arrange
             var fakeService = new FakeAuthService();
-            var controller = new AuthController(fakeService);
+            var controller = new AuthController(fakeService, new FakeAuditLogService());
             controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
 
             // Act
@@ -157,7 +166,7 @@ namespace CloudService.UnitTests.WebApi.Controllers
                 }
             };
 
-            var controller = new AuthController(fakeService);
+            var controller = new AuthController(fakeService, new FakeAuditLogService());
             var httpContext = new DefaultHttpContext();
             httpContext.Request.Headers["Cookie"] = "refreshToken=valid-refresh-token";
             controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
@@ -183,7 +192,7 @@ namespace CloudService.UnitTests.WebApi.Controllers
                 RefreshTokenHandler = (token, setCookie) => Task.FromResult<AuthResponse?>(null)
             };
 
-            var controller = new AuthController(fakeService);
+            var controller = new AuthController(fakeService, new FakeAuditLogService());
             var httpContext = new DefaultHttpContext();
             httpContext.Request.Headers["Cookie"] = "refreshToken=invalid-token";
             controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
@@ -210,7 +219,7 @@ namespace CloudService.UnitTests.WebApi.Controllers
                 }
             };
 
-            var controller = new AuthController(fakeService);
+            var controller = new AuthController(fakeService, new FakeAuditLogService());
             controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
 
             // Act
@@ -235,7 +244,7 @@ namespace CloudService.UnitTests.WebApi.Controllers
                 }
             };
 
-            var controller = new AuthController(fakeService);
+            var controller = new AuthController(fakeService, new FakeAuditLogService());
             var httpContext = new DefaultHttpContext();
             httpContext.Request.Headers["Cookie"] = "refreshToken=active-refresh-token";
             controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
@@ -256,7 +265,7 @@ namespace CloudService.UnitTests.WebApi.Controllers
         {
             // Arrange
             var fakeService = new FakeAuthService();
-            var controller = new AuthController(fakeService);
+            var controller = new AuthController(fakeService, new FakeAuditLogService());
             controller.ControllerContext = new ControllerContext
             {
                 HttpContext = new DefaultHttpContext()
@@ -289,7 +298,7 @@ namespace CloudService.UnitTests.WebApi.Controllers
                     return Task.FromResult(true);
                 }
             };
-            var controller = new AuthController(fakeService);
+            var controller = new AuthController(fakeService, new FakeAuditLogService());
             var httpContext = new DefaultHttpContext();
             var claims = new[] { new Claim(ClaimTypes.Name, "testuser") };
             var identity = new ClaimsIdentity(claims, "TestAuth");
@@ -319,7 +328,7 @@ namespace CloudService.UnitTests.WebApi.Controllers
             {
                 ChangePasswordHandler = (username, req) => Task.FromResult(false)
             };
-            var controller = new AuthController(fakeService);
+            var controller = new AuthController(fakeService, new FakeAuditLogService());
             var httpContext = new DefaultHttpContext();
             var claims = new[] { new Claim(ClaimTypes.Name, "testuser") };
             var identity = new ClaimsIdentity(claims, "TestAuth");

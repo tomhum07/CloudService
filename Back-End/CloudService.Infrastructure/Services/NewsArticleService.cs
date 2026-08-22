@@ -42,16 +42,19 @@ namespace CloudService.Infrastructure.Services
                 query = query.IgnoreQueryFilters();
             }
 
-    // Tìm kiếm theo tiêu đề, tóm tắt hoặc nội dung
-    if (!string.IsNullOrWhiteSpace(search))
-    {
-        search = search.Trim();
+            // Tìm kiếm theo tiêu đề, tóm tắt hoặc nội dung (không phân biệt hoa thường - Case Insensitive)
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var lowerSearch = search.Trim().ToLower();
 
-        query = query.Where(x =>
-            x.Title.Contains(search) ||
-            (x.Summary != null && x.Summary.Contains(search)) ||
-            x.Content.Contains(search));
-    }
+                query = query.Where(x =>
+                    EF.Functions.ILike(x.Title, $"%{lowerSearch}%") ||
+                    (x.Summary != null && EF.Functions.ILike(x.Summary, $"%{lowerSearch}%")) ||
+                    EF.Functions.ILike(x.Content, $"%{lowerSearch}%") ||
+                    x.Title.ToLower().Contains(lowerSearch) ||
+                    (x.Summary != null && x.Summary.ToLower().Contains(lowerSearch)) ||
+                    x.Content.ToLower().Contains(lowerSearch));
+            }
 
     // Tổng số bài viết sau khi tìm kiếm
     var totalItems = await query.CountAsync();

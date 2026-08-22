@@ -4,51 +4,94 @@ import Link from "next/link";
 import { apiFetch } from "@/utils/api";
 import { dataSyncService } from "@/utils/signalr";
 
-const DOMAIN_PRICES = [
-  { tld: ".vn", price: "450.000đ", renew: "350.000đ", popular: true },
-  { tld: ".com", price: "249.000đ", renew: "299.000đ", popular: true },
-  { tld: ".net", price: "289.000đ", renew: "329.000đ", popular: false },
-  { tld: ".com.vn", price: "350.000đ", renew: "250.000đ", popular: false },
-  { tld: ".io", price: "790.000đ", renew: "850.000đ", popular: false }
-];
-
-
 const FEATURES_HIGHLIGHT = [
   {
-    icon: "⚡",
+    iconType: "cpu",
     title: "100% Ổ Cứng NVMe Enterprise",
     desc: "Sử dụng dòng ổ cứng NVMe chuyên dụng cho trung tâm dữ liệu, mang lại tốc độ đọc/ghi IOPS vượt trội gấp 10 lần SSD thông thường."
   },
   {
-    icon: "🛡️",
+    iconType: "shield",
     title: "Tường Lửa Chống DDoS Độc Quyền",
     desc: "Hệ thống Anti-DDoS Firewall đa tầng Layer 3, 4 và 7 tự động nhận diện và lọc sạch các đợt tấn công SYN Flood, UDP Flood, HTTP Request Flood."
   },
   {
-    icon: "🌐",
+    iconType: "server",
     title: "Hạ Tầng Datacenter Tier 3 Quốc Tế",
     desc: "Cụm máy chủ đặt tại các trung tâm dữ liệu đạt chuẩn Quốc tế TIA-942 Rated 3 tại Hà Nội và TP.HCM với cam kết 99.99% Uptime."
   },
   {
-    icon: "🔄",
+    iconType: "backup",
     title: "Tự Động Sao Lưu (Daily Backup)",
     desc: "Dữ liệu của bạn luôn an toàn với cơ chế Backup tự động hàng ngày độc lập ra cụm Storage ngoài và hỗ trợ khôi phục Snapshot 1-Click."
   },
   {
-    icon: "👨‍💻",
+    iconType: "support",
     title: "Hỗ Trợ Kỹ Thuật 24/7/365",
     desc: "Đội ngũ chuyên gia hệ thống túc trực 24/7 qua Ticket, Hotline và LiveChat với thời gian phản hồi trung bình dưới 5 phút."
   },
   {
-    icon: "💰",
+    iconType: "refund",
     title: "Hoàn Tiền 100% Trong 30 Ngày",
     desc: "Cam kết hoàn lại 100% chi phí trong vòng 30 ngày nếu chất lượng dịch vụ không đáp ứng được kỳ vọng của quý khách hàng."
   }
 ];
 
+function FeatureIcon({ type }: { type: string }) {
+  switch (type) {
+    case "cpu":
+      return (
+        <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-5 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-200">
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+          </svg>
+        </div>
+      );
+    case "shield":
+      return (
+        <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-5 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-200">
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+        </div>
+      );
+    case "server":
+      return (
+        <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-5 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-200">
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+          </svg>
+        </div>
+      );
+    case "backup":
+      return (
+        <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-5 group-hover:bg-amber-600 group-hover:text-white transition-colors duration-200">
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </div>
+      );
+    case "support":
+      return (
+        <div className="w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center mb-5 group-hover:bg-sky-600 group-hover:text-white transition-colors duration-200">
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+        </div>
+      );
+    case "refund":
+    default:
+      return (
+        <div className="w-12 h-12 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center mb-5 group-hover:bg-violet-600 group-hover:text-white transition-colors duration-200">
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+          </svg>
+        </div>
+      );
+  }
+}
+
 export default function Home() {
-  const [domainQuery, setDomainQuery] = useState("");
-  const [domainResult, setDomainResult] = useState<{ checked: boolean; domain: string; available?: boolean; price?: string } | null>(null);
   const [plans, setPlans] = useState<any[]>([]);
   const [news, setNews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -115,24 +158,6 @@ export default function Home() {
     return () => unsubscribe();
   }, []);
 
-  const handleDomainCheck = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!domainQuery.trim()) return;
-    
-    let clean = domainQuery.trim().toLowerCase();
-    if (!clean.includes(".")) {
-      clean += ".vn";
-    }
-
-    const available = Math.random() > 0.3;
-    setDomainResult({
-      checked: true,
-      domain: clean,
-      available,
-      price: clean.endsWith(".vn") ? "450.000đ / năm" : "249.000đ / năm"
-    });
-  };
-
   const filteredPlans = plans.filter((p) => {
     if (activeTab === "all") return true;
     const cat = (p.categoryName || "").toLowerCase();
@@ -145,7 +170,7 @@ export default function Home() {
   return (
     <div className="relative min-h-screen bg-slate-50 text-slate-800 selection:bg-blue-600 selection:text-white">
       
-      {/* 1. HERO SECTION & DOMAIN SEARCH */}
+      {/* 1. HERO SECTION */}
       <section className="relative overflow-hidden pt-28 pb-20 border-b border-slate-200 bg-gradient-to-b from-blue-50 via-white to-slate-50">
         <div className="max-w-7xl mx-auto px-6 text-center">
           
@@ -164,75 +189,32 @@ export default function Home() {
           </h1>
 
           <p className="text-sm sm:text-base md:text-lg text-slate-600 max-w-3xl mx-auto mb-10 leading-relaxed">
-            Cung cấp giải pháp <strong>Cloud VPS NVMe</strong>, <strong>Web Hosting LiteSpeed</strong>, <strong>Tên miền</strong>, <strong>Email doanh nghiệp</strong> và <strong>Tường lửa Anti-DDoS</strong> chuyên sâu bảo vệ website an toàn 24/7.
+            Cung cấp giải pháp <strong>Cloud VPS NVMe</strong>, <strong>Web Hosting LiteSpeed</strong>, <strong>Email Doanh Nghiệp</strong> và <strong>Tường Lửa Anti-DDoS</strong> chuyên sâu bảo vệ website an toàn tuyệt đối 24/7.
           </p>
 
-          {/* DOMAIN SEARCH BAR */}
-          <div className="max-w-3xl mx-auto mb-12">
-            <form onSubmit={handleDomainCheck} className="p-2 rounded-2xl bg-white border border-slate-300 shadow-xl flex flex-col sm:flex-row gap-2">
-              <div className="flex-1 flex items-center px-4 gap-3">
-                <span className="text-slate-400 text-lg">🔍</span>
-                <input
-                  type="text"
-                  placeholder="Nhập tên miền bạn muốn đăng ký (VD: congtycuaban.vn, shoponline.com)..."
-                  value={domainQuery}
-                  onChange={(e) => setDomainQuery(e.target.value)}
-                  className="w-full bg-transparent text-sm text-slate-900 placeholder-slate-400 focus:outline-none py-3"
-                />
-              </div>
-              <button
-                type="submit"
-                className="px-8 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm transition-all shadow-md shadow-blue-500/20 shrink-0"
-              >
-                Kiểm Tra Tên Miền
-              </button>
-            </form>
-
-            {/* Quick Domain Pricing Pills */}
-            <div className="flex flex-wrap items-center justify-center gap-3 mt-4 text-xs">
-              <span className="text-slate-500 font-medium">Bảng giá hot:</span>
-              {DOMAIN_PRICES.map((d) => (
-                <div key={d.tld} className="px-3 py-1 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center gap-2">
-                  <span className="font-bold text-blue-600">{d.tld}</span>
-                  <span className="text-slate-700 font-semibold">{d.price}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Domain Check Result Modal/Card */}
-            {domainResult && domainResult.checked && (
-              <div className="mt-6 p-4 rounded-2xl bg-white border border-blue-200 shadow-lg text-left flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in zoom-in-95 duration-200">
-                <div className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white ${domainResult.available ? "bg-emerald-600" : "bg-rose-600"}`}>
-                    {domainResult.available ? "✓" : "✕"}
-                  </div>
-                  <div>
-                    <h4 className="text-base font-bold text-slate-900">{domainResult.domain}</h4>
-                    <p className="text-xs text-slate-600">
-                      {domainResult.available
-                        ? `Tên miền còn trống! Giá đăng ký chỉ từ ${domainResult.price}`
-                        : "Tên miền này đã có người đăng ký. Vui lòng chọn đuôi mở rộng khác."}
-                    </p>
-                  </div>
-                </div>
-                {domainResult.available ? (
-                  <Link
-                    href={`/order?plan=domain&name=${encodeURIComponent(domainResult.domain)}`}
-                    className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors shrink-0 shadow-sm"
-                  >
-                    Đăng Ký Ngay
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setDomainResult(null)}
-                    className="text-xs text-slate-500 hover:text-slate-900 px-3 py-1.5"
-                  >
-                    Đóng
-                  </button>
-                )}
-              </div>
-            )}
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-14">
+            <Link
+              href="/pricing"
+              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm tracking-wide transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"
+            >
+              <span>Xem Bảng Giá Gói Cước</span>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </Link>
+            <Link
+              href="/services"
+              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 font-black text-sm border border-slate-300 shadow-sm transition-all flex items-center justify-center gap-2"
+            >
+              <span>Khám Phá Dịch Vụ</span>
+            </Link>
+            <Link
+              href="/order"
+              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-sm transition-all flex items-center justify-center gap-2"
+            >
+              <span>Đăng Ký Nhanh</span>
+            </Link>
           </div>
 
           {/* Key Metrics Strip */}
@@ -335,7 +317,7 @@ export default function Home() {
                 {plan.qrCodeUrl && (
                   <div
                     onClick={() => setSelectedQrPlan(plan)}
-                    className="p-3 bg-slate-50 hover:bg-blue-50/60 border border-slate-200 hover:border-blue-300 rounded-2xl mb-5 flex items-center gap-3.5 cursor-pointer transition-all duration-200 group/qr shadow-xs"
+                    className="p-3 bg-slate-50 hover:bg-blue-50/60 border border-slate-200 hover:border-blue-300 rounded-2xl mb-4 flex items-center gap-3.5 cursor-pointer transition-all duration-200 group/qr shadow-xs"
                     title="Bấm để phóng to mã QR quét trên điện thoại"
                   >
                     <div className="relative shrink-0 bg-white p-1.5 rounded-xl border border-slate-200 shadow-xs">
@@ -343,50 +325,64 @@ export default function Home() {
                       <img
                         src={plan.qrCodeUrl}
                         alt={`QR Code ${plan.name}`}
-                        className="w-16 h-16 object-contain rounded-lg group-hover/qr:scale-105 transition-transform"
+                        className="w-14 h-14 object-contain rounded-lg group-hover/qr:scale-105 transition-transform"
                       />
                       <div className="absolute inset-0 bg-blue-600/10 rounded-xl opacity-0 group-hover/qr:opacity-100 transition-opacity flex items-center justify-center">
-                        <span className="text-xs">🔍</span>
+                        <svg className="w-3.5 h-3.5 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                        </svg>
                       </div>
                     </div>
                     <div className="text-left flex-1 min-w-0">
-                      <div className="flex items-center gap-1 text-[11px] font-bold text-slate-900 group-hover/qr:text-blue-600 transition-colors">
-                        <span>📱 Quét QR Thanh Toán</span>
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-900 group-hover/qr:text-blue-600 transition-colors">
+                        <svg className="w-3.5 h-3.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        <span>Quét QR Thanh Toán</span>
                       </div>
-                      <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5 leading-snug">
-                        Chạm để phóng to & quét đặt mua nhanh
+                      <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5 leading-snug">
+                        Chạm để phóng to mã QR
                       </p>
                     </div>
                   </div>
                 )}
 
-                <div className="h-[1px] bg-slate-100 mb-4"></div>
-
-                <ul className="space-y-2.5 text-xs text-slate-700 mb-6">
+                {/* Clean Professional Specs Table */}
+                <div className="py-3.5 my-4 border-t border-b border-slate-100 space-y-2.5 text-xs">
                   {plan.cpu && (
-                    <li className="flex items-center gap-2">
-                      <span className="text-blue-600 font-bold">⚡ CPU:</span> {plan.cpu}
-                    </li>
+                    <div className="flex justify-between items-center text-slate-600">
+                      <span className="text-slate-500 font-medium">Vi xử lý (CPU)</span>
+                      <span className="font-semibold text-slate-900 font-mono text-[11px]">{plan.cpu}</span>
+                    </div>
                   )}
                   {plan.ram && (
-                    <li className="flex items-center gap-2">
-                      <span className="text-blue-600 font-bold">💾 RAM:</span> {plan.ram}
-                    </li>
+                    <div className="flex justify-between items-center text-slate-600">
+                      <span className="text-slate-500 font-medium">Bộ nhớ (RAM)</span>
+                      <span className="font-semibold text-slate-900 font-mono text-[11px]">{plan.ram}</span>
+                    </div>
                   )}
                   {plan.storage && (
-                    <li className="flex items-center gap-2">
-                      <span className="text-blue-600 font-bold">💽 Ổ cứng:</span> {plan.storage}
-                    </li>
+                    <div className="flex justify-between items-center text-slate-600">
+                      <span className="text-slate-500 font-medium">Lưu trữ (Disk)</span>
+                      <span className="font-semibold text-slate-900 font-mono text-[11px]">{plan.storage}</span>
+                    </div>
                   )}
                   {plan.bandwidth && (
-                    <li className="flex items-center gap-2">
-                      <span className="text-blue-600 font-bold">🚀 Băng thông:</span> {plan.bandwidth}
-                    </li>
+                    <div className="flex justify-between items-center text-slate-600">
+                      <span className="text-slate-500 font-medium">Băng thông</span>
+                      <span className="font-semibold text-slate-900">{plan.bandwidth}</span>
+                    </div>
                   )}
-                  <li className="flex items-center gap-2">
-                    <span className="text-emerald-600 font-bold">🛡️ Tường lửa:</span> Anti-DDoS 100Gbps
-                  </li>
-                </ul>
+                  <div className="flex justify-between items-center text-slate-600 pt-0.5">
+                    <span className="text-slate-500 font-medium">Tường lửa</span>
+                    <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 text-[11px]">
+                      <svg className="w-3.5 h-3.5 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Anti-DDoS 100Gbps
+                    </span>
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -472,8 +468,11 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-600 border border-rose-200 mb-4">
-                🛡️ CÔNG NGHỆ BẢO MẬT ĐỘC QUYỀN
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-600 border border-rose-200 mb-4">
+                <svg className="w-3.5 h-3.5 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <span>CÔNG NGHỆ BẢO MẬT ĐỘC QUYỀN</span>
               </div>
               <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mb-6 leading-tight">
                 Tường Lửa Anti-DDoS Đa Tầng <br />
@@ -568,10 +567,10 @@ export default function Home() {
           {FEATURES_HIGHLIGHT.map((f, idx) => (
             <div
               key={idx}
-              className="p-7 rounded-2xl bg-white border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all shadow-sm"
+              className="p-7 rounded-2xl bg-white border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all shadow-xs group"
             >
-              <div className="text-3xl mb-4">{f.icon}</div>
-              <h3 className="text-base font-bold text-slate-900 mb-2">{f.title}</h3>
+              <FeatureIcon type={f.iconType} />
+              <h3 className="text-base font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">{f.title}</h3>
               <p className="text-xs text-slate-600 leading-relaxed">{f.desc}</p>
             </div>
           ))}

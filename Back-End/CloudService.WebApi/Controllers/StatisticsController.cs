@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using CloudService.Application.Interfaces;
 
@@ -6,6 +7,7 @@ namespace CloudService.WebApi.Controllers
 {
     [ApiController]
     [Route("api/statistics")]
+    [Authorize(Roles = "Admin")]
     public class StatisticsController : ControllerBase
     {
         private readonly IStatisticsService _statisticsService;

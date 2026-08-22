@@ -12,16 +12,56 @@ interface UserProfile {
   role: string;
 }
 
-// Helper lấy icon mặc định sinh động theo tên danh mục thực tế
-function getCategoryIcon(name: string = ""): string {
+// Helper render SVG icon chuẩn Enterprise cho từng danh mục
+function CategoryIcon({ name = "", className = "w-4 h-4" }: { name?: string; className?: string }) {
   const lower = name.toLowerCase();
-  if (lower.includes("vps") || lower.includes("máy chủ")) return "⚡";
-  if (lower.includes("host") || lower.includes("web")) return "🌐";
-  if (lower.includes("domain") || lower.includes("miền")) return "🏷️";
-  if (lower.includes("mail") || lower.includes("thư")) return "✉️";
-  if (lower.includes("ssl") || lower.includes("chứng chỉ")) return "🔒";
-  if (lower.includes("firewall") || lower.includes("ddos") || lower.includes("bảo mật")) return "🛡️";
-  return "📦";
+  if (lower.includes("vps") || lower.includes("máy chủ")) {
+    return (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+      </svg>
+    );
+  }
+  if (lower.includes("host") || lower.includes("web")) {
+    return (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+      </svg>
+    );
+  }
+  if (lower.includes("domain") || lower.includes("miền")) {
+    return (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+      </svg>
+    );
+  }
+  if (lower.includes("mail") || lower.includes("thư")) {
+    return (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      </svg>
+    );
+  }
+  if (lower.includes("ssl") || lower.includes("chứng chỉ")) {
+    return (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+      </svg>
+    );
+  }
+  if (lower.includes("firewall") || lower.includes("ddos") || lower.includes("bảo mật")) {
+    return (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+      </svg>
+    );
+  }
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+    </svg>
+  );
 }
 
 export default function Header() {
@@ -49,6 +89,9 @@ export default function Header() {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showOldPwd, setShowOldPwd] = useState(false);
+  const [showNewPwd, setShowNewPwd] = useState(false);
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
   const [pwdLoading, setPwdLoading] = useState(false);
   const [pwdMsg, setPwdMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
@@ -340,25 +383,32 @@ export default function Header() {
                       {dbCategories.length === 0 ? (
                         <div className="p-4 text-center text-xs text-slate-400">Đang tải danh mục...</div>
                       ) : (
-                        dbCategories.map((cat) => (
-                          <div
-                            key={cat.id}
-                            onMouseEnter={() => setActiveCategoryTab(cat.id)}
-                            className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${
-                              (activeCategoryTab === cat.id || (!activeCategoryTab && dbCategories[0]?.id === cat.id))
-                                ? "bg-blue-50 text-blue-700 font-bold border border-blue-200 shadow-sm"
-                                : "hover:bg-slate-50 text-slate-700 font-medium"
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <span className="text-xl">{getCategoryIcon(cat.name)}</span>
-                              <span className="text-xs truncate">{cat.name}</span>
+                        dbCategories.map((cat) => {
+                          const isSelected = activeCategoryTab === cat.id || (!activeCategoryTab && dbCategories[0]?.id === cat.id);
+                          return (
+                            <div
+                              key={cat.id}
+                              onMouseEnter={() => setActiveCategoryTab(cat.id)}
+                              className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${
+                                isSelected
+                                  ? "bg-blue-50 text-blue-700 font-bold border border-blue-200 shadow-xs"
+                                  : "hover:bg-slate-50 text-slate-700 font-medium"
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                                  isSelected ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"
+                                }`}>
+                                  <CategoryIcon name={cat.name} className="w-4 h-4" />
+                                </div>
+                                <span className="text-xs truncate">{cat.name}</span>
+                              </div>
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 shrink-0">
+                                {dbPlans.filter((p) => p.categoryId === cat.id).length} gói
+                              </span>
                             </div>
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600 shrink-0">
-                              {dbPlans.filter((p) => p.categoryId === cat.id).length} gói
-                            </span>
-                          </div>
-                        ))
+                          );
+                        })
                       )}
                     </div>
 
@@ -369,14 +419,18 @@ export default function Header() {
                           <>
                             {/* Category Header */}
                             <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
-                              <div>
-                                <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
-                                  <span>{getCategoryIcon(currentCategory.name)}</span>
-                                  <span>{currentCategory.name}</span>
-                                </h3>
-                                <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
-                                  {currentCategory.description || "Hệ thống dịch vụ đám mây hiệu năng cao tiêu chuẩn quốc tế"}
-                                </p>
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                                  <CategoryIcon name={currentCategory.name} className="w-5 h-5" />
+                                </div>
+                                <div>
+                                  <h3 className="text-sm font-bold text-slate-900">
+                                    {currentCategory.name}
+                                  </h3>
+                                  <p className="text-[11px] text-slate-500 line-clamp-1">
+                                    {currentCategory.description || "Hệ thống dịch vụ đám mây hiệu năng cao tiêu chuẩn quốc tế"}
+                                  </p>
+                                </div>
                               </div>
                               <Link
                                 href="/pricing"
@@ -388,7 +442,7 @@ export default function Header() {
                             </div>
 
                             {/* Items Grid */}
-                            <div className="grid grid-cols-2 gap-3.5 max-h-[260px] overflow-y-auto pr-1">
+                            <div className="grid grid-cols-2 gap-3.5 max-h-[260px] overflow-y-auto pr-1 custom-scrollbar">
                               {currentCategoryPlans.length === 0 ? (
                                 <div className="col-span-2 text-center py-8 text-xs text-slate-400 bg-slate-50 rounded-xl border border-slate-100">
                                   Chưa có gói cước nào trong danh mục này.
@@ -406,7 +460,7 @@ export default function Header() {
                                       key={plan.id}
                                       href={`/order?planId=${plan.id}`}
                                       onClick={() => setIsServicesOpen(false)}
-                                      className="p-3.5 rounded-xl border border-slate-100 hover:border-blue-300 hover:bg-blue-50/40 transition-all group block shadow-xs bg-white"
+                                      className="p-3.5 rounded-xl border border-slate-100 hover:border-blue-300 hover:bg-blue-50/30 transition-all group block shadow-xs bg-white"
                                     >
                                       <div className="flex items-center justify-between mb-1">
                                         <h4 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate pr-2">
@@ -414,13 +468,13 @@ export default function Header() {
                                         </h4>
                                         <span className="text-xs font-black text-blue-600 shrink-0">{formattedPrice}</span>
                                       </div>
-                                      <p className="text-[11px] text-slate-500 line-clamp-1 mb-2">
-                                        {plan.description || `${plan.cpu || ""} - ${plan.ram || ""} - ${plan.storage || ""}`}
+                                      <p className="text-[11px] text-slate-500 line-clamp-1 mb-2.5">
+                                        {plan.description || `${plan.cpu || ""} ${plan.ram || ""} ${plan.storage || ""}`}
                                       </p>
-                                      <div className="flex items-center gap-2 text-[10px] text-slate-600 font-medium">
-                                        {plan.cpu && <span>⚡ {plan.cpu}</span>}
-                                        {plan.ram && <span>💾 {plan.ram}</span>}
-                                        {plan.storage && <span>💽 {plan.storage}</span>}
+                                      <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-slate-600 font-medium">
+                                        {plan.cpu && <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 font-mono">{plan.cpu}</span>}
+                                        {plan.ram && <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 font-mono">{plan.ram}</span>}
+                                        {plan.storage && <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 font-mono">{plan.storage}</span>}
                                       </div>
                                     </Link>
                                   );
@@ -436,15 +490,22 @@ export default function Header() {
                       </div>
 
                       {/* Bottom Banner */}
-                      <div className="mt-4 p-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-between">
-                        <div className="text-xs">
-                          <strong className="block font-bold">🚀 Miễn Phí Chuyển Đổi Dữ Liệu & Hỗ Trợ 24/7</strong>
-                          <span className="text-[10px] text-blue-100">Cam kết Uptime 99.99% tại Datacenter chuẩn Tier 3.</span>
+                      <div className="mt-4 p-3.5 rounded-xl bg-slate-900 text-white flex items-center justify-between shadow-sm">
+                        <div className="flex items-center gap-2.5 text-xs">
+                          <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white shrink-0">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <strong className="block font-bold text-white">Miễn Phí Chuyển Đổi Dữ Liệu & Hỗ Trợ 24/7</strong>
+                            <span className="text-[11px] text-slate-400">Cam kết Uptime 99.99% tại Datacenter chuẩn Tier 3 Quốc tế.</span>
+                          </div>
                         </div>
                         <Link
                           href="/pricing"
                           onClick={() => setIsServicesOpen(false)}
-                          className="px-4 py-1.5 rounded-lg bg-white text-blue-700 hover:bg-blue-50 text-xs font-bold transition-colors shadow-sm shrink-0"
+                          className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors shadow-sm shrink-0 ml-4"
                         >
                           Xem Toàn Bộ Gói
                         </Link>
@@ -473,6 +534,18 @@ export default function Header() {
               }`}
             >
               Tin Tức
+            </Link>
+
+            <Link
+              href="/affiliate"
+              className={`px-3.5 py-2 text-sm font-semibold rounded-lg transition-colors flex items-center gap-1.5 ${
+                pathname === "/affiliate" ? "text-blue-600 bg-blue-50" : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
+              }`}
+            >
+              <span>Cộng Tác Viên</span>
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
+                CTV
+              </span>
             </Link>
 
             <Link
@@ -524,7 +597,9 @@ export default function Header() {
                         onClick={() => setShowProfileMenu(false)}
                         className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-blue-600 hover:bg-blue-50 font-semibold transition-colors"
                       >
-                        <span>📊</span>
+                        <svg className="w-4 h-4 text-blue-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
                         <span>Trang Quản Trị Admin</span>
                       </Link>
                     )}
@@ -534,8 +609,21 @@ export default function Header() {
                       onClick={() => setShowProfileMenu(false)}
                       className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-50 font-medium transition-colors"
                     >
-                      <span>📦</span>
+                      <svg className="w-4 h-4 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                      </svg>
                       <span>Quản lý gói cước của tôi</span>
+                    </Link>
+
+                    <Link
+                      href="/affiliate"
+                      onClick={() => setShowProfileMenu(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-50 font-medium transition-colors"
+                    >
+                      <svg className="w-4 h-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                      <span>Chương trình CTV (Affiliate)</span>
                     </Link>
 
                     <button
@@ -546,7 +634,9 @@ export default function Header() {
                       }}
                       className="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-50 font-medium transition-colors"
                     >
-                      <span>✏️</span>
+                      <svg className="w-4 h-4 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
                       <span>Đổi thông tin cá nhân</span>
                     </button>
 
@@ -558,7 +648,9 @@ export default function Header() {
                       }}
                       className="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-50 font-medium transition-colors"
                     >
-                      <span>🔑</span>
+                      <svg className="w-4 h-4 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                      </svg>
                       <span>Đổi mật khẩu</span>
                     </button>
 
@@ -569,7 +661,9 @@ export default function Header() {
                       onClick={handleLogout}
                       className="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-rose-600 hover:bg-rose-50 font-bold transition-colors"
                     >
-                      <span>🚪</span>
+                      <svg className="w-4 h-4 text-rose-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
                       <span>Đăng xuất</span>
                     </button>
                   </div>
@@ -606,50 +700,101 @@ export default function Header() {
 
         {/* Mobile Navigation Drawer */}
         {isOpen && (
-          <div className="lg:hidden bg-white border-t border-slate-200 p-6 space-y-4 shadow-xl max-h-[80vh] overflow-y-auto">
+          <div className="lg:hidden bg-white border-t border-slate-200 p-6 space-y-4 shadow-xl max-h-[85vh] overflow-y-auto custom-scrollbar">
             <Link
               href="/"
               onClick={() => setIsOpen(false)}
-              className="block text-sm font-bold text-slate-800 hover:text-blue-600"
+              className="flex items-center gap-2 text-sm font-bold text-slate-800 hover:text-blue-600 py-1"
             >
+              <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
               Trang Chủ
             </Link>
 
-            {dbCategories.map((cat) => {
-              const catPlans = dbPlans.filter((p) => p.categoryId === cat.id);
-              return (
-                <div key={cat.id} className="border-t border-slate-100 pt-3">
-                  <span className="text-xs font-bold text-blue-600 uppercase tracking-wider block mb-2">
-                    {getCategoryIcon(cat.name)} {cat.name}
-                  </span>
-                  <div className="space-y-2 pl-3">
-                    {catPlans.length === 0 ? (
-                      <span className="text-xs text-slate-400 italic">Chưa có gói cước</span>
-                    ) : (
-                      catPlans.map((p) => {
-                        const firstPrice = p.prices?.[0]?.price || 0;
-                        const priceStr = firstPrice > 0 ? `${new Intl.NumberFormat("vi-VN").format(firstPrice)}đ` : "Liên hệ";
-                        return (
-                          <Link
-                            key={p.id}
-                            href={`/order?planId=${p.id}`}
-                            onClick={() => setIsOpen(false)}
-                            className="block text-xs font-semibold text-slate-700 hover:text-blue-600 truncate"
-                          >
-                            {p.name} - <span className="text-blue-600 font-bold">{priceStr}</span>
-                          </Link>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+            <div className="border-t border-slate-100 pt-3">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2 px-1">
+                Danh Mục Dịch Vụ
+              </span>
+              <div className="space-y-3">
+                {dbCategories.map((cat) => {
+                  const catPlans = dbPlans.filter((p) => p.categoryId === cat.id);
+                  return (
+                    <div key={cat.id} className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                      <span className="text-xs font-bold text-blue-700 block mb-1.5 flex items-center gap-2">
+                        <CategoryIcon name={cat.name} className="w-3.5 h-3.5" />
+                        <span>{cat.name}</span>
+                      </span>
+                      <div className="space-y-1.5 pl-2">
+                        {catPlans.length === 0 ? (
+                          <span className="text-[11px] text-slate-400 italic block py-0.5">Chưa có gói cước</span>
+                        ) : (
+                          catPlans.slice(0, 4).map((p) => {
+                            const firstPrice = p.prices?.[0]?.price || 0;
+                            const priceStr = firstPrice > 0 ? `${new Intl.NumberFormat("vi-VN").format(firstPrice)}đ/th` : "Liên hệ";
+                            return (
+                              <Link
+                                key={p.id}
+                                href={`/order?planId=${p.id}`}
+                                onClick={() => setIsOpen(false)}
+                                className="flex items-center justify-between py-1.5 text-xs text-slate-700 hover:text-blue-600"
+                              >
+                                <span className="font-medium truncate pr-2">{p.name}</span>
+                                <span className="text-[11px] font-bold text-blue-600 shrink-0">{priceStr}</span>
+                              </Link>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
 
-            <div className="border-t border-slate-100 pt-3 space-y-2">
-              <Link href="/pricing" onClick={() => setIsOpen(false)} className="block text-xs font-bold text-slate-800 hover:text-blue-600">Bảng Giá</Link>
-              <Link href="/news" onClick={() => setIsOpen(false)} className="block text-xs font-bold text-slate-800 hover:text-blue-600">Tin Tức</Link>
-              <Link href="/about" onClick={() => setIsOpen(false)} className="block text-xs font-bold text-slate-800 hover:text-blue-600">Giới Thiệu</Link>
+            <div className="border-t border-slate-100 pt-3 space-y-1">
+              <Link href="/pricing" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-xs font-bold text-slate-800 hover:text-blue-600 py-2">
+                <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Bảng Giá Dịch Vụ
+              </Link>
+              <Link href="/news" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-xs font-bold text-slate-800 hover:text-blue-600 py-2">
+                <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                </svg>
+                Tin Tức & Khuyến Mãi
+              </Link>
+              <Link href="/affiliate" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-xs font-bold text-slate-800 hover:text-blue-600 py-2">
+                <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                Đối Tác Tiếp Thị (Affiliate)
+              </Link>
+              <Link href="/about" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-xs font-bold text-slate-800 hover:text-blue-600 py-2">
+                <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                Về Chúng Tôi
+              </Link>
+              {user && (
+                <Link href="/my-plans" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-xs font-bold text-blue-600 hover:text-blue-700 py-2">
+                  <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                  </svg>
+                  Gói Cước Của Tôi
+                </Link>
+              )}
+            </div>
+
+            <div className="pt-3 border-t border-slate-100">
+              <Link
+                href="/order"
+                onClick={() => setIsOpen(false)}
+                className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-blue-500/20"
+              >
+                <span>Khởi Tạo Dịch Vụ Ngay →</span>
+              </Link>
             </div>
           </div>
         )}
@@ -732,35 +877,94 @@ export default function Header() {
             <form onSubmit={handleChangePassword} className="space-y-4">
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-1.5">Mật Khẩu Hiện Tại *</label>
-                <input
-                  type="password"
-                  required
-                  value={oldPassword}
-                  onChange={(e) => setOldPassword(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-500"
-                />
+                <div className="relative">
+                  <input
+                    type={showOldPwd ? "text" : "password"}
+                    required
+                    value={oldPassword}
+                    onChange={(e) => setOldPassword(e.target.value)}
+                    className="w-full h-10 pl-3.5 pr-10 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowOldPwd(!showOldPwd)}
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 focus:outline-none"
+                    title={showOldPwd ? "Ẩn" : "Hiện"}
+                  >
+                    {showOldPwd ? (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
 
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-1.5">Mật Khẩu Mới *</label>
-                <input
-                  type="password"
-                  required
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-500"
-                />
+                <div className="relative">
+                  <input
+                    type={showNewPwd ? "text" : "password"}
+                    required
+                    placeholder="Tối thiểu 6 ký tự"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full h-10 pl-3.5 pr-10 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPwd(!showNewPwd)}
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 focus:outline-none"
+                    title={showNewPwd ? "Ẩn" : "Hiện"}
+                  >
+                    {showNewPwd ? (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
 
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-1.5">Xác Nhận Mật Khẩu Mới *</label>
-                <input
-                  type="password"
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-500"
-                />
+                <div className="relative">
+                  <input
+                    type={showConfirmPwd ? "text" : "password"}
+                    required
+                    placeholder="Nhập lại mật khẩu mới"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full h-10 pl-3.5 pr-10 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPwd(!showConfirmPwd)}
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 focus:outline-none"
+                    title={showConfirmPwd ? "Ẩn" : "Hiện"}
+                  >
+                    {showConfirmPwd ? (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">

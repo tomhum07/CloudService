@@ -14,9 +14,26 @@ interface Category {
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
-  const totalItems = categories.length;
+
+  const filteredCategories = categories.filter((c) => {
+    const term = searchTerm.trim().toLowerCase();
+    const matchesSearch = !term ||
+      (c.name && c.name.toLowerCase().includes(term)) ||
+      (c.slug && c.slug.toLowerCase().includes(term)) ||
+      (c.description && c.description.toLowerCase().includes(term));
+
+    const matchesStatus = statusFilter === "all" ||
+      (statusFilter === "active" && c.isActive) ||
+      (statusFilter === "inactive" && !c.isActive);
+
+    return matchesSearch && matchesStatus;
+  });
+
+  const totalItems = filteredCategories.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
   const [error, setError] = useState<string | null>(null);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -146,16 +163,67 @@ export default function CategoriesPage() {
           onClick={() => handleOpenFormModal()}
           className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-all shadow-md shadow-blue-500/20 flex items-center gap-2"
         >
-          <span>➕</span>
+          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
           <span>Thêm Danh Mục Mới</span>
         </button>
       </div>
 
       {error && (
-        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
-          ⚠️ {error}
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center gap-2">
+          <svg className="w-4 h-4 text-rose-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{error}</span>
         </div>
       )}
+
+      {/* Search & Status Filter Bar */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4 justify-between items-center">
+        <div className="relative flex-1 w-full">
+          <input
+            type="text"
+            placeholder="Tìm kiếm danh mục theo tên, slug hoặc mô tả..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full h-10 pl-10 pr-9 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all placeholder-slate-400"
+          />
+          <svg className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          {searchTerm && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchTerm("");
+                setCurrentPage(1);
+              }}
+              className="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-slate-600"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <select
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="h-10 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white w-full sm:w-40 font-medium"
+          >
+            <option value="all">Tất cả trạng thái</option>
+            <option value="active">Đang hiện</option>
+            <option value="inactive">Đang ẩn</option>
+          </select>
+        </div>
+      </div>
 
       {/* Table */}
       <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
@@ -175,12 +243,14 @@ export default function CategoriesPage() {
                 <tr>
                   <td colSpan={5} className="p-8 text-center text-slate-400">Đang tải danh mục...</td>
                 </tr>
-              ) : categories.length === 0 ? (
+              ) : filteredCategories.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-slate-400">Không tìm thấy danh mục nào.</td>
+                  <td colSpan={5} className="p-8 text-center text-slate-400">
+                    {searchTerm ? "Không tìm thấy danh mục nào phù hợp với từ khóa." : "Chưa có danh mục nào trong cơ sở dữ liệu."}
+                  </td>
                 </tr>
               ) : (
-                categories.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((category) => (
+                filteredCategories.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((category) => (
                   <tr key={category.id} className="hover:bg-slate-50/60 transition-colors">
                     <td className="py-3.5 px-4 font-bold text-slate-900">
                       {category.name}
@@ -266,8 +336,11 @@ export default function CategoriesPage() {
             <p className="text-xs text-slate-500 mb-4">Điền đầy đủ thông tin tên và đường dẫn (slug) cho danh mục.</p>
 
             {formError && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium mb-4">
-                ⚠️ {formError}
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium mb-4 flex items-center gap-2">
+                <svg className="w-4 h-4 text-rose-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{formError}</span>
               </div>
             )}
 
@@ -336,7 +409,18 @@ export default function CategoriesPage() {
       {isDeleteModalOpen && currentCategory && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
           <div className="w-full max-w-sm bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl text-center">
-            <div className="text-3xl mb-3">{currentCategory.isActive ? "👁️‍🗨️" : "👁️"}</div>
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-3">
+              {currentCategory.isActive ? (
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                </svg>
+              ) : (
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              )}
+            </div>
             <h3 className="text-lg font-bold text-slate-900 mb-1">
               {currentCategory.isActive ? "Ẩn Danh Mục Này?" : "Hiện Lại Danh Mục?"}
             </h3>
