@@ -126,11 +126,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           Tài khoản của bạn là <span className="text-rose-600 font-bold">Khách Hàng (Customer)</span> và không có quyền truy cập vào Cổng quản trị CloudAdmin. Vui lòng quay về trang chủ hoặc đăng nhập bằng tài khoản Quản trị viên.
         </p>
         <div className="flex flex-wrap gap-3 justify-center">
-          <Link href="/" className="px-5 py-2.5 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-xs">
-            🏠 Về Trang Chủ
+          <Link href="/" className="px-5 py-2.5 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-xs flex items-center gap-2">
+            <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span>Về Trang Chủ</span>
           </Link>
-          <button onClick={handleLogout} className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition-all">
-            🔑 Đăng Nhập Quản Trị
+          <button onClick={handleLogout} className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition-all flex items-center gap-2">
+            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
+            <span>Đăng Nhập Quản Trị</span>
           </button>
         </div>
       </div>

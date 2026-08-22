@@ -12,7 +12,7 @@ export const SERVICE_DETAILS_DATA: Record<string, {
   speedRating: number;
   highlightChip: string;
   priceStarting: string;
-  features: { title: string; desc: string; icon: string }[];
+  features: { title: string; desc: string; icon?: string }[];
   plans: {
     name: string;
     cpu: string;
@@ -34,10 +34,10 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "Vietnix Speed Optimizer & LiteSpeed Enterprise",
     priceStarting: "45.000đ/tháng",
     features: [
-      { icon: "⚡", title: "Ổ cứng Enterprise NVMe", desc: "Tốc độ đọc ghi IOPS vượt trội gấp 10 lần SSD thông thường, xử lý database mượt mà." },
-      { icon: "🚀", title: "LiteSpeed Enterprise & LSCache", desc: "Tăng tốc độ phản hồi website WordPress gấp 5 lần so với Apache / Nginx." },
-      { icon: "🛡️", title: "Bảo vệ Imunify360 AI", desc: "Tự động quét và diệt mã độc thời gian thực, ngăn chặn tấn công WAF Layer 7." },
-      { icon: "🔄", title: "JetBackup 2 Lần / Ngày", desc: "Dữ liệu được sao lưu độc lập 2 lần mỗi ngày, hỗ trợ phục hồi 1-Click an toàn." }
+      { title: "Ổ cứng Enterprise NVMe", desc: "Tốc độ đọc ghi IOPS vượt trội gấp 10 lần SSD thông thường, xử lý database mượt mà." },
+      { title: "LiteSpeed Enterprise & LSCache", desc: "Tăng tốc độ phản hồi website WordPress gấp 5 lần so với Apache / Nginx." },
+      { title: "Bảo vệ Imunify360 AI", desc: "Tự động quét và diệt mã độc thời gian thực, ngăn chặn tấn công WAF Layer 7." },
+      { title: "JetBackup 2 Lần / Ngày", desc: "Dữ liệu được sao lưu độc lập 2 lần mỗi ngày, hỗ trợ phục hồi 1-Click an toàn." }
     ],
     plans: [
       { name: "MaxSpeed 1", cpu: "1 Core AMD EPYC", ram: "1 GB RAM", storage: "10 GB NVMe", bandwidth: "Không giới hạn", price: "45.000đ" },
@@ -60,10 +60,10 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "CPU AMD EPYC 7003 & Dedicated Resources",
     priceStarting: "120.000đ/tháng",
     features: [
-      { icon: "🏢", title: "Tài nguyên cấp phát độc lập", desc: "Không lo nghẽn tài nguyên do các website khác trên cùng server." },
-      { icon: "🛡️", title: "Tường lửa Anti-DDoS WAF", desc: "Chống spam request và tấn công DDoS bảo đảm website luôn online 99.99%." },
-      { icon: "📧", title: "Mail Server riêng biệt", desc: "Tỷ lệ gửi email thông báo đơn hàng vào thẳng hộp thư Inbox của khách hàng." },
-      { icon: "⚡", title: "Hỗ trợ Redis Cache & Memcached", desc: "Tối ưu hóa truy vấn cơ sở dữ liệu cho hệ thống WooCommerce/Magento." }
+      { title: "Tài nguyên cấp phát độc lập", desc: "Không lo nghẽn tài nguyên do các website khác trên cùng server." },
+      { title: "Tường lửa Anti-DDoS WAF", desc: "Chống spam request và tấn công DDoS bảo đảm website luôn online 99.99%." },
+      { title: "Mail Server riêng biệt", desc: "Tỷ lệ gửi email thông báo đơn hàng vào thẳng hộp thư Inbox của khách hàng." },
+      { title: "Hỗ trợ Redis Cache & Memcached", desc: "Tối ưu hóa truy vấn cơ sở dữ liệu cho hệ thống WooCommerce/Magento." }
     ],
     plans: [
       { name: "Business Pro 1", cpu: "2 vCPUs", ram: "4 GB RAM", storage: "40 GB NVMe", bandwidth: "Không giới hạn", price: "120.000đ" },
@@ -84,9 +84,9 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "Vietnix Speed Optimizer & WP Toolkit",
     priceStarting: "39.000đ/tháng",
     features: [
-      { icon: "🌐", title: "Cài đặt WordPress 1-Click", desc: "Khởi tạo website WordPress mới tinh chỉ trong vòng 30 giây." },
-      { icon: "⚡", title: "Plugin LSCache Độc Quyền", desc: "Tăng tốc điểm số Core Web Vitals của Google giúp lên top SEO nhanh hơn." },
-      { icon: "🔒", title: "Tự động vá lỗi bảo mật", desc: "Phát hiện và ngăn chặn các plugin chứa mã độc hay lỗ hổng zero-day." }
+      { title: "Cài đặt WordPress 1-Click", desc: "Khởi tạo website WordPress mới tinh chỉ trong vòng 30 giây." },
+      { title: "Plugin LSCache Độc Quyền", desc: "Tăng tốc điểm số Core Web Vitals của Google giúp lên top SEO nhanh hơn." },
+      { title: "Tự động vá lỗi bảo mật", desc: "Phát hiện và ngăn chặn các plugin chứa mã độc hay lỗ hổng zero-day." }
     ],
     plans: [
       { name: "WP Starter", cpu: "1 Core", ram: "1.5 GB RAM", storage: "15 GB NVMe", bandwidth: "Không giới hạn", price: "39.000đ" },
@@ -107,8 +107,8 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "100% NVMe Storage & cPanel Bản Quyền",
     priceStarting: "25.000đ/tháng",
     features: [
-      { icon: "💾", title: "Ổ cứng NVMe Tốc Độ Cao", desc: "Trải nghiệm tốc độ mượt mà hơn hẳn so với các loại hosting HDD/SSD truyền thống." },
-      { icon: "🛡️", title: "DirectAdmin / cPanel", desc: "Bảng điều khiển trực quan, hỗ trợ cài đặt chứng chỉ SSL chỉ với 1 click." }
+      { title: "Ổ cứng NVMe Tốc Độ Cao", desc: "Trải nghiệm tốc độ mượt mà hơn hẳn so với các loại hosting HDD/SSD truyền thống." },
+      { title: "DirectAdmin / cPanel", desc: "Bảng điều khiển trực quan, hỗ trợ cài đặt chứng chỉ SSL chỉ với 1 click." }
     ],
     plans: [
       { name: "NVMe Mini", cpu: "1 Core", ram: "1 GB RAM", storage: "5 GB NVMe", bandwidth: "Không giới hạn", price: "25.000đ" },
@@ -129,8 +129,8 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "Multi IP Class C & Diệt Mã Độc Imunify360",
     priceStarting: "150.000đ/tháng",
     features: [
-      { icon: "🌐", title: "Nhiều dải IP Class C", desc: "Mỗi website được gắn một địa chỉ IP riêng biệt tránh bị Google phạt mạng lưới." },
-      { icon: "📁", title: "Quản lý tập trung 1 Dashboard", desc: "Dễ dàng quản lý hàng chục website và database trên cùng một tài khoản." }
+      { title: "Nhiều dải IP Class C", desc: "Mỗi website được gắn một địa chỉ IP riêng biệt tránh bị Google phạt mạng lưới." },
+      { title: "Quản lý tập trung 1 Dashboard", desc: "Dễ dàng quản lý hàng chục website và database trên cùng một tài khoản." }
     ],
     plans: [
       { name: "SEO 5 IPs", cpu: "2 Core", ram: "3 GB RAM", storage: "30 GB NVMe", bandwidth: "5 Dedicated IPs", price: "150.000đ" },
@@ -149,10 +149,10 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "CPU AMD EPYC 7003 & KVM Virtualization",
     priceStarting: "150.000đ/tháng",
     features: [
-      { icon: "⚡", title: "CPU AMD EPYC & Intel Xeon Gold", desc: "Tần số xung nhịp cao chuyên dụng cho các ứng dụng backend, API và database lớn." },
-      { icon: "🛡️", title: "Tường lửa Anti-DDoS 100Gbps+", desc: "Bảo vệ miễn phí trước các đợt tấn công từ chối dịch vụ Layer 3/4/7." },
-      { icon: "🎛️", title: "Toàn quyền Root Access", desc: "Tự do cài đặt hệ điều hành Linux (Ubuntu, AlmaLinux, Debian) hoặc Windows Server." },
-      { icon: "🔄", title: "Snapshot & Backup Tự Động", desc: "Khởi tạo bản sao lưu snapshot chỉ trong vài giây, an toàn tuyệt đối dữ liệu." }
+      { title: "CPU AMD EPYC & Intel Xeon Gold", desc: "Tần số xung nhịp cao chuyên dụng cho các ứng dụng backend, API và database lớn." },
+      { title: "Tường lửa Anti-DDoS 100Gbps+", desc: "Bảo vệ miễn phí trước các đợt tấn công từ chối dịch vụ Layer 3/4/7." },
+      { title: "Toàn quyền Root Access", desc: "Tự do cài đặt hệ điều hành Linux (Ubuntu, AlmaLinux, Debian) hoặc Windows Server." },
+      { title: "Snapshot & Backup Tự Động", desc: "Khởi tạo bản sao lưu snapshot chỉ trong vài giây, an toàn tuyệt đối dữ liệu." }
     ],
     plans: [
       { name: "VPS NVMe 1", cpu: "2 vCPUs", ram: "4 GB RAM ECC", storage: "60 GB NVMe Gen4", bandwidth: "1 Gbps Unmetered", price: "150.000đ" },
@@ -174,8 +174,8 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "Dung Lượng Lớn & Chi Phí Tiết Kiệm",
     priceStarting: "90.000đ/tháng",
     features: [
-      { icon: "💾", title: "Dung lượng SSD lớn", desc: "Thoải mái lưu trữ dữ liệu với mức chi phí trên mỗi GB tối ưu nhất." },
-      { icon: "⚡", title: "Băng thông trong nước 1Gbps", desc: "Tốc độ tải về cực nhanh tại các trung tâm dữ liệu Viettel IDC / VNPT." }
+      { title: "Dung lượng SSD lớn", desc: "Thoải mái lưu trữ dữ liệu với mức chi phí trên mỗi GB tối ưu nhất." },
+      { title: "Băng thông trong nước 1Gbps", desc: "Tốc độ tải về cực nhanh tại các trung tâm dữ liệu Viettel IDC / VNPT." }
     ],
     plans: [
       { name: "VPS SSD 1", cpu: "1 vCPU", ram: "2 GB RAM", storage: "40 GB SSD", bandwidth: "1 Gbps", price: "90.000đ" },
@@ -194,9 +194,9 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "DNS Anycast Toàn Cầu & Quản Lý Miễn Phí",
     priceStarting: "249.000đ/năm",
     features: [
-      { icon: "🌐", title: "Kích hoạt DNS tức thì", desc: "Tên miền được kích hoạt và phân giải địa chỉ IP chỉ sau vài giây." },
-      { icon: "🔒", title: "Khóa an toàn Registry Lock", desc: "Bảo vệ tên miền thương hiệu tránh bị chiếm đoạt hoặc đổi nameserver trái phép." },
-      { icon: "🛡️", title: "Ẩn danh Whois Privacy", desc: "Bảo vệ thông tin cá nhân và số điện thoại khỏi bị spam quảng cáo." }
+      { title: "Kích hoạt DNS tức thì", desc: "Tên miền được kích hoạt và phân giải địa chỉ IP chỉ sau vài giây." },
+      { title: "Khóa an toàn Registry Lock", desc: "Bảo vệ tên miền thương hiệu tránh bị chiếm đoạt hoặc đổi nameserver trái phép." },
+      { title: "Ẩn danh Whois Privacy", desc: "Bảo vệ thông tin cá nhân và số điện thoại khỏi bị spam quảng cáo." }
     ],
     plans: [
       { name: "Tên Miền .com", cpu: "ICANN Quốc Tế", ram: "DNS Anycast", storage: "Whois Privacy", bandwidth: "Toàn cầu", price: "249.000đ/năm" },
@@ -215,8 +215,8 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "Bảo Hộ Pháp Lý VNNIC & Ưu Tiên SEO VN",
     priceStarting: "350.000đ/năm",
     features: [
-      { icon: "🇻🇳", title: "Được pháp luật bảo hộ", desc: "Tránh nguy cơ mất thương hiệu tại thị trường Việt Nam." },
-      { icon: "📈", title: "Tăng điểm SEO Google", desc: "Tối ưu hóa hiển thị cho người dùng tìm kiếm tại Việt Nam." }
+      { title: "Được pháp luật bảo hộ", desc: "Tránh nguy cơ mất thương hiệu tại thị trường Việt Nam." },
+      { title: "Tăng điểm SEO Google", desc: "Tối ưu hóa hiển thị cho người dùng tìm kiếm tại Việt Nam." }
     ],
     plans: [
       { name: "Tên Miền .com.vn", cpu: "VNNIC", ram: "Doanh nghiệp", storage: "Bảo hộ", bandwidth: "Việt Nam", price: "350.000đ/năm" },
@@ -234,7 +234,7 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "Tặng Thêm 1 Năm Duy Trì & Hỗ Trợ 24/7",
     priceStarting: "Theo giá gia hạn",
     features: [
-      { icon: "🔄", title: "Không gián đoạn website", desc: "Hệ thống giữ nguyên toàn bộ bản ghi DNS trong quá trình chuyển đổi." }
+      { title: "Không gián đoạn website", desc: "Hệ thống giữ nguyên toàn bộ bản ghi DNS trong quá trình chuyển đổi." }
     ],
     plans: [
       { name: "Chuyển .com", cpu: "Transfer", ram: "Tặng 1 năm", storage: "DNS Giữ nguyên", bandwidth: "Toàn cầu", price: "249.000đ" },
@@ -252,9 +252,9 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "Hạ Tầng Mail Cluster & Tỷ Lệ Inbox 99.9%",
     priceStarting: "99.000đ/tháng",
     features: [
-      { icon: "✉️", title: "Địa chỉ Email theo tên miền", desc: "Tạo sự chuyên nghiệp khi giao dịch với đối tác (VD: ceo@tenmien.vn)." },
-      { icon: "🛡️", title: "Bộ lọc Antispam & Antivirus kép", desc: "Ngăn chặn 99.9% thư rác, email lừa đảo phishing và mã độc tống tiền." },
-      { icon: "📱", title: "Đồng bộ đa thiết bị mượt mà", desc: "Tương thích 100% với Outlook, Gmail App, Apple Mail trên điện thoại và máy tính." }
+      { title: "Địa chỉ Email theo tên miền", desc: "Tạo sự chuyên nghiệp khi giao dịch với đối tác (VD: ceo@tenmien.vn)." },
+      { title: "Bộ lọc Antispam & Antivirus kép", desc: "Ngăn chặn 99.9% thư rác, email lừa đảo phishing và mã độc tống tiền." },
+      { title: "Đồng bộ đa thiết bị mượt mà", desc: "Tương thích 100% với Outlook, Gmail App, Apple Mail trên điện thoại và máy tính." }
     ],
     plans: [
       { name: "Mail Starter", cpu: "5 Hòm thư", ram: "10 GB Dung lượng", storage: "Webmail Pro", bandwidth: "Không giới hạn gửi", price: "99.000đ/th" },
@@ -273,8 +273,8 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "Bảo Hiểm Quốc Tế Lên Đến $1,750,000",
     priceStarting: "199.000đ/năm",
     features: [
-      { icon: "🔒", title: "Mã hóa đường truyền 256-bit", desc: "Ngăn chặn hacker đánh cắp mật khẩu và thông tin thẻ tín dụng của khách hàng." },
-      { icon: "🌐", title: "Hỗ trợ Wildcard SSL", desc: "Bảo vệ không giới hạn tất cả các subdomain (*.tenmien.vn)." }
+      { title: "Mã hóa đường truyền 256-bit", desc: "Ngăn chặn hacker đánh cắp mật khẩu và thông tin thẻ tín dụng của khách hàng." },
+      { title: "Hỗ trợ Wildcard SSL", desc: "Bảo vệ không giới hạn tất cả các subdomain (*.tenmien.vn)." }
     ],
     plans: [
       { name: "Sectigo PositiveSSL", cpu: "1 Tên miền", ram: "Xác thực Domain (DV)", storage: "Mã hóa 256-bit", bandwidth: "Bảo hiểm $10,000", price: "199.000đ/năm" },
@@ -293,9 +293,9 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "Dung Lượng Lọc 100Gbps+ & Độ Trễ < 2ms",
     priceStarting: "350.000đ/tháng",
     features: [
-      { icon: "🛡️", title: "Bảo vệ Layer 3 & 4 (Network)", desc: "Lọc sạch lưu lượng tấn công mạng băng thông lớn lên đến 100Gbps+." },
-      { icon: "🤖", title: "Bảo vệ Layer 7 WAF (Application)", desc: "Chống spam form, cào dữ liệu trái phép (Bot Scraping) và HTTP Request Flood." },
-      { icon: "📊", title: "Giám sát thời gian thực", desc: "Cung cấp bảng biểu đồ lưu lượng và chi tiết các đợt tấn công bị triệt tiêu." }
+      { title: "Bảo vệ Layer 3 & 4 (Network)", desc: "Lọc sạch lưu lượng tấn công mạng băng thông lớn lên đến 100Gbps+." },
+      { title: "Bảo vệ Layer 7 WAF (Application)", desc: "Chống spam form, cào dữ liệu trái phép (Bot Scraping) và HTTP Request Flood." },
+      { title: "Giám sát thời gian thực", desc: "Cung cấp bảng biểu đồ lưu lượng và chi tiết các đợt tấn công bị triệt tiêu." }
     ],
     plans: [
       { name: "Firewall Standard", cpu: "30 Gbps Capacity", ram: "Layer 3/4 Protection", storage: "Phản hồi < 1s", bandwidth: "1 Dedicated IP", price: "350.000đ/th" },
@@ -314,9 +314,9 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "Dell PowerEdge / HP Enterprise & 10Gbps Uplink",
     priceStarting: "1.850.000đ/tháng",
     features: [
-      { icon: "🖥️", title: "100% Phần cứng vật lý riêng", desc: "Không chia sẻ tài nguyên với bất kỳ ai, tối đa hóa sức mạnh xử lý." },
-      { icon: "🌐", title: "Đường truyền mạng 10Gbps", desc: "Băng thông trong nước tốc độ cao không giới hạn lưu lượng truyền tải." },
-      { icon: "🛠️", title: "Thay thế linh kiện trong 30 phút", desc: "Cam kết xử lý sự cố phần cứng tức thì bởi kỹ sư thường trực tại Datacenter." }
+      { title: "100% Phần cứng vật lý riêng", desc: "Không chia sẻ tài nguyên với bất kỳ ai, tối đa hóa sức mạnh xử lý." },
+      { title: "Đường truyền mạng 10Gbps", desc: "Băng thông trong nước tốc độ cao không giới hạn lưu lượng truyền tải." },
+      { title: "Thay thế linh kiện trong 30 phút", desc: "Cam kết xử lý sự cố phần cứng tức thì bởi kỹ sư thường trực tại Datacenter." }
     ],
     plans: [
       { name: "Server Dell E5-2680", cpu: "2x Intel Xeon E5 (28 Cores)", ram: "64 GB RAM ECC", storage: "2x 480 GB SSD Enterprise", bandwidth: "1 Gbps Port", price: "1.850.000đ/th" },
@@ -335,8 +335,8 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "Datacenter Tier 3 Quốc Tế & Nguồn Điện N+1",
     priceStarting: "1.200.000đ/tháng",
     features: [
-      { icon: "🏢", title: "Hạ tầng Datacenter Tier 3", desc: "Hệ thống làm mát chính xác, PUE thấp, nguồn điện kép UPS và máy phát dự phòng." },
-      { icon: "🔒", title: "Kiểm soát an ninh 6 lớp", desc: "Camera giám sát, nhận diện vân tay/khuôn mặt và bảo vệ túc trực 24/7." }
+      { title: "Hạ tầng Datacenter Tier 3", desc: "Hệ thống làm mát chính xác, PUE thấp, nguồn điện kép UPS và máy phát dự phòng." },
+      { title: "Kiểm soát an ninh 6 lớp", desc: "Camera giám sát, nhận diện vân tay/khuôn mặt và bảo vệ túc trực 24/7." }
     ],
     plans: [
       { name: "Chỗ đặt 1U Rack", cpu: "1U Server Space", ram: "Công suất điện 350W", storage: "1 IP Tĩnh", bandwidth: "1 Gbps Shared", price: "1.200.000đ/th" },
@@ -355,8 +355,8 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "Kiến Trúc Multi-Cloud & Cam Kết SLA 99.99%",
     priceStarting: "Liên hệ tư vấn",
     features: [
-      { icon: "☁️", title: "Private Cloud Độc Quyền", desc: "Xây dựng hạ tầng đám mây riêng biệt hoàn toàn theo yêu cầu doanh nghiệp." },
-      { icon: "📈", title: "Tự động co giãn (Auto Scaling)", desc: "Hệ thống tự động tăng giảm tài nguyên máy chủ theo lưu lượng truy cập thực tế." }
+      { title: "Private Cloud Độc Quyền", desc: "Xây dựng hạ tầng đám mây riêng biệt hoàn toàn theo yêu cầu doanh nghiệp." },
+      { title: "Tự động co giãn (Auto Scaling)", desc: "Hệ thống tự động tăng giảm tài nguyên máy chủ theo lưu lượng truy cập thực tế." }
     ],
     plans: [
       { name: "Cloud Cluster Cơ Bản", cpu: "Multi-Node Setup", ram: "Auto-Failover", storage: "Ceph Storage NVMe", bandwidth: "Dedicated VLAN", price: "2.500.000đ/th" },
@@ -374,8 +374,8 @@ export const SERVICE_DETAILS_DATA: Record<string, {
     highlightChip: "Tương Thích 100% AWS S3 API & Chi Phí Cực Rẻ",
     priceStarting: "150.000đ/tháng",
     features: [
-      { icon: "📦", title: "Chuẩn giao thức S3 API", desc: "Dễ dàng tích hợp với WordPress, NextCloud, Cyberduck, AWS CLI và các SDK." },
-      { icon: "🛡️", title: "Độ bền dữ liệu 99.999999999%", desc: "Cơ chế nhân bản dữ liệu 3 vùng an toàn tuyệt đối trước mọi sự cố phần cứng." }
+      { title: "Chuẩn giao thức S3 API", desc: "Dễ dàng tích hợp với WordPress, NextCloud, Cyberduck, AWS CLI và các SDK." },
+      { title: "Độ bền dữ liệu 99.999999999%", desc: "Cơ chế nhân bản dữ liệu 3 vùng an toàn tuyệt đối trước mọi sự cố phần cứng." }
     ],
     plans: [
       { name: "S3 Storage 250GB", cpu: "S3 API", ram: "Băng thông 500GB", storage: "250 GB Storage", bandwidth: "Độ bền 11 số 9", price: "150.000đ/th" },

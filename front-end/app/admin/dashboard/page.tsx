@@ -287,8 +287,13 @@ export default function AdminDashboard() {
           </div>
 
           <div className="mt-6 p-4 rounded-xl bg-blue-50 border border-blue-100 text-xs text-slate-600">
-            <strong className="text-blue-900 block mb-1">💡 Gợi ý kinh doanh:</strong>
-            Gói Cloud VPS NVMe và Web Hosting đang là sản phẩm có mức tăng trưởng doanh thu cao nhất.
+            <div className="flex items-center gap-1.5 text-blue-900 font-bold mb-1">
+              <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Gợi ý kinh doanh:</span>
+            </div>
+            <p>Gói Cloud VPS NVMe và Web Hosting đang là sản phẩm có mức tăng trưởng doanh thu cao nhất.</p>
           </div>
         </div>
 

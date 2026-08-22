@@ -254,14 +254,19 @@ export default function PlansPage() {
           onClick={() => handleOpenFormModal()}
           className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-all shadow-md shadow-blue-500/20 flex items-center gap-2"
         >
-          <span>➕</span>
+          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
           <span>Thêm Gói Cước Mới</span>
         </button>
       </div>
 
       {error && (
-        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
-          ⚠️ {error}
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center gap-2">
+          <svg className="w-4 h-4 text-rose-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{error}</span>
         </div>
       )}
 
@@ -365,20 +370,26 @@ export default function PlansPage() {
                           >
                             <img src={plan.qrCodeUrl} alt="QR Code" className="w-10 h-10 border border-slate-200 rounded-lg p-0.5 bg-white shadow-xs group-hover:scale-105 transition-transform" />
                           </button>
-                          <div className="flex flex-col gap-0.5">
+                          <div className="flex flex-col gap-1">
                             <button
                               onClick={() => handleRegenerateQR(plan.id)}
-                              className="text-[10px] font-bold text-blue-600 hover:text-blue-700 text-left"
+                              className="text-[10px] font-bold text-blue-600 hover:text-blue-700 text-left flex items-center gap-1"
                               title="Tạo lại mã QR"
                             >
-                              🔄 Sinh lại
+                              <svg className="w-3 h-3 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                              <span>Sinh lại</span>
                             </button>
                             <button
                               type="button"
                               onClick={() => setPreviewQrPlan(plan)}
-                              className="text-[10px] font-medium text-slate-500 hover:text-slate-800 text-left"
+                              className="text-[10px] font-medium text-slate-500 hover:text-slate-800 text-left flex items-center gap-1"
                             >
-                              🔍 Xem lớn
+                              <svg className="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                              </svg>
+                              <span>Xem lớn</span>
                             </button>
                           </div>
                         </div>
@@ -464,8 +475,11 @@ export default function PlansPage() {
             <p className="text-xs text-slate-500 mb-4">Cấu hình thông số kỹ thuật và liên kết danh mục.</p>
 
             {formError && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium mb-4">
-                ⚠️ {formError}
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium mb-4 flex items-center gap-2">
+                <svg className="w-4 h-4 text-rose-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{formError}</span>
               </div>
             )}
 
@@ -579,7 +593,18 @@ export default function PlansPage() {
       {isDeleteModalOpen && currentPlan && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
           <div className="w-full max-w-sm bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl text-center">
-            <div className="text-3xl mb-3">{currentPlan.isActive !== false ? "👁️‍🗨️" : "👁️"}</div>
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-3">
+              {currentPlan.isActive !== false ? (
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                </svg>
+              ) : (
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              )}
+            </div>
             <h3 className="text-lg font-bold text-slate-900 mb-1">
               {currentPlan.isActive !== false ? "Ẩn Gói Cước Này?" : "Kích Hoạt Lại Gói Cước?"}
             </h3>
@@ -638,7 +663,7 @@ export default function PlansPage() {
             <div className="text-left bg-slate-50 p-3 rounded-xl border border-slate-100 mb-4 text-xs space-y-1">
               <p className="font-bold text-slate-800">{previewQrPlan.name}</p>
               <p className="text-slate-500 text-[11px]">
-                📱 Quét mã bằng camera điện thoại để chuyển thẳng đến trang đăng ký & thanh toán gói này.
+                Quét mã bằng camera điện thoại để chuyển thẳng đến trang đăng ký & thanh toán gói này.
               </p>
             </div>
 
@@ -649,7 +674,10 @@ export default function PlansPage() {
                 rel="noreferrer"
                 className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 text-center transition-all flex items-center justify-center gap-1.5"
               >
-                <span>🔗 Mở Trang Đăng Ký Thanh Toán</span>
+                <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+                <span>Mở Trang Đăng Ký Thanh Toán</span>
               </a>
               <button
                 type="button"
