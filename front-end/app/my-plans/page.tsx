@@ -584,22 +584,24 @@ export default function MyPlansPage() {
 
                   {/* Khung Mã QR PayOS Thật */}
                   {loadingQr ? (
-                    <div className="p-12 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-3">
+                    <div className="p-12 bg-slate-50 rounded-3xl border border-slate-200 text-center space-y-3">
                       <div className="w-8 h-8 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
-                      <p className="text-xs text-slate-600 font-medium">Đang tạo mã QR thanh toán tự động PayOS...</p>
+                      <p className="text-xs text-slate-600 font-medium">Đang tải mã QR thanh toán PayOS...</p>
                     </div>
                   ) : (
-                    <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-3">
+                    <div className="p-4 bg-slate-50 rounded-3xl border border-slate-200 text-center space-y-4">
                       <div className="inline-block p-3 bg-white border border-slate-200 rounded-2xl shadow-sm">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={
-                            payosData?.qrCode
+                            payosData?.accountNumber
+                              ? `https://img.vietqr.io/image/${payosData.bin || "970422"}-${payosData.accountNumber}-compact2.png?amount=${Math.round(payosData.amount || selectedPayOrder.price || selectedPayOrder.totalAmount || 0)}&addInfo=${encodeURIComponent(payosData.description || selectedPayOrder.orderCode)}&accountName=${encodeURIComponent(payosData.accountName || "")}`
+                              : payosData?.qrCode
                               ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(payosData.qrCode)}`
-                              : `https://api.vietqr.io/image/970422-0987654321-compact2.jpg?amount=${Math.round(selectedPayOrder.price || selectedPayOrder.totalAmount || 0)}&addInfo=${encodeURIComponent(selectedPayOrder.orderCode)}`
+                              : `https://img.vietqr.io/image/970422-0987654321-compact2.png?amount=${Math.round(selectedPayOrder.price || selectedPayOrder.totalAmount || 0)}&addInfo=${encodeURIComponent(selectedPayOrder.orderCode)}`
                           }
                           alt="PayOS VietQR Payment Code"
-                          className="w-52 h-52 mx-auto object-contain rounded-lg"
+                          className="w-56 h-56 mx-auto object-contain rounded-xl"
                         />
                         <div className="text-[10px] text-slate-500 font-bold uppercase mt-2 tracking-wider flex items-center justify-center gap-1.5">
                           <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -610,20 +612,32 @@ export default function MyPlansPage() {
                       </div>
 
                       {/* Bảng Chi Tiết STK */}
-                      <div className="bg-white p-3.5 rounded-xl border border-slate-200 text-xs text-left space-y-2">
+                      <div className="bg-white p-4 rounded-2xl border border-slate-200 text-xs text-left space-y-2.5">
                         {payosData?.accountName && (
-                          <div className="flex justify-between items-center pb-1.5 border-b border-slate-100">
+                          <div className="flex justify-between items-center pb-2 border-b border-slate-100">
                             <span className="text-slate-500">Chủ tài khoản:</span>
                             <span className="font-bold text-slate-900 uppercase">{payosData.accountName}</span>
                           </div>
                         )}
-                        <div className="flex justify-between items-center pb-1.5 border-b border-slate-100">
+                        <div className="flex justify-between items-center pb-2 border-b border-slate-100">
                           <span className="text-slate-500">Số tài khoản:</span>
-                          <span className="font-mono font-bold text-blue-600 text-sm">
-                            {payosData?.accountNumber || "0987654321"}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-blue-600 text-sm">
+                              {payosData?.accountNumber || "0987654321"}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(payosData?.accountNumber || "0987654321");
+                                setCheckMessage({ type: "info", text: "Đã sao chép số tài khoản vào bộ nhớ tạm." });
+                              }}
+                              className="text-[10px] px-2 py-0.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold cursor-pointer"
+                            >
+                              Sao chép
+                            </button>
+                          </div>
                         </div>
-                        <div className="flex justify-between items-center pb-1.5 border-b border-slate-100">
+                        <div className="flex justify-between items-center pb-2 border-b border-slate-100">
                           <span className="text-slate-500">Số tiền:</span>
                           <span className="font-black text-rose-600 text-sm">
                             {formatPrice(payosData?.amount || selectedPayOrder.price || selectedPayOrder.totalAmount || 0)}
@@ -631,9 +645,21 @@ export default function MyPlansPage() {
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-slate-500">Nội dung chuyển khoản:</span>
-                          <span className="font-mono font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
-                            {payosData?.description || selectedPayOrder.orderCode}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                              {payosData?.description || selectedPayOrder.orderCode}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(payosData?.description || selectedPayOrder.orderCode);
+                                setCheckMessage({ type: "info", text: "Đã sao chép nội dung chuyển khoản." });
+                              }}
+                              className="text-[10px] px-2 py-0.5 rounded bg-rose-50 text-rose-600 hover:bg-rose-100 font-bold cursor-pointer"
+                            >
+                              Sao chép
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>

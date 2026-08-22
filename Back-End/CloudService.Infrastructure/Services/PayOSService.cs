@@ -74,6 +74,40 @@ namespace CloudService.Infrastructure.Services
 
             if (amount <= 0) amount = 10000;
 
+            // Kiểm tra xem đơn hàng này đã có mã PayOS được tạo trước đó chưa để tái sử dụng 100% cùng 1 mã QR và OrderCode
+            if (!string.IsNullOrEmpty(order.Notes) && order.Notes.Contains("[PayOSData:"))
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(order.Notes, @"\[PayOSData:\s*orderCode=(\d+)&qrCode=([^&]*)&accountNumber=([^&]*)&accountName=([^&]*)&bin=([^&]*)&checkoutUrl=([^&]*)&amount=(\d+)&description=([^\]]*)\]");
+                if (match.Success)
+                {
+                    var existingOrderCode = long.Parse(match.Groups[1].Value);
+                    var existingQrCode = System.Web.HttpUtility.UrlDecode(match.Groups[2].Value);
+                    var existingAccNo = match.Groups[3].Value;
+                    var existingAccName = System.Web.HttpUtility.UrlDecode(match.Groups[4].Value);
+                    var existingBin = match.Groups[5].Value;
+                    var existingCheckoutUrl = System.Web.HttpUtility.UrlDecode(match.Groups[6].Value);
+                    var existingAmount = int.Parse(match.Groups[7].Value);
+                    var existingDesc = match.Groups[8].Value;
+
+                    if (existingAmount == amount || request.Amount == null)
+                    {
+                        _logger.LogInformation("[PayOS] Tái sử dụng mã QR thanh toán PayOS duy nhất cho Đơn Hàng #{OrderId} (OrderCode: {OrderCode})", order.Id, existingOrderCode);
+                        return new PaymentLinkResponse
+                        {
+                            CheckoutUrl = existingCheckoutUrl,
+                            QrCode = existingQrCode,
+                            AccountNumber = existingAccNo,
+                            AccountName = existingAccName,
+                            Bin = existingBin,
+                            Description = existingDesc,
+                            OrderCode = existingOrderCode,
+                            Amount = existingAmount,
+                            Status = "PENDING"
+                        };
+                    }
+                }
+            }
+
             // Mã đơn hàng số nguyên
             var orderCode = long.Parse($"{DateTime.UtcNow:yyMMddHHmmss}{order.Id % 100:D2}");
             var planName = order.PlanPrice?.Plan?.Name ?? "Goi Cloud";
@@ -137,6 +171,19 @@ namespace CloudService.Infrastructure.Services
             var accountNumber = dataElem.TryGetProperty("accountNumber", out var accNo) ? accNo.GetString() ?? "" : "";
             var accountName = dataElem.TryGetProperty("accountName", out var accName) ? accName.GetString() ?? "" : "";
             var bin = dataElem.TryGetProperty("bin", out var binElem) ? binElem.GetString() ?? "" : "";
+
+            // Lưu thông tin PayOS vào đơn hàng để đảm bảo CHỈ CÓ 1 MÃ QR DUY NHẤT cho đơn hàng này
+            var payosNote = $"[PayOSData: orderCode={orderCode}&qrCode={System.Web.HttpUtility.UrlEncode(qrCode)}&accountNumber={accountNumber}&accountName={System.Web.HttpUtility.UrlEncode(accountName)}&bin={bin}&checkoutUrl={System.Web.HttpUtility.UrlEncode(checkoutUrl)}&amount={amount}&description={description}]";
+            if (string.IsNullOrEmpty(order.Notes))
+            {
+                order.Notes = payosNote;
+            }
+            else
+            {
+                order.Notes = System.Text.RegularExpressions.Regex.Replace(order.Notes, @"\[PayOSData:[^\]]*\]", "").Trim();
+                order.Notes = $"{order.Notes} {payosNote}".Trim();
+            }
+            await _context.SaveChangesAsync();
 
             return new PaymentLinkResponse
             {

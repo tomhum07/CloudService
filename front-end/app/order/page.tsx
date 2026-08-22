@@ -932,13 +932,17 @@ function OrderFormContent() {
                   {/* KHUNG HIỂN THỊ MÃ QR TRỰC TIẾP TRÊN TRANG */}
                   <div className="p-6 bg-slate-50 rounded-3xl border border-slate-200 text-center space-y-4">
                     
-                    {payosData?.qrCode ? (
+                    {payosData?.accountNumber || payosData?.qrCode ? (
                       <>
                         {/* Khung chứa ảnh QR Code thật từ PayOS */}
                         <div className="inline-block p-4 bg-white border border-slate-200 rounded-3xl shadow-sm relative group">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(payosData.qrCode)}`}
+                            src={
+                              payosData.accountNumber
+                                ? `https://img.vietqr.io/image/${payosData.bin || "970422"}-${payosData.accountNumber}-compact2.png?amount=${Math.round(payosData.amount || createdOrder?.totalAmount || 0)}&addInfo=${encodeURIComponent(payosData.description || createdOrder?.orderCode || "")}&accountName=${encodeURIComponent(payosData.accountName || "")}`
+                                : `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(payosData.qrCode || "")}`
+                            }
                             alt="PayOS Payment QR Code"
                             className="w-56 h-56 mx-auto object-contain rounded-xl"
                           />
@@ -946,7 +950,7 @@ function OrderFormContent() {
                             <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                             </svg>
-                            <span>VietQR PayOS Tự Động 24/7</span>
+                            <span>VietQR PayOS Tự Động 24/7 (Quét Bằng Mọi Ngân Hàng)</span>
                           </div>
                         </div>
 

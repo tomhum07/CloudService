@@ -280,8 +280,8 @@ namespace CloudService.Infrastructure.Services
             // Nếu trong Notes có ghi nhận số tiền thanh toán thực tế sau khi giảm giá hoặc qua PayOS, ưu tiên hiển thị đúng số tiền đó
             if (!string.IsNullOrEmpty(o.Notes))
             {
-                // Hỗ trợ [Tổng tiền: 2.000đ], [Tổng tiền: 2,000đ], [PayOS: Đã thanh toán 2.000đ], [Số tiền: 2000đ]
-                var match = System.Text.RegularExpressions.Regex.Match(o.Notes, @"(?:Tổng tiền|Đã thanh toán|Số tiền|Gia tien):\s*([\d\.\,]+)\s*(?:đ|vnd|đồng)?", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                // Hỗ trợ [Tổng tiền: 2.000đ], [PayOSData: ... amount=2000 ...], [PayOS: Đã thanh toán 2.000đ]
+                var match = System.Text.RegularExpressions.Regex.Match(o.Notes, @"(?:Tổng tiền|Đã thanh toán|Số tiền|Gia tien|amount=)\s*[:=]?\s*([\d\.\,]+)\s*(?:đ|vnd|đồng)?", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                 if (match.Success)
                 {
                     var cleanNum = match.Groups[1].Value.Replace(".", "").Replace(",", "").Trim();
