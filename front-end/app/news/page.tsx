@@ -23,7 +23,7 @@ function NewsContent() {
     async function loadNews() {
       setLoading(true);
       try {
-        let url = `/api/news?pageNumber=${currentPage}&pageSize=9`;
+        let url = `/api/news?pageNumber=${currentPage}&pageSize=12`;
         if (searchTerm.trim()) {
           url += `&search=${encodeURIComponent(searchTerm.trim())}`;
         }
@@ -36,7 +36,13 @@ function NewsContent() {
           const data = await res.json();
           const items = data.items || data;
           if (Array.isArray(items)) {
-            setNews(items);
+            // Sắp xếp bài viết mới nhất lên đầu tiên (Newest first)
+            const sortedItems = [...items].sort((a: any, b: any) => {
+              const dateA = new Date(a.publishedAt || a.createdAt || 0).getTime();
+              const dateB = new Date(b.publishedAt || b.createdAt || 0).getTime();
+              return dateB - dateA;
+            });
+            setNews(sortedItems);
             if (data.totalPages) setTotalPages(data.totalPages);
           }
         }
@@ -60,8 +66,14 @@ function NewsContent() {
     setCurrentPage(1);
   };
 
+  const featuredArticle = news.length > 0 && currentPage === 1 && !searchTerm.trim() && selectedCategory === "Tất cả" 
+    ? news[0] 
+    : null;
+  const regularArticles = featuredArticle ? news.slice(1) : news;
+
   return (
     <div className="space-y-12">
+      
       {/* Search & Category Filter Bar */}
       <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
         {/* Categories Pills */}
@@ -111,13 +123,69 @@ function NewsContent() {
         </form>
       </div>
 
+      {/* Featured Article Card (Tin Mới Nhất Nổi Bật Ở Đầu) */}
+      {!loading && featuredArticle && (
+        <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-md hover:border-blue-300 transition-all group">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {featuredArticle.thumbnailUrl ? (
+              <div className="lg:col-span-6 overflow-hidden rounded-2xl border border-slate-200">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={featuredArticle.thumbnailUrl}
+                  alt={featuredArticle.title}
+                  className="w-full h-64 sm:h-80 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+            ) : (
+              <div className="lg:col-span-6 h-64 sm:h-80 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-800 p-8 flex flex-col justify-end text-white">
+                <span className="text-xs font-bold uppercase tracking-widest text-blue-200 mb-2">BÀI VIẾT NỔI BẬT</span>
+                <h3 className="text-xl font-bold">{featuredArticle.title}</h3>
+              </div>
+            )}
+
+            <div className="lg:col-span-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                  🔥 TIN MỚI NHẤT: {featuredArticle.categoryName || featuredArticle.category || "Tin Tức"}
+                </span>
+                <span className="text-xs text-slate-400 font-medium">
+                  {new Date(featuredArticle.publishedAt || featuredArticle.createdAt || Date.now()).toLocaleDateString("vi-VN")}
+                </span>
+              </div>
+
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 group-hover:text-blue-600 transition-colors leading-tight">
+                <Link href={`/news/${featuredArticle.id}`}>
+                  {featuredArticle.title}
+                </Link>
+              </h2>
+
+              <p className="text-sm text-slate-600 leading-relaxed line-clamp-4">
+                {featuredArticle.summary || featuredArticle.content}
+              </p>
+
+              <div className="pt-2">
+                <Link
+                  href={`/news/${featuredArticle.id}`}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition-all"
+                >
+                  <span>Đọc Toàn Văn Bài Viết</span>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* News Grid */}
       {loading ? (
         <div className="py-20 text-center text-slate-400 text-sm">
           <span className="w-8 h-8 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin inline-block mb-3"></span>
           <div>Đang tải bài viết từ cơ sở dữ liệu...</div>
         </div>
-      ) : news.length === 0 ? (
+      ) : regularArticles.length === 0 && !featuredArticle ? (
         <div className="text-center py-20 bg-white rounded-3xl border border-slate-200 p-8 max-w-lg mx-auto">
           <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mx-auto mb-4">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -131,7 +199,7 @@ function NewsContent() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {news.map((item) => (
+          {regularArticles.map((item) => (
             <article
               key={item.id}
               className="bg-white border border-slate-200 rounded-3xl p-6 flex flex-col justify-between hover:border-blue-300 hover:shadow-xl transition-all group"
@@ -139,11 +207,19 @@ function NewsContent() {
               <div>
                 {/* Meta Header */}
                 <div className="flex items-center justify-between mb-4">
-                  <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-100">
+                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${
+                    (item.categoryName || item.category) === "Khuyến Mãi"
+                      ? "bg-purple-50 text-purple-700 border border-purple-200"
+                      : (item.categoryName || item.category) === "Sự Kiện"
+                      ? "bg-amber-50 text-amber-700 border border-amber-200"
+                      : (item.categoryName || item.category) === "Hướng Dẫn"
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      : "bg-blue-50 text-blue-700 border border-blue-200"
+                  }`}>
                     {item.categoryName || item.category || "Tin Tức"}
                   </span>
                   <span className="text-[11px] text-slate-400 font-medium">
-                    {new Date(item.createdAt || Date.now()).toLocaleDateString("vi-VN")}
+                    {new Date(item.publishedAt || item.createdAt || Date.now()).toLocaleDateString("vi-VN")}
                   </span>
                 </div>
 
@@ -160,26 +236,28 @@ function NewsContent() {
                 )}
 
                 {/* Title */}
-                <h2 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors mb-3 leading-snug line-clamp-2">
+                <h3 className="text-base font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2 leading-snug">
                   <Link href={`/news/${item.id}`}>
                     {item.title}
                   </Link>
-                </h2>
+                </h3>
 
                 {/* Summary */}
-                <p className="text-xs text-slate-500 line-clamp-3 leading-relaxed mb-6">
-                  {item.summary || item.content || "Xem nội dung bài viết chi tiết tại đây."}
+                <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed mb-6">
+                  {item.summary || item.content}
                 </p>
               </div>
 
-              {/* Read More Link */}
+              {/* Action */}
               <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-[11px] font-bold text-slate-400">Tác giả: Ban Biên Tập</span>
+                <span className="text-[11px] font-semibold text-slate-500">
+                  Tác giả: {item.authorName || "Ban Biên Tập CloudService"}
+                </span>
                 <Link
                   href={`/news/${item.id}`}
-                  className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
+                  className="text-xs font-bold text-blue-600 group-hover:text-blue-700 flex items-center gap-1 group-hover:gap-1.5 transition-all"
                 >
-                  <span>Chi tiết</span>
+                  <span>Đọc tiếp</span>
                   <span>→</span>
                 </Link>
               </div>
@@ -188,25 +266,27 @@ function NewsContent() {
         </div>
       )}
 
-      {/* Pagination */}
+      {/* Pagination Controls */}
       {totalPages > 1 && (
         <div className="flex justify-center items-center gap-2 pt-6">
           <button
-            onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+            type="button"
             disabled={currentPage === 1}
-            className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 disabled:opacity-40 text-xs font-bold text-slate-700 rounded-xl"
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-xs"
           >
-            ← Trang trước
+            ← Trang Trước
           </button>
-          <span className="text-xs font-bold text-slate-600 px-4">
+          <span className="text-xs font-bold text-slate-500 px-3">
             Trang {currentPage} / {totalPages}
           </span>
           <button
-            onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+            type="button"
             disabled={currentPage === totalPages}
-            className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 disabled:opacity-40 text-xs font-bold text-slate-700 rounded-xl"
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-xs"
           >
-            Trang sau →
+            Trang Tiếp →
           </button>
         </div>
       )}
@@ -216,31 +296,23 @@ function NewsContent() {
 
 export default function NewsPage() {
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 pb-20 selection:bg-blue-600 selection:text-white">
-      {/* Hero Header */}
-      <section className="bg-white border-b border-slate-200 py-16 px-4">
-        <div className="max-w-7xl mx-auto text-center space-y-4">
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold shadow-xs">
-            <svg className="w-3.5 h-3.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-            </svg>
-            <span>Cổng Thông Tin & Kiến Thức Công Nghệ</span>
-          </div>
-          <h1 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight">
-            Tin Tức & Thông Báo Hệ Thống
-          </h1>
-          <p className="text-sm md:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            Cập nhật những thông báo kỹ thuật, lịch nâng cấp hạ tầng mạng và chương trình ưu đãi mới nhất từ CloudService.
-          </p>
-        </div>
-      </section>
+    <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="text-center max-w-3xl mx-auto mb-12">
+        <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block mb-2">
+          BLOG & KIẾN THỨC CLOUD
+        </span>
+        <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mb-4">
+          Tin Tức, Cập Nhật Tính Năng & Hướng Dẫn Kỹ Thuật
+        </h1>
+        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+          Chia sẻ kinh nghiệm quản trị máy chủ, tối ưu hiệu năng web hosting, cấu hình tên miền và bảo mật an ninh mạng.
+        </p>
+      </div>
 
-      {/* Main List */}
-      <main className="max-w-7xl mx-auto px-4 py-12">
-        <Suspense fallback={<div className="text-center py-20 text-slate-400">Đang tải tin tức...</div>}>
-          <NewsContent />
-        </Suspense>
-      </main>
+      <Suspense fallback={<div className="py-20 text-center text-xs text-slate-400">Đang tải tin tức...</div>}>
+        <NewsContent />
+      </Suspense>
     </div>
   );
 }
