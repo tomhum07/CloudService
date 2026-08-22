@@ -47,7 +47,9 @@ export default function PricesPage() {
   const [isPriceModalOpen, setIsPriceModalOpen] = useState(false);
   const [isDeletePriceModalOpen, setIsDeletePriceModalOpen] = useState(false);
   const [currentPrice, setCurrentPrice] = useState<PlanPrice | null>(null);
+  
   const [isPromoModalOpen, setIsPromoModalOpen] = useState(false);
+  const [editingPromo, setEditingPromo] = useState<Promotion | null>(null);
   const [selectedPromoToDelete, setSelectedPromoToDelete] = useState<Promotion | null>(null);
 
   // Forms state
@@ -62,7 +64,8 @@ export default function PricesPage() {
     name: "",
     discountPercentage: 0,
     startDate: new Date().toISOString().split("T")[0],
-    endDate: new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0]
+    endDate: new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0],
+    isActive: true
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -243,14 +246,27 @@ export default function PricesPage() {
     }
   };
 
-  const handleOpenPromoModal = () => {
+  const handleOpenPromoModal = (promo?: Promotion) => {
     setFormError(null);
-    setPromoForm({
-      name: "",
-      discountPercentage: 0,
-      startDate: new Date().toISOString().split("T")[0],
-      endDate: new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0]
-    });
+    if (promo) {
+      setEditingPromo(promo);
+      setPromoForm({
+        name: promo.name,
+        discountPercentage: promo.discountPercentage,
+        startDate: promo.startDate ? new Date(promo.startDate).toISOString().split("T")[0] : "",
+        endDate: promo.endDate ? new Date(promo.endDate).toISOString().split("T")[0] : "",
+        isActive: promo.isActive !== false
+      });
+    } else {
+      setEditingPromo(null);
+      setPromoForm({
+        name: "",
+        discountPercentage: 0,
+        startDate: new Date().toISOString().split("T")[0],
+        endDate: new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0],
+        isActive: true
+      });
+    }
     setIsPromoModalOpen(true);
   };
 
@@ -266,23 +282,28 @@ export default function PricesPage() {
     }
 
     try {
-      const res = await apiFetch("/api/promotions", {
-        method: "POST",
+      const endpoint = editingPromo ? `/api/promotions/${editingPromo.id}` : "/api/promotions";
+      const method = editingPromo ? "PUT" : "POST";
+
+      const res = await apiFetch(endpoint, {
+        method,
         body: JSON.stringify({
           name: promoForm.name,
           discountPercentage: Number(promoForm.discountPercentage),
           startDate: new Date(promoForm.startDate).toISOString(),
-          endDate: new Date(promoForm.endDate + "T23:59:59").toISOString()
+          endDate: new Date(promoForm.endDate + "T23:59:59").toISOString(),
+          isActive: promoForm.isActive
         })
       });
 
-      if (!res.ok) throw new Error("Tạo mã khuyến mãi thất bại.");
+      if (!res.ok) throw new Error(editingPromo ? "Cập nhật khuyến mãi thất bại." : "Tạo mã khuyến mãi thất bại.");
 
       setIsPromoModalOpen(false);
+      setEditingPromo(null);
       fetchPromotions();
       if (selectedPlanId) fetchPrices(selectedPlanId);
     } catch (err: any) {
-      setFormError(err.message || "Không thể tạo khuyến mãi.");
+      setFormError(err.message || "Không thể lưu khuyến mãi.");
     } finally {
       setIsSubmitting(false);
     }
@@ -321,6 +342,9 @@ export default function PricesPage() {
   };
 
   const getPromoStatus = (promo: Promotion) => {
+    if (promo.isActive === false) {
+      return { label: "Đã Tắt", color: "bg-slate-100 text-slate-600 border-slate-200" };
+    }
     const now = new Date().getTime();
     const start = promo.startDate ? new Date(promo.startDate).getTime() : 0;
     const end = promo.endDate ? new Date(promo.endDate).getTime() : Infinity;
@@ -341,11 +365,11 @@ export default function PricesPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white py-4 px-5 rounded-2xl border border-slate-200 shadow-sm">
         <div>
           <h1 className="text-lg sm:text-xl font-black text-slate-900">Quản Lý Bảng Giá & Khuyến Mãi</h1>
-          <p className="text-xs text-slate-500 mt-0.5">Cấu hình chu kỳ thanh toán và hạn định thời gian cho chương trình giảm giá</p>
+          <p className="text-xs text-slate-500 mt-0.5">Cấu hình chu kỳ thanh toán và chỉnh sửa đầy đủ thông tin chương trình giảm giá</p>
         </div>
         <div className="flex items-center gap-3">
           <button 
-            onClick={handleOpenPromoModal}
+            onClick={() => handleOpenPromoModal()}
             className="px-4 py-2.5 rounded-xl bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 font-bold text-xs transition-colors flex items-center gap-2"
           >
             <svg className="w-4 h-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -516,7 +540,7 @@ export default function PricesPage() {
               <p className="text-[11px] text-slate-500">Mã hết hạn sẽ tự động ẩn khỏi trang chủ và không thể áp dụng khi đặt hàng</p>
             </div>
             <button
-              onClick={handleOpenPromoModal}
+              onClick={() => handleOpenPromoModal()}
               className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs transition-colors"
             >
               + Tạo Mã Mới
@@ -568,12 +592,18 @@ export default function PricesPage() {
                             {status.label}
                           </span>
                         </td>
-                        <td className="py-3.5 px-4 text-right">
+                        <td className="py-3.5 px-4 text-right space-x-1.5">
+                          <button
+                            onClick={() => handleOpenPromoModal(promo)}
+                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-[11px] transition-colors"
+                          >
+                            Sửa
+                          </button>
                           <button
                             onClick={() => setSelectedPromoToDelete(promo)}
                             className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg font-bold text-[11px] transition-colors"
                           >
-                            Xóa Mã
+                            Xóa
                           </button>
                         </td>
                       </tr>
@@ -646,10 +676,10 @@ export default function PricesPage() {
                   <option value="">-- Không áp dụng khuyến mãi --</option>
                   {promotions.map((pr) => {
                     const status = getPromoStatus(pr);
-                    const isExpired = status.label === "Đã Hết Hạn";
+                    const isExpired = status.label === "Đã Hết Hạn" || status.label === "Đã Tắt";
                     return (
                       <option key={pr.id} value={pr.id}>
-                        {pr.name} (Giảm {pr.discountPercentage}%) {isExpired ? "[Đã hết hạn]" : ""}
+                        {pr.name} (Giảm {pr.discountPercentage}%) {isExpired ? `[${status.label}]` : ""}
                       </option>
                     );
                   })}
@@ -710,12 +740,16 @@ export default function PricesPage() {
         </div>
       )}
 
-      {/* Promotion Form Modal */}
+      {/* Promotion Form Modal (Tạo & Sửa Khuyến Mãi) */}
       {isPromoModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
           <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl">
-            <h3 className="text-lg font-bold text-slate-900 mb-1">Tạo Chương Trình Khuyến Mãi Mới</h3>
-            <p className="text-xs text-slate-500 mb-4">Cấu hình mã giảm giá, tỷ lệ % và thời hạn hiệu lực.</p>
+            <h3 className="text-lg font-bold text-slate-900 mb-1">
+              {editingPromo ? "Chỉnh Sửa Chương Trình Khuyến Mãi" : "Tạo Chương Trình Khuyến Mãi Mới"}
+            </h3>
+            <p className="text-xs text-slate-500 mb-4">
+              {editingPromo ? `Cập nhật toàn bộ thông tin của mã ${editingPromo.name}.` : "Cấu hình mã giảm giá, tỷ lệ % và thời hạn hiệu lực."}
+            </p>
 
             {formError && (
               <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium mb-4 flex items-center gap-2">
@@ -779,10 +813,26 @@ export default function PricesPage() {
                 </div>
               </div>
 
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="promoIsActive"
+                  checked={promoForm.isActive}
+                  onChange={(e) => setPromoForm({ ...promoForm, isActive: e.target.checked })}
+                  className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500"
+                />
+                <label htmlFor="promoIsActive" className="text-xs font-bold text-slate-700 cursor-pointer">
+                  Kích hoạt trạng thái áp dụng (Đang bật)
+                </label>
+              </div>
+
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => setIsPromoModalOpen(false)}
+                  onClick={() => {
+                    setIsPromoModalOpen(false);
+                    setEditingPromo(null);
+                  }}
                   className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700"
                 >
                   Hủy Bỏ
@@ -790,9 +840,9 @@ export default function PricesPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-xs font-bold text-white shadow-md shadow-blue-500/20"
+                  className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-xs font-bold text-white shadow-md shadow-purple-500/20"
                 >
-                  {isSubmitting ? "Đang tạo..." : "Tạo Khuyến Mãi"}
+                  {isSubmitting ? "Đang lưu..." : editingPromo ? "Cập Nhật Khuyến Mãi" : "Tạo Khuyến Mãi"}
                 </button>
               </div>
             </form>

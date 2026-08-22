@@ -152,7 +152,7 @@ namespace CloudService.Infrastructure.Services
             };
         }
 
-        public async Task<PromotionDto?> UpdatePromotionAsync(int id, CreatePromotionRequest request)
+        public async Task<PromotionDto?> UpdatePromotionAsync(int id, UpdatePromotionRequest request)
         {
             var promotion = await _context.Promotions.FindAsync(id);
             if (promotion == null) return null;
@@ -164,6 +164,7 @@ namespace CloudService.Infrastructure.Services
             promotion.DiscountPercentage = (int)request.DiscountPercentage;
             promotion.StartDate = startDate;
             promotion.EndDate = endDate;
+            promotion.IsActive = request.IsActive;
 
             await _context.SaveChangesAsync();
 

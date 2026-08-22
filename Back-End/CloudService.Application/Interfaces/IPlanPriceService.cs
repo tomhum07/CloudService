@@ -12,7 +12,7 @@ namespace CloudService.Application.Interfaces
         Task<bool> DeletePriceAsync(int planId, int priceId);
         Task<IEnumerable<PromotionDto>> GetAllPromotionsAsync(bool activeOnly = false);
         Task<PromotionDto> CreatePromotionAsync(CreatePromotionRequest request);
-        Task<PromotionDto?> UpdatePromotionAsync(int id, CreatePromotionRequest request);
+        Task<PromotionDto?> UpdatePromotionAsync(int id, UpdatePromotionRequest request);
         Task<bool> DeletePromotionAsync(int id);
         Task<PromotionDto?> ValidatePromotionAsync(string code);
     }

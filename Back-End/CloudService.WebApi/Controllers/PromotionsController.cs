@@ -58,7 +58,7 @@ namespace CloudService.WebApi.Controllers
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<PromotionDto>> Update(int id, [FromBody] CreatePromotionRequest request)
+        public async Task<ActionResult<PromotionDto>> Update(int id, [FromBody] UpdatePromotionRequest request)
         {
             var actor = User?.Identity?.Name ?? "Admin";
             var promotion = await _planPriceService.UpdatePromotionAsync(id, request);
