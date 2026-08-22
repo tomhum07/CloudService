@@ -28,9 +28,9 @@ namespace CloudService.WebApi.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<PromotionDto>>> GetAll()
+        public async Task<ActionResult<IEnumerable<PromotionDto>>> GetAll([FromQuery] bool activeOnly = false)
         {
-            var promotions = await _planPriceService.GetAllPromotionsAsync();
+            var promotions = await _planPriceService.GetAllPromotionsAsync(activeOnly);
             return Ok(promotions);
         }
 
@@ -51,9 +51,41 @@ namespace CloudService.WebApi.Controllers
         {
             var actor = User?.Identity?.Name ?? "Admin";
             var promotion = await _planPriceService.CreatePromotionAsync(request);
-            await _auditLogService.LogAsync(actor, "Tạo khuyến mãi mới", $"Tạo chương trình khuyến mãi: {promotion.Name} (Giảm {promotion.DiscountPercentage}%)");
+            await _auditLogService.LogAsync(actor, "Tạo khuyến mãi mới", $"Tạo chương trình khuyến mãi: {promotion.Name} (Giảm {promotion.DiscountPercentage}%) - Hiệu lực: {promotion.StartDate:dd/MM/yyyy} đến {promotion.EndDate:dd/MM/yyyy}");
             await _hubContext.Clients.All.SendAsync("DataChanged", "promotion", "create");
             return CreatedAtAction(nameof(GetAll), new { }, promotion);
+        }
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<PromotionDto>> Update(int id, [FromBody] CreatePromotionRequest request)
+        {
+            var actor = User?.Identity?.Name ?? "Admin";
+            var promotion = await _planPriceService.UpdatePromotionAsync(id, request);
+            if (promotion == null)
+            {
+                return NotFound(new { message = "Không tìm thấy chương trình khuyến mãi." });
+            }
+
+            await _auditLogService.LogAsync(actor, "Cập nhật khuyến mãi", $"Sửa chương trình khuyến mãi #{id}: {promotion.Name} (Giảm {promotion.DiscountPercentage}%) - Hiệu lực: {promotion.StartDate:dd/MM/yyyy} đến {promotion.EndDate:dd/MM/yyyy}");
+            await _hubContext.Clients.All.SendAsync("DataChanged", "promotion", "update");
+            return Ok(promotion);
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var actor = User?.Identity?.Name ?? "Admin";
+            var success = await _planPriceService.DeletePromotionAsync(id);
+            if (!success)
+            {
+                return NotFound(new { message = "Không tìm thấy chương trình khuyến mãi." });
+            }
+
+            await _auditLogService.LogAsync(actor, "Xóa khuyến mãi", $"Xóa chương trình khuyến mãi #{id}");
+            await _hubContext.Clients.All.SendAsync("DataChanged", "promotion", "delete");
+            return NoContent();
         }
     }
 }

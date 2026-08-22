@@ -245,7 +245,7 @@ function OrderFormContent() {
     setPromoMessage(null);
 
     try {
-      // 1. Gọi API xác thực mã giảm giá từ database
+      // 1. Gọi API xác thực mã giảm giá từ database (đã bao gồm kiểm tra StartDate/EndDate)
       const res = await apiFetch(`/api/promotions/validate/${encodeURIComponent(code)}`);
       if (res.ok) {
         const data = await res.json();
@@ -257,24 +257,13 @@ function OrderFormContent() {
           text: `Áp dụng mã ${data.name} thành công! Giảm ${discount}% tổng giá trị.`
         });
       } else {
-        // Fallback kiểm tra các mã ưu đãi mặc định hệ thống
-        const upperCode = code.toUpperCase();
-        if (upperCode === "CLOUDSERVICE2026" || upperCode === "VIETNIX" || upperCode === "VIETTELIDC" || upperCode === "GIAMGIA10") {
-          const discount = upperCode === "GIAMGIA10" ? 10 : 15;
-          setDiscountPercent(discount);
-          setAppliedPromoName(upperCode);
-          setPromoMessage({
-            type: "success",
-            text: `Áp dụng mã ưu đãi ${upperCode} thành công! Giảm ${discount}% tổng giá trị.`
-          });
-        } else {
-          setDiscountPercent(0);
-          setAppliedPromoName("");
-          setPromoMessage({
-            type: "error",
-            text: "Mã giảm giá không tồn tại hoặc đã hết hạn sử dụng."
-          });
-        }
+        const errorData = await res.json().catch(() => null);
+        setDiscountPercent(0);
+        setAppliedPromoName("");
+        setPromoMessage({
+          type: "error",
+          text: errorData?.message || "Mã giảm giá không tồn tại hoặc đã hết hạn sử dụng."
+        });
       }
     } catch (err) {
       console.warn("Lỗi kiểm tra mã giảm giá:", err);

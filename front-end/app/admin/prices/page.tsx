@@ -39,16 +39,16 @@ export default function PricesPage() {
   const [isLoadingPrices, setIsLoadingPrices] = useState(false);
   const [isLoadingPromotions, setIsLoadingPromotions] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
-  const totalPriceItems = prices.length;
-  const totalPricePages = Math.ceil(totalPriceItems / itemsPerPage) || 1;
+
+  // Active tab: 'prices' or 'promotions'
+  const [activeTab, setActiveTab] = useState<"prices" | "promotions">("prices");
 
   // Modals state
   const [isPriceModalOpen, setIsPriceModalOpen] = useState(false);
   const [isDeletePriceModalOpen, setIsDeletePriceModalOpen] = useState(false);
   const [currentPrice, setCurrentPrice] = useState<PlanPrice | null>(null);
   const [isPromoModalOpen, setIsPromoModalOpen] = useState(false);
+  const [selectedPromoToDelete, setSelectedPromoToDelete] = useState<Promotion | null>(null);
 
   // Forms state
   const [priceForm, setPriceForm] = useState({
@@ -61,8 +61,8 @@ export default function PricesPage() {
   const [promoForm, setPromoForm] = useState({
     name: "",
     discountPercentage: 0,
-    startDate: "",
-    endDate: ""
+    startDate: new Date().toISOString().split("T")[0],
+    endDate: new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0]
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -190,6 +190,8 @@ export default function PricesPage() {
       };
       if (priceForm.promotionId) {
         payload.promotionId = Number(priceForm.promotionId);
+      } else {
+        payload.promotionId = null;
       }
 
       const res = await apiFetch(endpoint, {
@@ -243,7 +245,12 @@ export default function PricesPage() {
 
   const handleOpenPromoModal = () => {
     setFormError(null);
-    setPromoForm({ name: "", discountPercentage: 0, startDate: "", endDate: "" });
+    setPromoForm({
+      name: "",
+      discountPercentage: 0,
+      startDate: new Date().toISOString().split("T")[0],
+      endDate: new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0]
+    });
     setIsPromoModalOpen(true);
   };
 
@@ -251,14 +258,21 @@ export default function PricesPage() {
     e.preventDefault();
     setIsSubmitting(true);
     setFormError(null);
+
+    if (new Date(promoForm.startDate) > new Date(promoForm.endDate)) {
+      setFormError("Ngày kết thúc phải diễn ra sau ngày bắt đầu.");
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const res = await apiFetch("/api/promotions", {
         method: "POST",
         body: JSON.stringify({
           name: promoForm.name,
           discountPercentage: Number(promoForm.discountPercentage),
-          startDate: promoForm.startDate ? new Date(promoForm.startDate).toISOString() : new Date().toISOString(),
-          endDate: promoForm.endDate ? new Date(promoForm.endDate).toISOString() : new Date(Date.now() + 30*86400000).toISOString()
+          startDate: new Date(promoForm.startDate).toISOString(),
+          endDate: new Date(promoForm.endDate + "T23:59:59").toISOString()
         })
       });
 
@@ -266,8 +280,30 @@ export default function PricesPage() {
 
       setIsPromoModalOpen(false);
       fetchPromotions();
+      if (selectedPlanId) fetchPrices(selectedPlanId);
     } catch (err: any) {
       setFormError(err.message || "Không thể tạo khuyến mãi.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeletePromotion = async () => {
+    if (!selectedPromoToDelete) return;
+    setIsSubmitting(true);
+    try {
+      const res = await apiFetch(`/api/promotions/${selectedPromoToDelete.id}`, {
+        method: "DELETE"
+      });
+      if (res.ok) {
+        setSelectedPromoToDelete(null);
+        fetchPromotions();
+        if (selectedPlanId) fetchPrices(selectedPlanId);
+      } else {
+        throw new Error("Không thể xóa khuyến mãi");
+      }
+    } catch (err: any) {
+      alert(err.message || "Lỗi khi xóa khuyến mãi");
     } finally {
       setIsSubmitting(false);
     }
@@ -284,6 +320,20 @@ export default function PricesPage() {
     }
   };
 
+  const getPromoStatus = (promo: Promotion) => {
+    const now = new Date().getTime();
+    const start = promo.startDate ? new Date(promo.startDate).getTime() : 0;
+    const end = promo.endDate ? new Date(promo.endDate).getTime() : Infinity;
+
+    if (now < start) {
+      return { label: "Chưa Bắt Đầu", color: "bg-amber-50 text-amber-700 border-amber-200" };
+    }
+    if (now > end) {
+      return { label: "Đã Hết Hạn", color: "bg-rose-50 text-rose-700 border-rose-200" };
+    }
+    return { label: "Đang Diễn Ra", color: "bg-emerald-50 text-emerald-700 border-emerald-200" };
+  };
+
   return (
     <div className="space-y-6">
       
@@ -291,7 +341,7 @@ export default function PricesPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white py-4 px-5 rounded-2xl border border-slate-200 shadow-sm">
         <div>
           <h1 className="text-lg sm:text-xl font-black text-slate-900">Quản Lý Bảng Giá & Khuyến Mãi</h1>
-          <p className="text-xs text-slate-500 mt-0.5">Cấu hình giá cước theo từng chu kỳ thanh toán và gắn chương trình ưu đãi giảm giá</p>
+          <p className="text-xs text-slate-500 mt-0.5">Cấu hình chu kỳ thanh toán và hạn định thời gian cho chương trình giảm giá</p>
         </div>
         <div className="flex items-center gap-3">
           <button 
@@ -325,106 +375,216 @@ export default function PricesPage() {
         </div>
       )}
 
-      {/* Plan Selector Filter */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center gap-4">
-        <label className="text-xs font-bold text-slate-800 shrink-0">Chọn Gói Cước Cần Định Giá:</label>
-        <select 
-          value={selectedPlanId} 
-          onChange={(e) => setSelectedPlanId(e.target.value)}
-          className="w-full md:w-80 h-10 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+      {/* Tabs */}
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+        <button
+          onClick={() => setActiveTab("prices")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            activeTab === "prices"
+              ? "bg-blue-600 text-white shadow-xs"
+              : "text-slate-600 hover:text-slate-900 bg-white border border-slate-200"
+          }`}
         >
-          {plans.map(p => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </select>
+          Bảng Giá Theo Gói Cước
+        </button>
+        <button
+          onClick={() => setActiveTab("promotions")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+            activeTab === "promotions"
+              ? "bg-purple-600 text-white shadow-xs"
+              : "text-slate-600 hover:text-slate-900 bg-white border border-slate-200"
+          }`}
+        >
+          <span>Danh Sách Mã Khuyến Mãi</span>
+          <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+            activeTab === "promotions" ? "bg-purple-800 text-white" : "bg-slate-100 text-slate-700"
+          }`}>
+            {promotions.length}
+          </span>
+        </button>
       </div>
 
-      {/* Prices Table */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-700 uppercase font-bold border-b border-slate-200">
-              <tr>
-                <th className="py-3.5 px-4">Chu Kỳ Thanh Toán</th>
-                <th className="py-3.5 px-4">Giá Niêm Yết (VND)</th>
-                <th className="py-3.5 px-4">Khuyến Mãi Kèm Theo</th>
-                <th className="py-3.5 px-4">Giá Sau Giảm</th>
-                <th className="py-3.5 px-4">Trạng Thái</th>
-                <th className="py-3.5 px-4 text-right">Thao Tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {isLoadingPrices ? (
-                <tr>
-                  <td colSpan={6} className="p-8 text-center text-slate-400">Đang tải bảng giá...</td>
-                </tr>
-              ) : prices.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="p-8 text-center text-slate-400">Gói cước này chưa được thiết lập mức giá nào.</td>
-                </tr>
-              ) : (
-                prices.map((p) => {
-                  const finalPrice = p.discountPercentage
-                    ? p.price * (1 - p.discountPercentage / 100)
-                    : p.price;
+      {activeTab === "prices" ? (
+        <>
+          {/* Plan Selector Filter */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center gap-4">
+            <label className="text-xs font-bold text-slate-800 shrink-0">Chọn Gói Cước Cần Định Giá:</label>
+            <select 
+              value={selectedPlanId} 
+              onChange={(e) => setSelectedPlanId(e.target.value)}
+              className="w-full md:w-80 h-10 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+            >
+              {plans.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
 
-                  return (
-                    <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="py-3.5 px-4 font-bold text-slate-900">
-                        {getCycleLabel(p.billingCycle)}
-                      </td>
-                      <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
-                        {p.price.toLocaleString("vi-VN")} đ
-                      </td>
-                      <td className="py-3.5 px-4">
-                        {p.promotionName ? (
-                          <span className="px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-bold">
-                            {p.promotionName} (-{p.discountPercentage}%)
-                          </span>
-                        ) : (
-                          <span className="text-slate-400 text-[11px]">Không áp dụng</span>
-                        )}
-                      </td>
-                      <td className="py-3.5 px-4 font-mono font-bold text-blue-600">
-                        {Math.round(finalPrice).toLocaleString("vi-VN")} đ
-                      </td>
-                      <td className="py-3.5 px-4">
-                        {p.isActive ? (
-                          <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
-                            Khả dụng
-                          </span>
-                        ) : (
-                          <span className="px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold">
-                            Đã tắt
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-3.5 px-4 text-right space-x-1">
-                        <button 
-                          onClick={() => handleOpenPriceModal(p)}
-                          className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-[11px] transition-colors"
-                        >
-                          Sửa
-                        </button>
-                        <button 
-                          onClick={() => handleOpenDeletePriceModal(p)}
-                          className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-colors ${
-                            p.isActive
-                              ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
-                              : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200'
-                          }`}
-                        >
-                          {p.isActive ? "Tắt" : "Bật"}
-                        </button>
-                      </td>
+          {/* Prices Table */}
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-700 uppercase font-bold border-b border-slate-200">
+                  <tr>
+                    <th className="py-3.5 px-4">Chu Kỳ Thanh Toán</th>
+                    <th className="py-3.5 px-4">Giá Niêm Yết (VND)</th>
+                    <th className="py-3.5 px-4">Khuyến Mãi Kèm Theo</th>
+                    <th className="py-3.5 px-4">Giá Sau Giảm</th>
+                    <th className="py-3.5 px-4">Trạng Thái</th>
+                    <th className="py-3.5 px-4 text-right">Thao Tác</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {isLoadingPrices ? (
+                    <tr>
+                      <td colSpan={6} className="p-8 text-center text-slate-400">Đang tải bảng giá...</td>
                     </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                  ) : prices.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="p-8 text-center text-slate-400">Gói cước này chưa được thiết lập mức giá nào.</td>
+                    </tr>
+                  ) : (
+                    prices.map((p) => {
+                      const finalPrice = p.discountPercentage
+                        ? p.price * (1 - p.discountPercentage / 100)
+                        : p.price;
+
+                      return (
+                        <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
+                          <td className="py-3.5 px-4 font-bold text-slate-900">
+                            {getCycleLabel(p.billingCycle)}
+                          </td>
+                          <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
+                            {p.price.toLocaleString("vi-VN")} đ
+                          </td>
+                          <td className="py-3.5 px-4">
+                            {p.promotionName ? (
+                              <span className="px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-bold">
+                                {p.promotionName} (-{p.discountPercentage}%)
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 text-[11px]">Không áp dụng</span>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4 font-mono font-bold text-blue-600">
+                            {Math.round(finalPrice).toLocaleString("vi-VN")} đ
+                          </td>
+                          <td className="py-3.5 px-4">
+                            {p.isActive ? (
+                              <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                                Khả dụng
+                              </span>
+                            ) : (
+                              <span className="px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold">
+                                Đã tắt
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4 text-right space-x-1">
+                            <button 
+                              onClick={() => handleOpenPriceModal(p)}
+                              className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-[11px] transition-colors"
+                            >
+                              Sửa
+                            </button>
+                            <button 
+                              onClick={() => handleOpenDeletePriceModal(p)}
+                              className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-colors ${
+                                p.isActive
+                                  ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+                                  : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200'
+                              }`}
+                            >
+                              {p.isActive ? "Tắt" : "Bật"}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      ) : (
+        /* Promotions Table */
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+          <div className="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+            <div>
+              <h3 className="text-xs font-bold text-slate-900 uppercase">Danh Sách Mã Khuyến Mãi & Hạn Định</h3>
+              <p className="text-[11px] text-slate-500">Mã hết hạn sẽ tự động ẩn khỏi trang chủ và không thể áp dụng khi đặt hàng</p>
+            </div>
+            <button
+              onClick={handleOpenPromoModal}
+              className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs transition-colors"
+            >
+              + Tạo Mã Mới
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 text-slate-700 uppercase font-bold border-b border-slate-200">
+                <tr>
+                  <th className="py-3.5 px-4">Tên Chương Trình / Mã</th>
+                  <th className="py-3.5 px-4">Mức Giảm</th>
+                  <th className="py-3.5 px-4">Ngày Bắt Đầu</th>
+                  <th className="py-3.5 px-4">Ngày Kết Thúc</th>
+                  <th className="py-3.5 px-4">Trạng Thái Hiệu Lực</th>
+                  <th className="py-3.5 px-4 text-right">Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {isLoadingPromotions ? (
+                  <tr>
+                    <td colSpan={6} className="p-8 text-center text-slate-400">Đang tải danh sách khuyến mãi...</td>
+                  </tr>
+                ) : promotions.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="p-8 text-center text-slate-400">Chưa có chương trình khuyến mãi nào.</td>
+                  </tr>
+                ) : (
+                  promotions.map((promo) => {
+                    const status = getPromoStatus(promo);
+                    return (
+                      <tr key={promo.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="py-3.5 px-4 font-bold text-slate-900">
+                          {promo.name}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className="font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100">
+                            -{promo.discountPercentage}%
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-600">
+                          {promo.startDate ? new Date(promo.startDate).toLocaleDateString("vi-VN") : "Bắt đầu ngay"}
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-600">
+                          {promo.endDate ? new Date(promo.endDate).toLocaleDateString("vi-VN") : "Vô thời hạn"}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className={`px-2.5 py-0.5 rounded-full border text-[10px] font-bold ${status.color}`}>
+                            {status.label}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          <button
+                            onClick={() => setSelectedPromoToDelete(promo)}
+                            className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg font-bold text-[11px] transition-colors"
+                          >
+                            Xóa Mã
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Price Form Modal */}
       {isPriceModalOpen && (
@@ -484,9 +644,15 @@ export default function PricesPage() {
                   className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
                 >
                   <option value="">-- Không áp dụng khuyến mãi --</option>
-                  {promotions.map((pr) => (
-                    <option key={pr.id} value={pr.id}>{pr.name} (Giảm {pr.discountPercentage}%)</option>
-                  ))}
+                  {promotions.map((pr) => {
+                    const status = getPromoStatus(pr);
+                    const isExpired = status.label === "Đã Hết Hạn";
+                    return (
+                      <option key={pr.id} value={pr.id}>
+                        {pr.name} (Giảm {pr.discountPercentage}%) {isExpired ? "[Đã hết hạn]" : ""}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
 
@@ -549,7 +715,7 @@ export default function PricesPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
           <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl">
             <h3 className="text-lg font-bold text-slate-900 mb-1">Tạo Chương Trình Khuyến Mãi Mới</h3>
-            <p className="text-xs text-slate-500 mb-4">Mã giảm giá sẽ tự động trừ % khi khách hàng chọn gói cước.</p>
+            <p className="text-xs text-slate-500 mb-4">Cấu hình mã giảm giá, tỷ lệ % và thời hạn hiệu lực.</p>
 
             {formError && (
               <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium mb-4 flex items-center gap-2">
@@ -562,11 +728,11 @@ export default function PricesPage() {
 
             <form onSubmit={handlePromoSubmit} className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Tên Chương Trình *</label>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Tên Chương Trình / Mã Giảm Giá *</label>
                 <input
                   type="text"
                   required
-                  placeholder="VD: Khuyến Mãi Mùa Hè 2026"
+                  placeholder="VD: KHUYENMAI2026 hoặc GIAM20"
                   value={promoForm.name}
                   onChange={(e) => setPromoForm({ ...promoForm, name: e.target.value })}
                   className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
@@ -590,6 +756,29 @@ export default function PricesPage() {
                 />
               </div>
 
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Ngày Bắt Đầu *</label>
+                  <input
+                    type="date"
+                    required
+                    value={promoForm.startDate}
+                    onChange={(e) => setPromoForm({ ...promoForm, startDate: e.target.value })}
+                    className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Ngày Kết Thúc *</label>
+                  <input
+                    type="date"
+                    required
+                    value={promoForm.endDate}
+                    onChange={(e) => setPromoForm({ ...promoForm, endDate: e.target.value })}
+                    className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+                  />
+                </div>
+              </div>
+
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
                 <button
                   type="button"
@@ -607,6 +796,37 @@ export default function PricesPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Promo Modal */}
+      {selectedPromoToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="w-full max-w-sm bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl text-center">
+            <h3 className="text-lg font-bold text-slate-900 mb-1">
+              Xóa Mã Khuyến Mãi?
+            </h3>
+            <p className="text-xs text-slate-500 mb-6">
+              Bạn có chắc muốn xóa mã khuyến mãi <strong>{selectedPromoToDelete.name}</strong>? Các bảng giá đang liên kết với mã này sẽ tự động hủy liên kết.
+            </p>
+            <div className="flex justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => setSelectedPromoToDelete(null)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 rounded-xl"
+              >
+                Hủy Bỏ
+              </button>
+              <button
+                type="button"
+                onClick={handleDeletePromotion}
+                disabled={isSubmitting}
+                className="px-5 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-sm"
+              >
+                {isSubmitting ? "Đang xóa..." : "Xác Nhận Xóa"}
+              </button>
+            </div>
           </div>
         </div>
       )}
