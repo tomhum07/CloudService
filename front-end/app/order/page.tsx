@@ -130,9 +130,9 @@ function OrderFormContent() {
     }
     fetchPlan();
 
-    // Lắng nghe SignalR để cập nhật gói cước tức thì nếu Admin sửa gói khi đang xem
+    // Lắng nghe SignalR để cập nhật gói cước và voucher tức thì nếu Admin sửa khi đang xem
     const unsubscribe = dataSyncService.subscribe((entity) => {
-      if (entity === "plan" || entity === "price" || entity === "all") {
+      if (entity === "plan" || entity === "price" || entity === "promotion" || entity === "all") {
         fetchPlan();
       }
     });
@@ -297,7 +297,7 @@ function OrderFormContent() {
     }
   };
 
-  // Tải danh sách khuyến mãi đang còn hiệu lực
+  // Tải danh sách khuyến mãi đang còn hiệu lực & Tự động đồng bộ Real-time nếu Admin tắt mã
   useEffect(() => {
     async function loadVouchers() {
       try {
@@ -313,13 +313,41 @@ function OrderFormContent() {
               return now >= start && now <= end;
             });
             setAvailableVouchers(active);
+
+            // Đồng bộ: Nếu mã khách hàng đang áp dụng vừa bị admin tắt/xóa -> tự động hủy bỏ áp dụng ngay lập tức
+            setPromoCode((currentCode) => {
+              if (currentCode) {
+                const isValid = active.some((v: any) => v.name?.toLowerCase() === currentCode.trim().toLowerCase());
+                if (!isValid) {
+                  setDiscountPercent(0);
+                  setAppliedPromoName("");
+                  setModalSelectedPromo(null);
+                  setPromoMessage({
+                    type: "error",
+                    text: "Mã khuyến mãi vừa bị hệ thống đóng hoặc không còn hiệu lực."
+                  });
+                  return "";
+                }
+              }
+              return currentCode;
+            });
           }
         }
       } catch (err) {
         console.warn("Lỗi tải voucher:", err);
       }
     }
+
     loadVouchers();
+
+    // Lắng nghe SignalR để cập nhật danh sách voucher tức thì khi Admin bật/tắt/sửa/xóa mã khuyến mãi
+    const unsubscribe = dataSyncService.subscribe((entity) => {
+      if (entity === "promotion" || entity === "price" || entity === "all") {
+        loadVouchers();
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handleApplyModalCode = async () => {
@@ -421,6 +449,28 @@ function OrderFormContent() {
     }
 
     setLoading(true);
+
+    // Kiểm tra tính hợp lệ mới nhất của mã khuyến mãi trước khi tạo đơn
+    if (promoCode.trim()) {
+      try {
+        const valRes = await apiFetch(`/api/promotions/validate/${encodeURIComponent(promoCode.trim())}`);
+        if (!valRes.ok) {
+          setDiscountPercent(0);
+          setAppliedPromoName("");
+          setModalSelectedPromo(null);
+          setPromoMessage({
+            type: "error",
+            text: "Mã khuyến mãi này vừa bị hệ thống đóng hoặc không còn áp dụng được nữa."
+          });
+          setValidationError("Mã khuyến mãi đã hết hạn hoặc bị tắt. Vui lòng kiểm tra lại đơn hàng.");
+          setLoading(false);
+          return;
+        }
+      } catch {
+        // bỏ qua lỗi mạng
+      }
+    }
+
     const orderCode = "CS-" + Math.floor(100000 + Math.random() * 900000);
     const totalAmount = calculateTotal();
 

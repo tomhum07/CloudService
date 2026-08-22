@@ -202,9 +202,9 @@ export default function Home() {
 
     fetchData();
 
-    // Lắng nghe SignalR để cập nhật tức thì khi Admin thêm/sửa/xóa gói hoặc danh mục
+    // Lắng nghe SignalR để cập nhật tức thì khi Admin thêm/sửa/xóa gói, danh mục hoặc khuyến mãi
     const unsubscribe = dataSyncService.subscribe((entity) => {
-      if (entity === "plan" || entity === "category" || entity === "price" || entity === "all") {
+      if (entity === "plan" || entity === "category" || entity === "price" || entity === "promotion" || entity === "all") {
         fetchData();
       }
     });
