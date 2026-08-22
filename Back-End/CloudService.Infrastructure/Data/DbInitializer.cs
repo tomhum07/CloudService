@@ -16,6 +16,18 @@ namespace CloudService.Infrastructure.Data
                 if (context.Database.IsRelational())
                 {
                     await context.Database.MigrateAsync();
+                    try
+                    {
+                        await context.Database.ExecuteSqlRawAsync(@"
+                            DO $$ 
+                            BEGIN 
+                                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='NewsArticles' AND column_name='Category') THEN
+                                    ALTER TABLE ""NewsArticles"" ADD COLUMN ""Category"" VARCHAR(100) DEFAULT 'Tin Tức';
+                                END IF;
+                            END $$;
+                        ");
+                    }
+                    catch { }
                 }
                 else
                 {
