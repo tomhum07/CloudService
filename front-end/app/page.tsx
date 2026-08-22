@@ -39,24 +39,24 @@ const FEATURES_HIGHLIGHT = [
 
 const PREVIEW_TESTIMONIALS = [
   {
-    name: "Nguyễn Văn Hùng",
-    role: "Giám Đốc Kỹ Thuật (CTO)",
-    company: "SmartTech Corporation",
-    comment: "Cloud VPS NVMe cực nhanh, website thương mại điện tử của chúng tôi chạy mượt mà ngay cả trong các đợt Flash Sale triệu view.",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80"
+    name: "Nguyễn Phương Kiệt",
+    role: "Trưởng phòng Phòng ANM và PCTPSDCNC",
+    company: "Công An bên CAM 😁",
+    comment: "Cloud VPS NVMe cực nhanh, website ĐÀO LỬA của chúng tôi chạy mượt mà, ngay cả trong các đợt điều tra.",
+    avatar: "https://mttqkipzgbvikmneipqc.supabase.co/storage/v1/object/public/CLOUDSERVICCl_img/uploads/24e28da0bdea8c4f01f1c6fce73d653d.jpg?w=120&auto=format&fit=crop&q=80"
   },
   {
-    name: "Trần Thị Mai Lan",
-    role: "Trưởng phòng CNTT",
-    company: "VinRetail Solutions",
+    name: "Lê Minh Trọng",
+    role: "Developer",
+    company: "Web xem phim lậu Phimme",
     comment: "Tường lửa WAF tự động ngăn chặn hoàn toàn các cuộc tấn công DDoS botnet mà không làm tăng độ trễ truy cập của khách hàng.",
-    avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=120&auto=format&fit=crop&q=80"
+    avatar: "https://mttqkipzgbvikmneipqc.supabase.co/storage/v1/object/public/CLOUDSERVICCl_img/uploads/1787424247618_5974007531177142723_5974007531177142723_7d8b272ee70ff03a327466c4673d70e4.jpg?w=120&auto=format&fit=crop&q=80"
   },
   {
-    name: "Lê Hoàng Quân",
-    role: "Lead Developer",
-    company: "AgriFuture Startup",
-    comment: "Hệ thống thanh toán PayOS quét mã QR tự động kích hoạt dịch vụ tức thì giúp chúng tôi triển khai máy chủ chỉ trong 1 phút.",
+    name: "Trùm DevOps",
+    role: "DevOps Engineer",
+    company: "Web xem phim lậu Phimme",
+    comment: "Domain bên này nhiều, bị chặn cái là đổi sang domain khác, không lo bị mất khách hàng.",
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80"
   }
 ];
@@ -173,30 +173,28 @@ export default function Home() {
         console.error("Lỗi lấy tin tức:", err);
       }
 
-      // 3. Fetch Active Promotions
+      // 3. Fetch Active Promotions (Lọc mã hết hạn)
       try {
-        const promoRes = await apiFetch("/api/promotions");
+        const promoRes = await apiFetch("/api/promotions?activeOnly=true");
         if (promoRes.ok) {
           const promoData = await promoRes.json();
           if (Array.isArray(promoData) && promoData.length > 0) {
-            setPromotions(promoData);
+            const now = Date.now();
+            const activePromos = promoData.filter((pr: any) => {
+              if (pr.isActive === false) return false;
+              const start = pr.startDate ? new Date(pr.startDate).getTime() : 0;
+              const end = pr.endDate ? new Date(pr.endDate).getTime() : Infinity;
+              return now >= start && now <= end;
+            });
+            setPromotions(activePromos);
           } else {
-            // Default active promo fallback
-            setPromotions([
-              { id: 1, name: "Ưu Đãi Khai Xuân 2026", discountPercentage: 20, description: "Giảm 20% toàn bộ gói Cloud VPS NVMe và Hosting khi thanh toán chu kỳ 12 tháng." },
-              { id: 2, name: "Tri Ân Khách Hàng Doanh Nghiệp", discountPercentage: 30, description: "Tặng miễn phí Chứng chỉ số SSL EV và Tường lửa Anti-DDoS 100Gbps." }
-            ]);
+            setPromotions([]);
           }
         } else {
-          setPromotions([
-            { id: 1, name: "Ưu Đãi Khởi Nghiệp 2026", discountPercentage: 20, description: "Giảm 20% toàn bộ gói Cloud VPS NVMe và Hosting khi thanh toán chu kỳ 12 tháng." },
-            { id: 2, name: "Khuyến Mãi Đăng Ký Mới", discountPercentage: 15, description: "Áp dụng cho mọi đơn hàng khởi tạo lần đầu tại CloudService." }
-          ]);
+          setPromotions([]);
         }
       } catch {
-        setPromotions([
-          { id: 1, name: "Ưu Đãi Khởi Nghiệp 2026", discountPercentage: 20, description: "Giảm 20% toàn bộ gói Cloud VPS NVMe và Hosting khi thanh toán chu kỳ 12 tháng." }
-        ]);
+        setPromotions([]);
       }
 
       setLoading(false);
@@ -204,9 +202,9 @@ export default function Home() {
 
     fetchData();
 
-    // Lắng nghe SignalR để cập nhật tức thì khi Admin thêm/sửa/xóa gói hoặc danh mục
+    // Lắng nghe SignalR để cập nhật tức thì khi Admin thêm/sửa/xóa gói, danh mục hoặc khuyến mãi
     const unsubscribe = dataSyncService.subscribe((entity) => {
-      if (entity === "plan" || entity === "category" || entity === "price" || entity === "all") {
+      if (entity === "plan" || entity === "category" || entity === "price" || entity === "promotion" || entity === "all") {
         fetchData();
       }
     });
