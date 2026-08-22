@@ -27,6 +27,7 @@ namespace CloudService.WebApi.Controllers
             [FromQuery] int pageNumber = 0,
             [FromQuery] int pageSize = 10,
             [FromQuery] string? search = null,
+            [FromQuery] string? category = null,
             [FromQuery] bool includeInactive = false)
         {
             int targetPage = pageNumber > 0 ? pageNumber : page;
@@ -34,6 +35,7 @@ namespace CloudService.WebApi.Controllers
                 targetPage,
                 pageSize,
                 search,
+                category,
                 includeInactive);
 
             return Ok(articles);

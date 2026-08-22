@@ -9,6 +9,7 @@ namespace CloudService.Application.DTOs.News
         public string? Summary { get; set; }
         public string? ThumbnailUrl { get; set; }
         public string Content { get; set; } = string.Empty;
+        public string? Category { get; set; }
         public string? CategoryName { get; set; }
         public int AuthorId { get; set; }
         public DateTime? PublishedAt { get; set; }

@@ -10,6 +10,7 @@ namespace CloudService.Application.Interfaces
             int page = 1,
             int pageSize = 10,
             string? search = null,
+            string? category = null,
             bool includeInactive = false);
 
         Task<NewsArticleDto?> GetByIdAsync(int id);
