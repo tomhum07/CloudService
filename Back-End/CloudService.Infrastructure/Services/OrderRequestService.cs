@@ -21,8 +21,44 @@ namespace CloudService.Infrastructure.Services
             _context = context;
         }
 
+        private async Task AutoCancelExpiredOrdersAsync()
+        {
+            try
+            {
+                var expiryThreshold = DateTime.UtcNow.AddMinutes(-30);
+                var expiredOrders = await _context.OrderRequests
+                    .IgnoreQueryFilters()
+                    .Where(o => (o.Status == 0 || o.Status == 1) && o.CreatedAt <= expiryThreshold)
+                    .ToListAsync();
+
+                if (expiredOrders.Any())
+                {
+                    foreach (var o in expiredOrders)
+                    {
+                        o.Status = 3; // Đã hủy do quá hạn 30 phút
+                        var note = "Hệ thống: Tự động hủy đơn do quá hạn thanh toán 30 phút";
+                        if (string.IsNullOrWhiteSpace(o.Notes))
+                        {
+                            o.Notes = note;
+                        }
+                        else if (!o.Notes.Contains(note))
+                        {
+                            o.Notes = $"{o.Notes} | [{note}]";
+                        }
+                    }
+                    await _context.SaveChangesAsync();
+                }
+            }
+            catch
+            {
+                // Bỏ qua lỗi phụ nếu có
+            }
+        }
+
         public async Task<PagedResult<OrderRequestDto>> GetOrderRequestsAsync(int pageNumber = 1, int pageSize = 10, int? status = null, string? search = null)
         {
+            await AutoCancelExpiredOrdersAsync();
+
             if (pageNumber < 1) pageNumber = 1;
             if (pageSize < 1) pageSize = 10;
 
@@ -69,6 +105,8 @@ namespace CloudService.Infrastructure.Services
 
         public async Task<IEnumerable<OrderRequestDto>> GetAllOrdersAsync()
         {
+            await AutoCancelExpiredOrdersAsync();
+
             var list = await _context.OrderRequests
                 .IgnoreQueryFilters()
                 .Include(o => o.PlanPrice)
@@ -83,6 +121,8 @@ namespace CloudService.Infrastructure.Services
 
         public async Task<OrderRequestDto?> GetByIdAsync(int id)
         {
+            await AutoCancelExpiredOrdersAsync();
+
             var order = await _context.OrderRequests
                 .IgnoreQueryFilters()
                 .Include(o => o.PlanPrice)
@@ -170,6 +210,8 @@ namespace CloudService.Infrastructure.Services
 
         public async Task<IEnumerable<OrderRequestDto>> GetCustomerOrdersAsync(string emailOrUsername)
         {
+            await AutoCancelExpiredOrdersAsync();
+
             var search = emailOrUsername.ToLower().Trim();
             var orders = await _context.OrderRequests
                 .Include(o => o.PlanPrice)
@@ -185,6 +227,8 @@ namespace CloudService.Infrastructure.Services
 
         public async Task<byte[]> ExportOrdersToExcelAsync()
         {
+            await AutoCancelExpiredOrdersAsync();
+
             var orders = await _context.OrderRequests
                 .IgnoreQueryFilters()
                 .Include(o => o.PlanPrice)
@@ -241,6 +285,8 @@ namespace CloudService.Infrastructure.Services
 
         public async Task<byte[]> ExportOrdersToCsvAsync()
         {
+            await AutoCancelExpiredOrdersAsync();
+
             var orders = await _context.OrderRequests
                 .IgnoreQueryFilters()
                 .Include(o => o.PlanPrice)
@@ -292,6 +338,13 @@ namespace CloudService.Infrastructure.Services
                 }
             }
 
+            // Tự động gán trạng thái Đã Hủy (3) nếu đơn chưa hoàn tất mà đã quá hạn 30 phút
+            int status = o.Status;
+            if ((status == 0 || status == 1) && o.CreatedAt <= DateTime.UtcNow.AddMinutes(-30))
+            {
+                status = 3;
+            }
+
             return new OrderRequestDto
             {
                 Id = o.Id,
@@ -304,7 +357,7 @@ namespace CloudService.Infrastructure.Services
                 CustomerEmail = o.CustomerEmail,
                 CustomerPhone = o.CustomerPhone,
                 CompanyName = o.CompanyName,
-                Status = o.Status,
+                Status = status,
                 Notes = o.Notes,
                 CreatedAt = o.CreatedAt
             };
