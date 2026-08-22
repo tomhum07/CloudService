@@ -73,6 +73,17 @@ export default function AdminOrdersPage() {
     return () => unsubscribe();
   }, []);
 
+  const cleanOrderNotes = (rawNotes: string) => {
+    if (!rawNotes) return "Không có ghi chú thêm";
+    return rawNotes
+      .replace(/\[PayOSData:[^\]]*\]/g, "")
+      .replace(/\s+/g, " ")
+      .replace(/\s*\|\s*\|\s*/g, " | ")
+      .replace(/^\s*\|\s*/, "")
+      .replace(/\s*\|\s*$/, "")
+      .trim() || "Không có ghi chú thêm";
+  };
+
   const fetchOrdersAndPartners = async (isBackground = false) => {
     if (!isBackground) setLoading(true);
     try {
@@ -82,22 +93,27 @@ export default function AdminOrdersPage() {
         const orderData = await orderRes.json();
         const rawItems = orderData.items || orderData;
         if (Array.isArray(rawItems)) {
-          setOrders(rawItems.map((o: any) => ({
-            id: o.id,
-            code: o.orderCode || `ORD-${o.id}`,
-            client: o.customerName || "Khách vãng lai",
-            email: o.customerEmail || "Không có",
-            phone: o.customerPhone || "Không có",
-            company: o.companyName || "Cá nhân",
-            plan: o.planName || "Gói dịch vụ",
-            category: o.categoryName || "Hạ tầng Cloud",
-            cycle: o.billingCycle || "Theo tháng",
-            amount: o.price || 0,
-            notes: o.notes || "Không có ghi chú thêm",
-            status: o.statusName || (o.status === 2 ? "Hoàn tất" : o.status === 3 ? "Đã hủy" : "Chờ duyệt"),
-            statusCode: o.status,
-            date: new Date(o.createdAt).toLocaleString("vi-VN")
-          })));
+          setOrders(rawItems.map((o: any) => {
+            const isExpired = (o.status === 0 || o.status === 1) && (Date.now() - new Date(o.createdAt).getTime() > 30 * 60 * 1000);
+            const finalStatus = o.status === 2 ? "Hoàn tất" : (o.status === 3 || isExpired) ? "Đã hủy" : (o.statusName || "Chờ duyệt");
+            const finalStatusCode = (o.status === 3 || isExpired) ? 3 : o.status;
+            return {
+              id: o.id,
+              code: o.orderCode || `ORD-${o.id}`,
+              client: o.customerName || "Khách vãng lai",
+              email: o.customerEmail || "Không có",
+              phone: o.customerPhone || "Không có",
+              company: o.companyName || "Cá nhân",
+              plan: o.planName || "Gói dịch vụ",
+              category: o.categoryName || "Hạ tầng Cloud",
+              cycle: o.billingCycle || "Theo tháng",
+              amount: o.price || 0,
+              notes: cleanOrderNotes(o.notes),
+              status: finalStatus,
+              statusCode: finalStatusCode,
+              date: new Date(o.createdAt).toLocaleString("vi-VN")
+            };
+          }));
         }
       }
 
@@ -667,7 +683,7 @@ export default function AdminOrdersPage() {
                   Ghi Chú Đơn Hàng & Lịch Sử Giao Dịch
                 </h4>
                 <p className="text-slate-700 bg-white p-3 rounded-xl border border-slate-200 font-mono text-[11px] whitespace-pre-wrap">
-                  {selectedOrder.notes}
+                  {cleanOrderNotes(selectedOrder.notes)}
                 </p>
               </div>
 

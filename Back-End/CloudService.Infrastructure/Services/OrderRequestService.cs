@@ -21,8 +21,44 @@ namespace CloudService.Infrastructure.Services
             _context = context;
         }
 
+        private async Task AutoCancelExpiredOrdersAsync()
+        {
+            try
+            {
+                var expiryThreshold = DateTime.UtcNow.AddMinutes(-30);
+                var expiredOrders = await _context.OrderRequests
+                    .IgnoreQueryFilters()
+                    .Where(o => (o.Status == 0 || o.Status == 1) && o.CreatedAt <= expiryThreshold)
+                    .ToListAsync();
+
+                if (expiredOrders.Any())
+                {
+                    foreach (var o in expiredOrders)
+                    {
+                        o.Status = 3; // Đã hủy do quá hạn 30 phút
+                        var note = "Hệ thống: Tự động hủy đơn do quá hạn thanh toán 30 phút";
+                        if (string.IsNullOrWhiteSpace(o.Notes))
+                        {
+                            o.Notes = note;
+                        }
+                        else if (!o.Notes.Contains(note))
+                        {
+                            o.Notes = $"{o.Notes} | [{note}]";
+                        }
+                    }
+                    await _context.SaveChangesAsync();
+                }
+            }
+            catch
+            {
+                // Bỏ qua lỗi phụ nếu có
+            }
+        }
+
         public async Task<PagedResult<OrderRequestDto>> GetOrderRequestsAsync(int pageNumber = 1, int pageSize = 10, int? status = null, string? search = null)
         {
+            await AutoCancelExpiredOrdersAsync();
+
             if (pageNumber < 1) pageNumber = 1;
             if (pageSize < 1) pageSize = 10;
 
@@ -69,6 +105,8 @@ namespace CloudService.Infrastructure.Services
 
         public async Task<IEnumerable<OrderRequestDto>> GetAllOrdersAsync()
         {
+            await AutoCancelExpiredOrdersAsync();
+
             var list = await _context.OrderRequests
                 .IgnoreQueryFilters()
                 .Include(o => o.PlanPrice)
@@ -83,6 +121,8 @@ namespace CloudService.Infrastructure.Services
 
         public async Task<OrderRequestDto?> GetByIdAsync(int id)
         {
+            await AutoCancelExpiredOrdersAsync();
+
             var order = await _context.OrderRequests
                 .IgnoreQueryFilters()
                 .Include(o => o.PlanPrice)
@@ -170,6 +210,8 @@ namespace CloudService.Infrastructure.Services
 
         public async Task<IEnumerable<OrderRequestDto>> GetCustomerOrdersAsync(string emailOrUsername)
         {
+            await AutoCancelExpiredOrdersAsync();
+
             var search = emailOrUsername.ToLower().Trim();
             var orders = await _context.OrderRequests
                 .Include(o => o.PlanPrice)
@@ -185,6 +227,8 @@ namespace CloudService.Infrastructure.Services
 
         public async Task<byte[]> ExportOrdersToExcelAsync()
         {
+            await AutoCancelExpiredOrdersAsync();
+
             var orders = await _context.OrderRequests
                 .IgnoreQueryFilters()
                 .Include(o => o.PlanPrice)
@@ -241,6 +285,8 @@ namespace CloudService.Infrastructure.Services
 
         public async Task<byte[]> ExportOrdersToCsvAsync()
         {
+            await AutoCancelExpiredOrdersAsync();
+
             var orders = await _context.OrderRequests
                 .IgnoreQueryFilters()
                 .Include(o => o.PlanPrice)
@@ -273,6 +319,16 @@ namespace CloudService.Infrastructure.Services
             return text.Replace("\"", "\"\"");
         }
 
+        private static string CleanNotes(string? rawNotes)
+        {
+            if (string.IsNullOrWhiteSpace(rawNotes)) return string.Empty;
+            var cleaned = System.Text.RegularExpressions.Regex.Replace(rawNotes, @"\[PayOSData:[^\]]*\]", "").Trim();
+            cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\s+", " ");
+            cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\s*\|\s*\|\s*", " | ");
+            cleaned = cleaned.Trim(' ', '|', ' ');
+            return cleaned;
+        }
+
         private static OrderRequestDto MapToDto(OrderRequest o)
         {
             decimal price = o.PlanPrice?.Price ?? 0;
@@ -280,8 +336,8 @@ namespace CloudService.Infrastructure.Services
             // Nếu trong Notes có ghi nhận số tiền thanh toán thực tế sau khi giảm giá hoặc qua PayOS, ưu tiên hiển thị đúng số tiền đó
             if (!string.IsNullOrEmpty(o.Notes))
             {
-                // Hỗ trợ [Tổng tiền: 2.000đ], [Tổng tiền: 2,000đ], [PayOS: Đã thanh toán 2.000đ], [Số tiền: 2000đ]
-                var match = System.Text.RegularExpressions.Regex.Match(o.Notes, @"(?:Tổng tiền|Đã thanh toán|Số tiền|Gia tien):\s*([\d\.\,]+)\s*(?:đ|vnd|đồng)?", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                // Hỗ trợ [Tổng tiền: 2.000đ], [PayOSData: ... amount=2000 ...], [PayOS: Đã thanh toán 2.000đ]
+                var match = System.Text.RegularExpressions.Regex.Match(o.Notes, @"(?:Tổng tiền|Đã thanh toán|Số tiền|Gia tien|amount=)\s*[:=]?\s*([\d\.\,]+)\s*(?:đ|vnd|đồng)?", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                 if (match.Success)
                 {
                     var cleanNum = match.Groups[1].Value.Replace(".", "").Replace(",", "").Trim();
@@ -290,6 +346,13 @@ namespace CloudService.Infrastructure.Services
                         price = parsedAmount;
                     }
                 }
+            }
+
+            // Tự động gán trạng thái Đã Hủy (3) nếu đơn chưa hoàn tất mà đã quá hạn 30 phút
+            int status = o.Status;
+            if ((status == 0 || status == 1) && o.CreatedAt <= DateTime.UtcNow.AddMinutes(-30))
+            {
+                status = 3;
             }
 
             return new OrderRequestDto
@@ -304,8 +367,8 @@ namespace CloudService.Infrastructure.Services
                 CustomerEmail = o.CustomerEmail,
                 CustomerPhone = o.CustomerPhone,
                 CompanyName = o.CompanyName,
-                Status = o.Status,
-                Notes = o.Notes,
+                Status = status,
+                Notes = CleanNotes(o.Notes),
                 CreatedAt = o.CreatedAt
             };
         }
