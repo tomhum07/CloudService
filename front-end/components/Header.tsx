@@ -609,50 +609,82 @@ export default function Header() {
 
         {/* Mobile Navigation Drawer */}
         {isOpen && (
-          <div className="lg:hidden bg-white border-t border-slate-200 p-6 space-y-4 shadow-xl max-h-[80vh] overflow-y-auto">
+          <div className="lg:hidden bg-white border-t border-slate-200 p-6 space-y-4 shadow-xl max-h-[85vh] overflow-y-auto custom-scrollbar">
             <Link
               href="/"
               onClick={() => setIsOpen(false)}
-              className="block text-sm font-bold text-slate-800 hover:text-blue-600"
+              className="flex items-center gap-2 text-sm font-bold text-slate-800 hover:text-blue-600 py-1"
             >
-              Trang Chủ
+              <span>🏠</span> Trang Chủ
             </Link>
 
-            {dbCategories.map((cat) => {
-              const catPlans = dbPlans.filter((p) => p.categoryId === cat.id);
-              return (
-                <div key={cat.id} className="border-t border-slate-100 pt-3">
-                  <span className="text-xs font-bold text-blue-600 uppercase tracking-wider block mb-2">
-                    {getCategoryIcon(cat.name)} {cat.name}
-                  </span>
-                  <div className="space-y-2 pl-3">
-                    {catPlans.length === 0 ? (
-                      <span className="text-xs text-slate-400 italic">Chưa có gói cước</span>
-                    ) : (
-                      catPlans.map((p) => {
-                        const firstPrice = p.prices?.[0]?.price || 0;
-                        const priceStr = firstPrice > 0 ? `${new Intl.NumberFormat("vi-VN").format(firstPrice)}đ` : "Liên hệ";
-                        return (
-                          <Link
-                            key={p.id}
-                            href={`/order?planId=${p.id}`}
-                            onClick={() => setIsOpen(false)}
-                            className="block text-xs font-semibold text-slate-700 hover:text-blue-600 truncate"
-                          >
-                            {p.name} - <span className="text-blue-600 font-bold">{priceStr}</span>
-                          </Link>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+            <div className="border-t border-slate-100 pt-3">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2 px-1">
+                Danh Mục Dịch Vụ
+              </span>
+              <div className="space-y-3">
+                {dbCategories.map((cat) => {
+                  const catPlans = dbPlans.filter((p) => p.categoryId === cat.id);
+                  return (
+                    <div key={cat.id} className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                      <span className="text-xs font-bold text-blue-700 block mb-1.5 flex items-center gap-1.5">
+                        <span>{getCategoryIcon(cat.name)}</span> {cat.name}
+                      </span>
+                      <div className="space-y-1.5 pl-2">
+                        {catPlans.length === 0 ? (
+                          <span className="text-[11px] text-slate-400 italic block py-0.5">Chưa có gói cước</span>
+                        ) : (
+                          catPlans.slice(0, 4).map((p) => {
+                            const firstPrice = p.prices?.[0]?.price || 0;
+                            const priceStr = firstPrice > 0 ? `${new Intl.NumberFormat("vi-VN").format(firstPrice)}đ/th` : "Liên hệ";
+                            return (
+                              <Link
+                                key={p.id}
+                                href={`/order?planId=${p.id}`}
+                                onClick={() => setIsOpen(false)}
+                                className="flex items-center justify-between py-1.5 text-xs text-slate-700 hover:text-blue-600"
+                              >
+                                <span className="font-medium truncate pr-2">{p.name}</span>
+                                <span className="text-[11px] font-bold text-blue-600 shrink-0">{priceStr}</span>
+                              </Link>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
 
-            <div className="border-t border-slate-100 pt-3 space-y-2">
-              <Link href="/pricing" onClick={() => setIsOpen(false)} className="block text-xs font-bold text-slate-800 hover:text-blue-600">Bảng Giá</Link>
-              <Link href="/news" onClick={() => setIsOpen(false)} className="block text-xs font-bold text-slate-800 hover:text-blue-600">Tin Tức</Link>
-              <Link href="/about" onClick={() => setIsOpen(false)} className="block text-xs font-bold text-slate-800 hover:text-blue-600">Giới Thiệu</Link>
+            <div className="border-t border-slate-100 pt-3 space-y-1">
+              <Link href="/pricing" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-xs font-bold text-slate-800 hover:text-blue-600 py-2">
+                <span>⚡</span> Bảng Giá Dịch Vụ
+              </Link>
+              <Link href="/news" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-xs font-bold text-slate-800 hover:text-blue-600 py-2">
+                <span>📰</span> Tin Tức & Khuyến Mãi
+              </Link>
+              <Link href="/affiliate" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-xs font-bold text-slate-800 hover:text-blue-600 py-2">
+                <span>🤝</span> Đối Tác Tiếp Thị (Affiliate)
+              </Link>
+              <Link href="/about" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-xs font-bold text-slate-800 hover:text-blue-600 py-2">
+                <span>🏢</span> Về Chúng Tôi
+              </Link>
+              {user && (
+                <Link href="/my-plans" onClick={() => setIsOpen(false)} className="flex items-center gap-2 text-xs font-bold text-blue-600 hover:text-blue-700 py-2">
+                  <span>📦</span> Gói Cước Của Tôi
+                </Link>
+              )}
+            </div>
+
+            <div className="pt-3 border-t border-slate-100">
+              <Link
+                href="/order"
+                onClick={() => setIsOpen(false)}
+                className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-blue-500/20"
+              >
+                <span>🛒</span> Khởi Tạo Dịch Vụ Ngay
+              </Link>
             </div>
           </div>
         )}

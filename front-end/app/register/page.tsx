@@ -7,6 +7,7 @@ import { apiFetch, setAccessToken } from "@/utils/api";
 function RegisterForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
@@ -158,15 +159,23 @@ function RegisterForm() {
           />
         </div>
 
-        <div>
+        <div className="relative">
           <input
-            type="password"
+            type={showPassword ? "text" : "password"}
             required
             placeholder="Mật Khẩu (Tối thiểu 6 ký tự)"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
+            className="w-full h-11 pl-4 pr-10 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-3 text-xs text-slate-400 hover:text-slate-600 focus:outline-none"
+            title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+          >
+            {showPassword ? "🙈" : "👁️"}
+          </button>
         </div>
 
         <button

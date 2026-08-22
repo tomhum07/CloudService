@@ -167,37 +167,55 @@ export default function Home() {
             Cung cấp giải pháp <strong>Cloud VPS NVMe</strong>, <strong>Web Hosting LiteSpeed</strong>, <strong>Tên miền</strong>, <strong>Email doanh nghiệp</strong> và <strong>Tường lửa Anti-DDoS</strong> chuyên sâu bảo vệ website an toàn 24/7.
           </p>
 
-          {/* DOMAIN SEARCH BAR */}
-          <div className="max-w-3xl mx-auto mb-12">
-            <form onSubmit={handleDomainCheck} className="p-2 rounded-2xl bg-white border border-slate-300 shadow-xl flex flex-col sm:flex-row gap-2">
-              <div className="flex-1 flex items-center px-4 gap-3">
-                <span className="text-slate-400 text-lg">🔍</span>
-                <input
-                  type="text"
-                  placeholder="Nhập tên miền bạn muốn đăng ký (VD: congtycuaban.vn, shoponline.com)..."
-                  value={domainQuery}
-                  onChange={(e) => setDomainQuery(e.target.value)}
-                  className="w-full bg-transparent text-sm text-slate-900 placeholder-slate-400 focus:outline-none py-3"
-                />
-              </div>
-              <button
-                type="submit"
-                className="px-8 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm transition-all shadow-md shadow-blue-500/20 shrink-0"
-              >
-                Kiểm Tra Tên Miền
-              </button>
-            </form>
-
-            {/* Quick Domain Pricing Pills */}
-            <div className="flex flex-wrap items-center justify-center gap-3 mt-4 text-xs">
-              <span className="text-slate-500 font-medium">Bảng giá hot:</span>
-              {DOMAIN_PRICES.map((d) => (
-                <div key={d.tld} className="px-3 py-1 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center gap-2">
-                  <span className="font-bold text-blue-600">{d.tld}</span>
-                  <span className="text-slate-700 font-semibold">{d.price}</span>
+            {/* DOMAIN SEARCH BAR */}
+            <div className="max-w-3xl mx-auto mb-12">
+              <form onSubmit={handleDomainCheck} className="p-2 rounded-2xl bg-white border border-slate-300 shadow-xl flex flex-col sm:flex-row gap-2">
+                <div className="flex-1 flex items-center px-4 gap-3">
+                  <span className="text-slate-400 text-lg">🔍</span>
+                  <input
+                    type="text"
+                    placeholder="Nhập tên miền bạn muốn kiểm tra (VD: tencongty, myshop.com)..."
+                    value={domainQuery}
+                    onChange={(e) => setDomainQuery(e.target.value)}
+                    className="w-full bg-transparent text-sm text-slate-900 placeholder-slate-400 focus:outline-none py-3"
+                  />
+                  {domainQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setDomainQuery("")}
+                      className="text-xs text-slate-400 hover:text-slate-600 px-1"
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
-              ))}
-            </div>
+                <button
+                  type="submit"
+                  className="px-8 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm transition-all shadow-md shadow-blue-500/20 shrink-0"
+                >
+                  Kiểm Tra Tên Miền
+                </button>
+              </form>
+
+              {/* Quick Domain Pricing Pills (Click to append TLD) */}
+              <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-4 text-xs">
+                <span className="text-slate-500 font-medium">Đuôi mở rộng hot:</span>
+                {DOMAIN_PRICES.map((d) => (
+                  <button
+                    key={d.tld}
+                    type="button"
+                    onClick={() => {
+                      const base = domainQuery.includes(".") ? domainQuery.split(".")[0] : (domainQuery || "mybrand");
+                      setDomainQuery(`${base}${d.tld}`);
+                    }}
+                    className="px-3 py-1 rounded-lg bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-300 shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                    title={`Chọn đuôi ${d.tld}`}
+                  >
+                    <span className="font-bold text-blue-600">{d.tld}</span>
+                    <span className="text-slate-700 font-semibold">{d.price}</span>
+                  </button>
+                ))}
+              </div>
 
             {/* Domain Check Result Modal/Card */}
             {domainResult && domainResult.checked && (

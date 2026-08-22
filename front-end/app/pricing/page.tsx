@@ -265,6 +265,40 @@ export default function PricingPage() {
             })}
           </div>
         )}
+
+        {/* Feature Comparison Matrix */}
+        <div className="mt-20 bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 shadow-sm">
+          <div className="text-center mb-10">
+            <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block mb-2">Tiêu Chuẩn Phần Cứng</span>
+            <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Cam Kết Chất Lượng Dịch Vụ</h3>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
+            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
+              <div className="text-xl">⚡</div>
+              <h4 className="font-bold text-slate-900 text-sm">Enterprise NVMe U.2 / U.3</h4>
+              <p className="text-slate-600 leading-relaxed">
+                Tốc độ đọc/ghi ngẫu nhiên IOPS lên đến 800.000 IOPS, đảm bảo website thương mại điện tử và cơ sở dữ liệu luôn xử lý tức thì.
+              </p>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
+              <div className="text-xl">🛡️</div>
+              <h4 className="font-bold text-slate-900 text-sm">Anti-DDoS 100Gbps Miễn Phí</h4>
+              <p className="text-slate-600 leading-relaxed">
+                Tự động nhận diện và lọc lưu lượng tấn công SYN/UDP Flood và Layer 7 HTTP Request mà không gây nghẽn đường truyền.
+              </p>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
+              <div className="text-xl">🔄</div>
+              <h4 className="font-bold text-slate-900 text-sm">Sao Lưu Độc Lập Hàng Ngày</h4>
+              <p className="text-slate-600 leading-relaxed">
+                Hệ thống tự động sao lưu Snapshot định kỳ mỗi ngày sang cụm Storage độc lập, phục hồi 1-Click khi cần thiết.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* MODAL PHÓNG TO MÃ QR KHỔ LỚN TRÊN TRANG BẢNG GIÁ */}

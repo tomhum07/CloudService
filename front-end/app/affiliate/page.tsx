@@ -15,6 +15,14 @@ export default function AffiliatePage() {
   const [registered, setRegistered] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
+  // Calculator State
+  const [clientCount, setClientCount] = useState(15);
+  const [averageSpend, setAverageSpend] = useState(350000);
+
+  const firstMonthCommission = clientCount * averageSpend * 0.2;
+  const recurringMonthlyCommission = clientCount * averageSpend * 0.1;
+  const estimatedYearlyTotal = firstMonthCommission + recurringMonthlyCommission * 11;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
@@ -132,8 +140,113 @@ export default function AffiliatePage() {
           </div>
         </section>
 
+        {/* INTERACTIVE COMMISSION CALCULATOR */}
+        <section className="mb-16 bg-white border border-blue-200 rounded-3xl p-6 sm:p-10 shadow-lg relative overflow-hidden">
+          <div className="text-center max-w-2xl mx-auto mb-8">
+            <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block mb-1">Công Cụ Ước Tính</span>
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              Dự Tính Thu Nhập Thụ Động Của Bạn
+            </h2>
+            <p className="text-xs text-slate-500 mt-2">
+              Kéo thanh trượt để xem bạn có thể kiếm được bao nhiêu thu nhập hàng tháng khi giới thiệu khách hàng.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+            {/* Sliders */}
+            <div className="space-y-6 bg-slate-50 p-6 rounded-2xl border border-slate-200">
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-xs font-bold text-slate-700">Số khách hàng giới thiệu / tháng:</label>
+                  <span className="text-sm font-black text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-lg border border-blue-200">
+                    {clientCount} khách hàng
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={1}
+                  max={100}
+                  value={clientCount}
+                  onChange={(e) => setClientCount(Number(e.target.value))}
+                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                />
+                <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                  <span>1</span>
+                  <span>25</span>
+                  <span>50</span>
+                  <span>75</span>
+                  <span>100+</span>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-xs font-bold text-slate-700">Giá trị đơn hàng trung bình / tháng:</label>
+                  <span className="text-sm font-black text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-lg border border-blue-200">
+                    {new Intl.NumberFormat("vi-VN").format(averageSpend)}đ
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={100000}
+                  max={2000000}
+                  step={50000}
+                  value={averageSpend}
+                  onChange={(e) => setAverageSpend(Number(e.target.value))}
+                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                />
+                <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                  <span>100K (Hosting)</span>
+                  <span>500K (VPS Pro)</span>
+                  <span>2M (Dedicated)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Calculated Output Display */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-5 rounded-2xl bg-blue-50/80 border border-blue-200">
+                <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider block mb-1">
+                  Hoa hồng tháng đầu (20%)
+                </span>
+                <div className="text-2xl font-black text-blue-600">
+                  {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(firstMonthCommission)}
+                </div>
+                <p className="text-[10px] text-blue-600/80 mt-1">Thanh toán ngay khi khách kích hoạt</p>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-emerald-50/80 border border-emerald-200">
+                <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block mb-1">
+                  Hoa hồng duy trì / tháng (10%)
+                </span>
+                <div className="text-2xl font-black text-emerald-600">
+                  {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(recurringMonthlyCommission)}
+                </div>
+                <p className="text-[10px] text-emerald-600/80 mt-1">Thu nhập thụ động trọn đời</p>
+              </div>
+
+              <div className="sm:col-span-2 p-5 rounded-2xl bg-slate-900 text-white shadow-md">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                  <div>
+                    <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">Ước tính thu nhập năm đầu</span>
+                    <div className="text-3xl font-black text-white mt-0.5">
+                      {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(estimatedYearlyTotal)}
+                    </div>
+                  </div>
+                  <a
+                    href="#register-form"
+                    className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs text-center transition-colors shadow-md"
+                  >
+                    Bắt Đầu Ngay →
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Info & Form */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start mb-16">
+        <div id="register-form" className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start mb-16">
           
           {/* Rules & Guidelines */}
           <div className="bg-white border border-slate-200 rounded-2xl p-8 space-y-6 shadow-sm">
