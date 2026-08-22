@@ -120,22 +120,22 @@ namespace CloudService.Infrastructure.Services
 
             // Đồng thời xuất log có cấu trúc trực tiếp ra Serilog Console & File
             var idDisplay = userId.HasValue ? $" (ID: {userId.Value})" : "";
-            var payloadDisplay = !string.IsNullOrWhiteSpace(payload) ? $" [{payload}]" : "";
+            var payloadDisplay = !string.IsNullOrWhiteSpace(payload) ? $" - {payload}" : "";
             var actionLower = action.ToLower();
 
             if (_logger != null)
             {
                 if (actionLower.Contains("thất bại") || actionLower.Contains("khóa") || actionLower.Contains("từ chối") || actionLower.Contains("hủy") || actionLower.Contains("quá hạn"))
                 {
-                    _logger.LogWarning("{Action} cho tài khoản {Username}{UserId}{Payload}", action, userDisplay, idDisplay, payloadDisplay);
+                    _logger.LogWarning("[AUDIT CSDL] {Action} | User: {Username}{UserId}{Payload}", action, userDisplay, idDisplay, payloadDisplay);
                 }
                 else if (actionLower.Contains("lỗi") || actionLower.Contains("error") || actionLower.Contains("exception"))
                 {
-                    _logger.LogError("{Action} bởi tài khoản {Username}{UserId}{Payload}", action, userDisplay, idDisplay, payloadDisplay);
+                    _logger.LogError("[AUDIT CSDL] {Action} | User: {Username}{UserId}{Payload}", action, userDisplay, idDisplay, payloadDisplay);
                 }
                 else
                 {
-                    _logger.LogInformation("Người dùng {Username}{UserId} đã thực hiện: {Action}{Payload}", userDisplay, idDisplay, action, payloadDisplay);
+                    _logger.LogInformation("[AUDIT CSDL] {Action} | User: {Username}{UserId}{Payload}", action, userDisplay, idDisplay, payloadDisplay);
                 }
             }
 
