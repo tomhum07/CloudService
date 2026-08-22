@@ -986,19 +986,6 @@ function OrderFormContent() {
                             </span>
                           </div>
                         </div>
-
-                        {payosData.checkoutUrl && (
-                          <div className="max-w-md mx-auto pt-1">
-                            <a
-                              href={payosData.checkoutUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition-all"
-                            >
-                              <span>Mở Trang Thanh Toán PayOS (Thẻ / VietQR) ↗</span>
-                            </a>
-                          </div>
-                        )}
                       </>
                     ) : (
                       /* Trường hợp chưa nhận được PayOS Data do chưa cấu hình key trên server */
