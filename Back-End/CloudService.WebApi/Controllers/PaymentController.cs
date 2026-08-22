@@ -12,10 +12,12 @@ namespace CloudService.WebApi.Controllers
     public class PaymentController : ControllerBase
     {
         private readonly IPayOSService _payOSService;
+        private readonly IAuditLogService _auditLogService;
 
-        public PaymentController(IPayOSService payOSService)
+        public PaymentController(IPayOSService payOSService, IAuditLogService auditLogService)
         {
             _payOSService = payOSService;
+            _auditLogService = auditLogService;
         }
 
         /// <summary>
@@ -25,9 +27,11 @@ namespace CloudService.WebApi.Controllers
         [Authorize]
         public async Task<IActionResult> CreatePaymentLink([FromBody] CreatePaymentLinkRequest request)
         {
+            var actor = User?.Identity?.Name ?? "Khách hàng";
             try
             {
                 var result = await _payOSService.CreatePaymentLinkAsync(request);
+                await _auditLogService.LogAsync(actor, "Tạo link thanh toán PayOS", $"Khởi tạo link thanh toán đơn #{request.OrderId} với số tiền {request.Amount:N0}đ (OrderCode: {result.OrderCode})");
                 return Ok(result);
             }
             catch (KeyNotFoundException ex)
@@ -64,9 +68,11 @@ namespace CloudService.WebApi.Controllers
         [Authorize]
         public async Task<IActionResult> CancelPayment(long orderCode, [FromQuery] string? reason)
         {
+            var actor = User?.Identity?.Name ?? "Khách hàng";
             try
             {
                 var info = await _payOSService.CancelPaymentLinkAsync(orderCode, reason);
+                await _auditLogService.LogAsync(actor, "Hủy link thanh toán PayOS", $"Đã hủy link thanh toán mã #{orderCode}. Lý do: {reason ?? "Khách hàng hủy"}");
                 return Ok(info);
             }
             catch (Exception ex)
@@ -86,11 +92,13 @@ namespace CloudService.WebApi.Controllers
             {
                 // Tự động kích hoạt đơn hàng khi nhận thông báo thanh toán
                 await _payOSService.HandleWebhookPaymentSuccessAsync(webhookBody);
+                await _auditLogService.LogAsync("PayOS Server", "Xác nhận thanh toán tự động PayOS", "Xử lý thành công Webhook IPN và tự động kích hoạt gói cước cho đơn hàng");
 
                 return Ok(new { success = true, message = "Webhook verified and processed successfully." });
             }
             catch (Exception ex)
             {
+                await _auditLogService.LogAsync("PayOS Server", "Lỗi Webhook PayOS", $"Xử lý Webhook IPN thất bại: {ex.Message}");
                 return BadRequest(new { success = false, message = $"Webhook verification failed: {ex.Message}" });
             }
         }

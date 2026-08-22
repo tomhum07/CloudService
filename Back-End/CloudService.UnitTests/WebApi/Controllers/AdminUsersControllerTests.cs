@@ -61,6 +61,15 @@ namespace CloudService.UnitTests.WebApi.Controllers
             public Task<(bool Success, string Message)> ResetPasswordWithOtpAsync(VerifyResetOtpRequest request) => Task.FromResult((true, "Thành công"));
         }
 
+        private class FakeAuditLogService : IAuditLogService
+        {
+            public Task<CloudService.Application.DTOs.Common.PagedResult<CloudService.Application.DTOs.Audit.AuditLogDto>> GetLogsAsync(int pageNumber = 1, int pageSize = 15, string? search = null, string? type = null)
+                => Task.FromResult(new CloudService.Application.DTOs.Common.PagedResult<CloudService.Application.DTOs.Audit.AuditLogDto>());
+
+            public Task<CloudService.Application.DTOs.Audit.AuditLogDto> LogAsync(string username, string action, string? payload = null, int? userId = null)
+                => Task.FromResult(new CloudService.Application.DTOs.Audit.AuditLogDto());
+        }
+
         [Fact]
         public async Task GetAllUsers_ReturnsOkWithUsers()
         {
@@ -74,7 +83,7 @@ namespace CloudService.UnitTests.WebApi.Controllers
             {
                 GetAllUsersHandler = () => Task.FromResult<IEnumerable<UserDto>>(expectedUsers)
             };
-            var controller = new AdminUsersController(fakeService);
+            var controller = new AdminUsersController(fakeService, new FakeAuditLogService());
 
             // Act
             var result = await controller.GetAllUsers();
@@ -93,7 +102,7 @@ namespace CloudService.UnitTests.WebApi.Controllers
             {
                 RegisterUserHandler = req => Task.FromResult(true)
             };
-            var controller = new AdminUsersController(fakeService);
+            var controller = new AdminUsersController(fakeService, new FakeAuditLogService());
             var request = new RegisterRequest
             {
                 Username = "adminuser",
@@ -119,7 +128,7 @@ namespace CloudService.UnitTests.WebApi.Controllers
             {
                 RegisterUserHandler = req => Task.FromResult(false)
             };
-            var controller = new AdminUsersController(fakeService);
+            var controller = new AdminUsersController(fakeService, new FakeAuditLogService());
             var request = new RegisterRequest
             {
                 Username = "existinguser",
@@ -145,7 +154,7 @@ namespace CloudService.UnitTests.WebApi.Controllers
             {
                 UpdateUserHandler = (id, req) => Task.FromResult(true)
             };
-            var controller = new AdminUsersController(fakeService);
+            var controller = new AdminUsersController(fakeService, new FakeAuditLogService());
             var request = new UpdateUserRequest
             {
                 FullName = "Updated Name",
@@ -170,7 +179,7 @@ namespace CloudService.UnitTests.WebApi.Controllers
             {
                 UpdateUserHandler = (id, req) => Task.FromResult(false)
             };
-            var controller = new AdminUsersController(fakeService);
+            var controller = new AdminUsersController(fakeService, new FakeAuditLogService());
             var request = new UpdateUserRequest
             {
                 FullName = "Updated Name",
@@ -195,7 +204,7 @@ namespace CloudService.UnitTests.WebApi.Controllers
             {
                 DeleteUserHandler = id => Task.FromResult(true)
             };
-            var controller = new AdminUsersController(fakeService);
+            var controller = new AdminUsersController(fakeService, new FakeAuditLogService());
 
             // Act
             var result = await controller.DeleteUser(1);
@@ -213,7 +222,7 @@ namespace CloudService.UnitTests.WebApi.Controllers
             {
                 DeleteUserHandler = id => Task.FromResult(false)
             };
-            var controller = new AdminUsersController(fakeService);
+            var controller = new AdminUsersController(fakeService, new FakeAuditLogService());
 
             // Act
             var result = await controller.DeleteUser(999);
@@ -228,7 +237,7 @@ namespace CloudService.UnitTests.WebApi.Controllers
         {
             // Arrange
             var fakeService = new FakeAuthService();
-            var controller = new AdminUsersController(fakeService);
+            var controller = new AdminUsersController(fakeService, new FakeAuditLogService());
             var request = new AdminResetPasswordRequest { NewPassword = "" };
 
             // Act
@@ -247,7 +256,7 @@ namespace CloudService.UnitTests.WebApi.Controllers
             {
                 AdminResetPasswordHandler = (id, pwd) => Task.FromResult(true)
             };
-            var controller = new AdminUsersController(fakeService);
+            var controller = new AdminUsersController(fakeService, new FakeAuditLogService());
             var request = new AdminResetPasswordRequest { NewPassword = "NewPassword123!" };
 
             // Act
@@ -266,7 +275,7 @@ namespace CloudService.UnitTests.WebApi.Controllers
             {
                 AdminResetPasswordHandler = (id, pwd) => Task.FromResult(false)
             };
-            var controller = new AdminUsersController(fakeService);
+            var controller = new AdminUsersController(fakeService, new FakeAuditLogService());
             var request = new AdminResetPasswordRequest { NewPassword = "NewPassword123!" };
 
             // Act
