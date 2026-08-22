@@ -156,7 +156,8 @@ export default function AdminNewsPage() {
       summary: summary.trim(),
       thumbnailUrl: thumbnailUrl.trim() || null,
       content: content.trim(),
-      categoryName,
+      category: categoryName,
+      categoryName: categoryName,
       isActive
     };
 
@@ -322,7 +323,15 @@ export default function AdminNewsPage() {
                       </div>
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-100">
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                        (art.categoryName || art.category) === 'Khuyến Mãi'
+                          ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                          : (art.categoryName || art.category) === 'Sự Kiện'
+                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                          : (art.categoryName || art.category) === 'Hướng Dẫn'
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-blue-50 text-blue-700 border border-blue-200'
+                      }`}>
                         {art.categoryName || art.category || "Tin Tức"}
                       </span>
                     </td>
@@ -400,7 +409,7 @@ export default function AdminNewsPage() {
       {/* Modal Soạn Thảo & Chỉnh Sửa Bài Viết (TinyMCE Rich Editor) */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in overflow-y-auto">
-          <div className="w-full max-w-4xl bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-2xl my-8 max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-4xl bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-2xl my-8 max-h-[92vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <h3 className="text-xl font-black text-slate-900 mb-1">
               {editingArticle ? "Chỉnh Sửa Bài Viết" : "Soạn Thảo Bài Viết Mới"}
             </h3>

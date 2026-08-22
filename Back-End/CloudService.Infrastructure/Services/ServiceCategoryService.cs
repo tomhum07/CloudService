@@ -81,13 +81,43 @@ namespace CloudService.Infrastructure.Services
 
         public async Task<ServiceCategoryDto?> UpdateAsync(int id, UpdateServiceCategoryRequest request)
         {
-            var category = await _context.ServiceCategories.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == id);
+            var category = await _context.ServiceCategories
+                .IgnoreQueryFilters()
+                .Include(c => c.Plans)
+                    .ThenInclude(p => p.Prices)
+                .FirstOrDefaultAsync(c => c.Id == id);
             if (category == null) return null;
 
+            bool wasInactive = !category.IsActive;
             category.Name = request.Name;
             category.Slug = request.Slug;
             category.Description = request.Description;
             category.IsActive = request.IsActive;
+
+            // Nếu kích hoạt/hiện lại danh mục (từ false -> true), tự động khôi phục các gói cước và bảng giá thuộc danh mục
+            if (wasInactive && request.IsActive)
+            {
+                foreach (var plan in category.Plans)
+                {
+                    plan.IsActive = true;
+                    foreach (var price in plan.Prices)
+                    {
+                        price.IsActive = true;
+                    }
+                }
+            }
+            // Nếu ẩn danh mục (true -> false), cascade ẩn các gói cước và bảng giá thuộc danh mục
+            else if (!request.IsActive)
+            {
+                foreach (var plan in category.Plans)
+                {
+                    plan.IsActive = false;
+                    foreach (var price in plan.Prices)
+                    {
+                        price.IsActive = false;
+                    }
+                }
+            }
 
             await _context.SaveChangesAsync();
 

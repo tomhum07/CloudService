@@ -8,6 +8,10 @@ using CloudService.Application.Interfaces;
 using CloudService.Infrastructure.Services;
 using Serilog;
 
+// Thiết lập mã hóa UTF-8 cho Console giúp hiển thị tiếng Việt sắc nét, không bị lỗi font ?
+Console.OutputEncoding = Encoding.UTF8;
+Console.InputEncoding = Encoding.UTF8;
+
 // Cấu hình Serilog Logger (Ghi log Console và File theo ngày)
 Serilog.Log.Logger = new Serilog.LoggerConfiguration()
     .MinimumLevel.Information()
@@ -36,8 +40,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"),
         b => b.MigrationsAssembly("CloudService.Infrastructure")
+             .UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)
              .EnableRetryOnFailure());
-    options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+    options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)
+                                    .Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.MultipleCollectionIncludeWarning));
 });
 
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
@@ -149,9 +155,6 @@ builder.Services.AddOpenApi(options =>
 
 var app = builder.Build();
 
-// Tích hợp Serilog HTTP Request Logging
-app.UseSerilogRequestLogging();
-
 // Khởi chạy Migrations và Seed Dữ liệu tự động lúc khởi động
 using (var scope = app.Services.CreateScope())
 {
@@ -181,6 +184,9 @@ app.UseCors("AllowNextJS");
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Tích hợp Middleware Serilog AuditLog chi tiết theo chuẩn [Phân loại | Hành động | User | Role | IP]
+app.UseMiddleware<CloudService.WebApi.Middlewares.SerilogAuditLoggingMiddleware>();
 
 app.MapControllers();
 app.MapHub<CloudService.WebApi.Hubs.DataSyncHub>("/hubs/datasync");

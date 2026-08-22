@@ -214,6 +214,7 @@ namespace CloudService.Infrastructure.Services
 
             var search = emailOrUsername.ToLower().Trim();
             var orders = await _context.OrderRequests
+                .IgnoreQueryFilters()
                 .Include(o => o.PlanPrice)
                     .ThenInclude(p => p!.Plan)
                         .ThenInclude(sp => sp!.Category)

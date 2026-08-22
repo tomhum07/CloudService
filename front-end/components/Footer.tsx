@@ -72,6 +72,7 @@ export default function Footer() {
         <div className="flex flex-col gap-3">
           <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Về CloudService</h4>
           <Link href="/about" className="text-xs text-slate-500 hover:text-blue-600 transition-colors">Về Chúng Tôi</Link>
+          <Link href="/customers" className="text-xs text-slate-500 hover:text-blue-600 transition-colors">Khách Hàng & Đánh Giá</Link>
           <Link href="/pricing" className="text-xs text-slate-500 hover:text-blue-600 transition-colors">Bảng Báo Giá Chi Tiết</Link>
           <Link href="/news" className="text-xs text-slate-500 hover:text-blue-600 transition-colors">Tin Tức & Khuyến Mãi</Link>
           <Link href="/affiliate" className="text-xs text-slate-500 hover:text-blue-600 transition-colors">Đối Tác Tiếp Thị (Affiliate)</Link>

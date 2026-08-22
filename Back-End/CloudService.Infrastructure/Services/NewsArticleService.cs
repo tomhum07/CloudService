@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -22,6 +23,7 @@ namespace CloudService.Infrastructure.Services
             int page = 1,
             int pageSize = 10,
             string? search = null,
+            string? category = null,
             bool includeInactive = false)
         {
             if (page < 1)
@@ -42,6 +44,13 @@ namespace CloudService.Infrastructure.Services
                 query = query.IgnoreQueryFilters();
             }
 
+            // Lọc theo Chuyên Mục nếu được chỉ định
+            if (!string.IsNullOrWhiteSpace(category) && category != "Tất cả")
+            {
+                var lowerCat = category.Trim().ToLower();
+                query = query.Where(x => x.Category != null && x.Category.ToLower() == lowerCat);
+            }
+
             // Tìm kiếm theo tiêu đề, tóm tắt hoặc nội dung (không phân biệt hoa thường - Case Insensitive)
             if (!string.IsNullOrWhiteSpace(search))
             {
@@ -56,44 +65,45 @@ namespace CloudService.Infrastructure.Services
                     x.Content.ToLower().Contains(lowerSearch));
             }
 
-    // Tổng số bài viết sau khi tìm kiếm
-    var totalItems = await query.CountAsync();
+            // Tổng số bài viết sau khi tìm kiếm
+            var totalItems = await query.CountAsync();
 
-    // Tổng số trang
-    var totalPages = (int)Math.Ceiling(
-        totalItems / (double)pageSize);
+            // Tổng số trang
+            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
-    // Lấy dữ liệu theo trang
-    var articles = await query
-        .OrderByDescending(x => x.PublishedAt)
-        .Skip((page - 1) * pageSize)
-        .Take(pageSize)
-        .Select(x => new NewsArticleDto
-        {
-            Id = x.Id,
-            Title = x.Title,
-            Slug = x.Slug,
-            Summary = x.Summary,
-            ThumbnailUrl = x.ThumbnailUrl,
-            Content = x.Content,
-            AuthorId = x.AuthorId,
-            AuthorName = x.Author != null
-                ? x.Author.FullName
-                : null,
-            PublishedAt = x.PublishedAt,
-            IsActive = x.IsActive
-        })
-        .ToListAsync();
+            // Lấy dữ liệu theo trang
+            var articles = await query
+                .OrderByDescending(x => x.PublishedAt ?? x.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(x => new NewsArticleDto
+                {
+                    Id = x.Id,
+                    Title = x.Title,
+                    Slug = x.Slug,
+                    Summary = x.Summary,
+                    ThumbnailUrl = x.ThumbnailUrl,
+                    Content = x.Content,
+                    Category = x.Category ?? "Tin Tức",
+                    CategoryName = x.Category ?? "Tin Tức",
+                    AuthorId = x.AuthorId,
+                    AuthorName = x.Author != null
+                        ? x.Author.FullName
+                        : null,
+                    PublishedAt = x.PublishedAt,
+                    IsActive = x.IsActive
+                })
+                .ToListAsync();
 
-    return new PagedNewsResult
-    {
-        Items = articles,
-        Page = page,
-        PageSize = pageSize,
-        TotalItems = totalItems,
-        TotalPages = totalPages
-    };
-}
+            return new PagedNewsResult
+            {
+                Items = articles,
+                Page = page,
+                PageSize = pageSize,
+                TotalItems = totalItems,
+                TotalPages = totalPages
+            };
+        }
 
         public async Task<NewsArticleDto?> GetByIdAsync(int id)
         {
@@ -109,6 +119,8 @@ namespace CloudService.Infrastructure.Services
                     Summary = x.Summary,
                     ThumbnailUrl = x.ThumbnailUrl,
                     Content = x.Content,
+                    Category = x.Category ?? "Tin Tức",
+                    CategoryName = x.Category ?? "Tin Tức",
                     AuthorId = x.AuthorId,
                     AuthorName = x.Author != null ? x.Author.FullName : null,
                     PublishedAt = x.PublishedAt,
@@ -131,6 +143,8 @@ namespace CloudService.Infrastructure.Services
                     Summary = x.Summary,
                     ThumbnailUrl = x.ThumbnailUrl,
                     Content = x.Content,
+                    Category = x.Category ?? "Tin Tức",
+                    CategoryName = x.Category ?? "Tin Tức",
                     AuthorId = x.AuthorId,
                     AuthorName = x.Author != null ? x.Author.FullName : null,
                     PublishedAt = x.PublishedAt,
@@ -154,8 +168,12 @@ namespace CloudService.Infrastructure.Services
             }
 
             var publishedDate = request.IsActive
-                ? (request.PublishedAt ?? System.DateTime.UtcNow)
+                ? (request.PublishedAt ?? DateTime.UtcNow)
                 : (DateTime?)null;
+
+            var chosenCategory = !string.IsNullOrWhiteSpace(request.CategoryName)
+                ? request.CategoryName.Trim()
+                : (!string.IsNullOrWhiteSpace(request.Category) ? request.Category.Trim() : "Tin Tức");
 
             var article = new NewsArticle
             {
@@ -164,6 +182,7 @@ namespace CloudService.Infrastructure.Services
                 Summary = request.Summary?.Trim(),
                 ThumbnailUrl = request.ThumbnailUrl?.Trim(),
                 Content = request.Content ?? string.Empty,
+                Category = chosenCategory,
                 AuthorId = request.AuthorId,
                 PublishedAt = publishedDate,
                 IsActive = request.IsActive
@@ -197,13 +216,18 @@ namespace CloudService.Infrastructure.Services
                 slug = $"{baseSlug}-{counter++}";
             }
 
+            var chosenCategory = !string.IsNullOrWhiteSpace(request.CategoryName)
+                ? request.CategoryName.Trim()
+                : (!string.IsNullOrWhiteSpace(request.Category) ? request.Category.Trim() : article.Category ?? "Tin Tức");
+
             article.Title = request.Title.Trim();
             article.Slug = slug;
             article.Summary = request.Summary?.Trim();
             article.ThumbnailUrl = request.ThumbnailUrl?.Trim();
             article.Content = request.Content ?? string.Empty;
+            article.Category = chosenCategory;
             article.PublishedAt = request.IsActive 
-                ? (request.PublishedAt ?? article.PublishedAt ?? System.DateTime.UtcNow) 
+                ? (request.PublishedAt ?? article.PublishedAt ?? DateTime.UtcNow) 
                 : null;
             article.IsActive = request.IsActive;
 
@@ -214,7 +238,7 @@ namespace CloudService.Infrastructure.Services
 
         private static string GenerateSlug(string text)
         {
-            if (string.IsNullOrWhiteSpace(text)) return "bai-viet-" + System.Guid.NewGuid().ToString("N")[..6];
+            if (string.IsNullOrWhiteSpace(text)) return "bai-viet-" + Guid.NewGuid().ToString("N")[..6];
 
             string unaccented = text.ToLowerInvariant();
             // Remove vietnamese accents
@@ -246,7 +270,7 @@ namespace CloudService.Infrastructure.Services
             var clean = System.Text.RegularExpressions.Regex.Replace(unaccented, @"[^a-z0-9\s-]", "");
             clean = System.Text.RegularExpressions.Regex.Replace(clean, @"\s+", " ").Trim();
             clean = clean.Replace(" ", "-");
-            return string.IsNullOrWhiteSpace(clean) ? "bai-viet-" + System.Guid.NewGuid().ToString("N")[..6] : clean;
+            return string.IsNullOrWhiteSpace(clean) ? "bai-viet-" + Guid.NewGuid().ToString("N")[..6] : clean;
         }
 
         public async Task<bool> DeleteAsync(int id)
