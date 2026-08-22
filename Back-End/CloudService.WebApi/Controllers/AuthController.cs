@@ -31,15 +31,18 @@ namespace CloudService.WebApi.Controllers
                 var response = await _authService.LoginAsync(request, token => SetRefreshTokenCookie(token));
                 if (response == null)
                 {
+                    Serilog.Log.Warning("Đăng nhập thất bại cho tài khoản {Username} từ địa chỉ IP {IP} (Sai tài khoản hoặc mật khẩu)", request.Username, ipAddress);
                     await _auditLogService.LogAsync(request.Username, "Đăng nhập thất bại", $"Đăng nhập không thành công (sai tài khoản/mật khẩu) từ IP {ipAddress}");
                     return Unauthorized(new { message = "Tài khoản hoặc mật khẩu không chính xác." });
                 }
 
+                Serilog.Log.Information("Người dùng {Username} đã đăng nhập thành công với vai trò [{Role}] từ IP {IP}", response.Username, response.Role, ipAddress);
                 await _auditLogService.LogAsync(response.Username, "Đăng nhập hệ thống", $"Đăng nhập thành công với vai trò [{response.Role}] từ IP {ipAddress}");
                 return Ok(response);
             }
             catch (Exception ex) when (ex.Message == "LockedAccount")
             {
+                Serilog.Log.Warning("Tài khoản {Username} bị khóa cố gắng đăng nhập từ IP {IP}", request.Username, ipAddress);
                 await _auditLogService.LogAsync(request.Username, "Đăng nhập thất bại", $"Tài khoản bị khóa cố gắng đăng nhập từ IP {ipAddress}");
                 return Unauthorized(new { message = "Tài khoản của bạn đã bị khóa." });
             }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using CloudService.Application.DTOs.Audit;
 using CloudService.Application.DTOs.Common;
 using CloudService.Application.Interfaces;
@@ -14,10 +15,12 @@ namespace CloudService.Infrastructure.Services
     public class AuditLogService : IAuditLogService
     {
         private readonly ApplicationDbContext _context;
+        private readonly Microsoft.Extensions.Logging.ILogger<AuditLogService>? _logger;
 
-        public AuditLogService(ApplicationDbContext context)
+        public AuditLogService(ApplicationDbContext context, Microsoft.Extensions.Logging.ILogger<AuditLogService>? logger = null)
         {
             _context = context;
+            _logger = logger;
         }
 
         public async Task<PagedResult<AuditLogDto>> GetLogsAsync(int pageNumber = 1, int pageSize = 15, string? search = null, string? type = null)
@@ -100,10 +103,12 @@ namespace CloudService.Infrastructure.Services
 
         public async Task<AuditLogDto> LogAsync(string username, string action, string? payload = null, int? userId = null)
         {
+            var userDisplay = string.IsNullOrWhiteSpace(username) ? "system" : username;
+
             var log = new AuditLog
             {
                 UserId = userId,
-                Username = string.IsNullOrWhiteSpace(username) ? "system" : username,
+                Username = userDisplay,
                 Action = action,
                 Payload = payload,
                 Timestamp = DateTime.UtcNow,
@@ -112,6 +117,27 @@ namespace CloudService.Infrastructure.Services
 
             await _context.AuditLogs.AddAsync(log);
             await _context.SaveChangesAsync();
+
+            // Đồng thời xuất log có cấu trúc trực tiếp ra Serilog Console & File
+            var idDisplay = userId.HasValue ? $" (ID: {userId.Value})" : "";
+            var payloadDisplay = !string.IsNullOrWhiteSpace(payload) ? $" [{payload}]" : "";
+            var actionLower = action.ToLower();
+
+            if (_logger != null)
+            {
+                if (actionLower.Contains("thất bại") || actionLower.Contains("khóa") || actionLower.Contains("từ chối") || actionLower.Contains("hủy") || actionLower.Contains("quá hạn"))
+                {
+                    _logger.LogWarning("{Action} cho tài khoản {Username}{UserId}{Payload}", action, userDisplay, idDisplay, payloadDisplay);
+                }
+                else if (actionLower.Contains("lỗi") || actionLower.Contains("error") || actionLower.Contains("exception"))
+                {
+                    _logger.LogError("{Action} bởi tài khoản {Username}{UserId}{Payload}", action, userDisplay, idDisplay, payloadDisplay);
+                }
+                else
+                {
+                    _logger.LogInformation("Người dùng {Username}{UserId} đã thực hiện: {Action}{Payload}", userDisplay, idDisplay, action, payloadDisplay);
+                }
+            }
 
             return MapToDto(log);
         }
