@@ -49,6 +49,9 @@ export default function Header() {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showOldPwd, setShowOldPwd] = useState(false);
+  const [showNewPwd, setShowNewPwd] = useState(false);
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
   const [pwdLoading, setPwdLoading] = useState(false);
   const [pwdMsg, setPwdMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
@@ -732,35 +735,67 @@ export default function Header() {
             <form onSubmit={handleChangePassword} className="space-y-4">
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-1.5">Mật Khẩu Hiện Tại *</label>
-                <input
-                  type="password"
-                  required
-                  value={oldPassword}
-                  onChange={(e) => setOldPassword(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-500"
-                />
+                <div className="relative">
+                  <input
+                    type={showOldPwd ? "text" : "password"}
+                    required
+                    value={oldPassword}
+                    onChange={(e) => setOldPassword(e.target.value)}
+                    className="w-full h-10 pl-3.5 pr-10 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowOldPwd(!showOldPwd)}
+                    className="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-slate-600 focus:outline-none"
+                    title={showOldPwd ? "Ẩn" : "Hiện"}
+                  >
+                    {showOldPwd ? "🙈" : "👁️"}
+                  </button>
+                </div>
               </div>
 
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-1.5">Mật Khẩu Mới *</label>
-                <input
-                  type="password"
-                  required
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-500"
-                />
+                <div className="relative">
+                  <input
+                    type={showNewPwd ? "text" : "password"}
+                    required
+                    placeholder="Tối thiểu 6 ký tự"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full h-10 pl-3.5 pr-10 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPwd(!showNewPwd)}
+                    className="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-slate-600 focus:outline-none"
+                    title={showNewPwd ? "Ẩn" : "Hiện"}
+                  >
+                    {showNewPwd ? "🙈" : "👁️"}
+                  </button>
+                </div>
               </div>
 
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-1.5">Xác Nhận Mật Khẩu Mới *</label>
-                <input
-                  type="password"
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-500"
-                />
+                <div className="relative">
+                  <input
+                    type={showConfirmPwd ? "text" : "password"}
+                    required
+                    placeholder="Nhập lại mật khẩu mới"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full h-10 pl-3.5 pr-10 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPwd(!showConfirmPwd)}
+                    className="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-slate-600 focus:outline-none"
+                    title={showConfirmPwd ? "Ẩn" : "Hiện"}
+                  >
+                    {showConfirmPwd ? "🙈" : "👁️"}
+                  </button>
+                </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">

@@ -7,6 +7,7 @@ import { apiFetch, setAccessToken } from "@/utils/api";
 export default function AdminLogin() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -45,8 +46,10 @@ export default function AdminLogin() {
           }
         }
 
-        if (userRole === "Admin" || userRole === "Editor") {
+        if (userRole === "Admin") {
           router.push("/admin/dashboard");
+        } else if (userRole === "Editor") {
+          router.push("/admin/news");
         } else {
           router.push("/");
         }
@@ -100,28 +103,38 @@ export default function AdminLogin() {
                 Quên mật khẩu?
               </Link>
             </div>
-            <input
-              type="password"
-              required
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                placeholder="Nhập mật khẩu quản trị"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full h-11 pl-4 pr-11 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3 text-xs text-slate-400 hover:text-slate-600 focus:outline-none"
+                title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+              >
+                {showPassword ? "🙈" : "👁️"}
+              </button>
+            </div>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-xs transition-all shadow-md shadow-blue-500/20 mt-2"
+            className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-xs transition-all shadow-md shadow-blue-500/20"
           >
-            {loading ? "Đang xác thực..." : "Đăng Nhập Quản Trị"}
+            {loading ? "Đang xác thực hệ thống..." : "Đăng Nhập Quản Trị"}
           </button>
         </form>
 
-        <div className="mt-8 pt-6 border-t border-slate-100 text-center">
-          <Link href="/" className="text-xs font-bold text-slate-500 hover:text-blue-600 transition-colors">
-            ← Quay lại Trang Chủ Bán Hàng
+        <div className="mt-6 pt-6 border-t border-slate-100 text-center">
+          <Link href="/" className="text-xs font-semibold text-slate-500 hover:text-blue-600 transition-colors">
+            ← Quay về Trang chủ
           </Link>
         </div>
 

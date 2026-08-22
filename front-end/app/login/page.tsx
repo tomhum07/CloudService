@@ -7,6 +7,7 @@ import { apiFetch, setAccessToken } from "@/utils/api";
 function LoginForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -49,8 +50,10 @@ function LoginForm() {
 
         if (returnUrl) {
           router.push(returnUrl);
-        } else if (userRole === "Admin" || userRole === "Editor") {
+        } else if (userRole === "Admin") {
           router.push("/admin/dashboard");
+        } else if (userRole === "Editor") {
+          router.push("/admin/news");
         } else {
           router.push("/");
         }
@@ -86,10 +89,11 @@ function LoginForm() {
 
       <form onSubmit={handleLogin} className="space-y-4">
         <div>
+          <label className="text-xs font-bold text-slate-700 block mb-1.5">Tên Đăng Nhập *</label>
           <input
             type="text"
             required
-            placeholder="Tên đăng nhập (Username)"
+            placeholder="Nhập tên đăng nhập của bạn"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
@@ -97,18 +101,29 @@ function LoginForm() {
         </div>
 
         <div>
-          <input
-            type="password"
-            required
-            placeholder="Mật khẩu"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
-          />
-          <div className="mt-2 text-right">
+          <div className="flex justify-between items-center mb-1.5">
+            <label className="text-xs font-bold text-slate-700">Mật Khẩu *</label>
             <Link href="/forgot-password" className="text-xs font-semibold text-blue-600 hover:text-blue-700">
               Quên mật khẩu?
             </Link>
+          </div>
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              required
+              placeholder="Nhập mật khẩu"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full h-11 pl-4 pr-11 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-3 text-xs text-slate-400 hover:text-slate-600 focus:outline-none"
+              title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+            >
+              {showPassword ? "🙈" : "👁️"}
+            </button>
           </div>
         </div>
 

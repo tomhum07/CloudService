@@ -8,6 +8,10 @@ export default function ChangePasswordPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   
+  const [showOld, setShowOld] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -85,37 +89,67 @@ export default function ChangePasswordPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-xs font-bold text-slate-700 block mb-1.5">Mật Khẩu Hiện Tại *</label>
-            <input
-              type="password"
-              required
-              value={oldPassword}
-              onChange={(e) => setOldPassword(e.target.value)}
-              className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
-            />
+            <div className="relative">
+              <input
+                type={showOld ? "text" : "password"}
+                required
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+                className="w-full h-11 pl-4 pr-11 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowOld(!showOld)}
+                className="absolute right-3 top-3 text-xs text-slate-400 hover:text-slate-600 focus:outline-none"
+                title={showOld ? "Ẩn" : "Hiện"}
+              >
+                {showOld ? "🙈" : "👁️"}
+              </button>
+            </div>
           </div>
 
           <div>
             <label className="text-xs font-bold text-slate-700 block mb-1.5">Mật Khẩu Mới *</label>
-            <input
-              type="password"
-              required
-              placeholder="Tối thiểu 6 ký tự"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
-            />
+            <div className="relative">
+              <input
+                type={showNew ? "text" : "password"}
+                required
+                placeholder="Tối thiểu 6 ký tự"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full h-11 pl-4 pr-11 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNew(!showNew)}
+                className="absolute right-3 top-3 text-xs text-slate-400 hover:text-slate-600 focus:outline-none"
+                title={showNew ? "Ẩn" : "Hiện"}
+              >
+                {showNew ? "🙈" : "👁️"}
+              </button>
+            </div>
           </div>
 
           <div>
             <label className="text-xs font-bold text-slate-700 block mb-1.5">Xác Nhận Mật Khẩu Mới *</label>
-            <input
-              type="password"
-              required
-              placeholder="Nhập lại mật khẩu mới"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
-            />
+            <div className="relative">
+              <input
+                type={showConfirm ? "text" : "password"}
+                required
+                placeholder="Nhập lại mật khẩu mới"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full h-11 pl-4 pr-11 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirm(!showConfirm)}
+                className="absolute right-3 top-3 text-xs text-slate-400 hover:text-slate-600 focus:outline-none"
+                title={showConfirm ? "Ẩn" : "Hiện"}
+              >
+                {showConfirm ? "🙈" : "👁️"}
+              </button>
+            </div>
           </div>
 
           <button

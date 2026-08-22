@@ -17,9 +17,29 @@ export default function UsersPage() {
   const [users, setUsers] = useState<UserDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
-  const totalPages = Math.ceil(users.length / itemsPerPage) || 1;
+
+  const filteredUsers = users.filter((u) => {
+    const term = searchTerm.trim().toLowerCase();
+    const matchesSearch = !term ||
+      (u.username && u.username.toLowerCase().includes(term)) ||
+      (u.fullName && u.fullName.toLowerCase().includes(term)) ||
+      (u.email && u.email.toLowerCase().includes(term));
+
+    const matchesRole = roleFilter === "all" || u.role?.toLowerCase() === roleFilter.toLowerCase();
+    const matchesStatus = statusFilter === "all" ||
+      (statusFilter === "active" && u.isActive) ||
+      (statusFilter === "inactive" && !u.isActive);
+
+    return matchesSearch && matchesRole && matchesStatus;
+  });
+
+  const totalItems = filteredUsers.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -212,6 +232,66 @@ export default function UsersPage() {
         </div>
       )}
 
+      {/* Search & Filters Bar */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4 justify-between items-center">
+        <div className="relative flex-1 w-full">
+          <input
+            type="text"
+            placeholder="Tìm kiếm theo username, họ tên hoặc email..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full h-10 pl-10 pr-9 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all placeholder-slate-400"
+          />
+          <svg className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          {searchTerm && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchTerm("");
+                setCurrentPage(1);
+              }}
+              className="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-slate-600"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <select
+            value={roleFilter}
+            onChange={(e) => {
+              setRoleFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="h-10 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white w-full sm:w-36 font-medium"
+          >
+            <option value="all">Tất cả vai trò</option>
+            <option value="Admin">Admin</option>
+            <option value="Editor">Editor</option>
+            <option value="Customer">Customer</option>
+          </select>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="h-10 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white w-full sm:w-36 font-medium"
+          >
+            <option value="all">Tất cả trạng thái</option>
+            <option value="active">Hoạt động</option>
+            <option value="inactive">Đã khóa</option>
+          </select>
+        </div>
+      </div>
+
       {/* Table */}
       <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
@@ -231,12 +311,14 @@ export default function UsersPage() {
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-slate-400">Đang tải danh sách người dùng...</td>
                 </tr>
-              ) : users.length === 0 ? (
+              ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-slate-400">Chưa có tài khoản nào trên hệ thống.</td>
+                  <td colSpan={6} className="p-8 text-center text-slate-400">
+                    {searchTerm ? "Không tìm thấy người dùng nào phù hợp." : "Chưa có tài khoản nào trên hệ thống."}
+                  </td>
                 </tr>
               ) : (
-                users.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((u) => (
+                filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((u) => (
                   <tr key={u.id} className="hover:bg-slate-50/60 transition-colors">
                     <td className="py-3.5 px-4 font-mono font-bold text-slate-900">{u.username}</td>
                     <td className="py-3.5 px-4 font-semibold text-slate-900">{u.fullName}</td>
