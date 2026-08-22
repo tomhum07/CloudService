@@ -319,6 +319,16 @@ namespace CloudService.Infrastructure.Services
             return text.Replace("\"", "\"\"");
         }
 
+        private static string CleanNotes(string? rawNotes)
+        {
+            if (string.IsNullOrWhiteSpace(rawNotes)) return string.Empty;
+            var cleaned = System.Text.RegularExpressions.Regex.Replace(rawNotes, @"\[PayOSData:[^\]]*\]", "").Trim();
+            cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\s+", " ");
+            cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\s*\|\s*\|\s*", " | ");
+            cleaned = cleaned.Trim(' ', '|', ' ');
+            return cleaned;
+        }
+
         private static OrderRequestDto MapToDto(OrderRequest o)
         {
             decimal price = o.PlanPrice?.Price ?? 0;
@@ -358,7 +368,7 @@ namespace CloudService.Infrastructure.Services
                 CustomerPhone = o.CustomerPhone,
                 CompanyName = o.CompanyName,
                 Status = status,
-                Notes = o.Notes,
+                Notes = CleanNotes(o.Notes),
                 CreatedAt = o.CreatedAt
             };
         }

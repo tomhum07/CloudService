@@ -73,6 +73,17 @@ export default function AdminOrdersPage() {
     return () => unsubscribe();
   }, []);
 
+  const cleanOrderNotes = (rawNotes: string) => {
+    if (!rawNotes) return "Không có ghi chú thêm";
+    return rawNotes
+      .replace(/\[PayOSData:[^\]]*\]/g, "")
+      .replace(/\s+/g, " ")
+      .replace(/\s*\|\s*\|\s*/g, " | ")
+      .replace(/^\s*\|\s*/, "")
+      .replace(/\s*\|\s*$/, "")
+      .trim() || "Không có ghi chú thêm";
+  };
+
   const fetchOrdersAndPartners = async (isBackground = false) => {
     if (!isBackground) setLoading(true);
     try {
@@ -97,7 +108,7 @@ export default function AdminOrdersPage() {
               category: o.categoryName || "Hạ tầng Cloud",
               cycle: o.billingCycle || "Theo tháng",
               amount: o.price || 0,
-              notes: o.notes || "Không có ghi chú thêm",
+              notes: cleanOrderNotes(o.notes),
               status: finalStatus,
               statusCode: finalStatusCode,
               date: new Date(o.createdAt).toLocaleString("vi-VN")
@@ -672,7 +683,7 @@ export default function AdminOrdersPage() {
                   Ghi Chú Đơn Hàng & Lịch Sử Giao Dịch
                 </h4>
                 <p className="text-slate-700 bg-white p-3 rounded-xl border border-slate-200 font-mono text-[11px] whitespace-pre-wrap">
-                  {selectedOrder.notes}
+                  {cleanOrderNotes(selectedOrder.notes)}
                 </p>
               </div>
 
