@@ -153,9 +153,6 @@ builder.Services.AddOpenApi(options =>
 
 var app = builder.Build();
 
-// Tích hợp Serilog HTTP Request Logging
-app.UseSerilogRequestLogging();
-
 // Khởi chạy Migrations và Seed Dữ liệu tự động lúc khởi động
 using (var scope = app.Services.CreateScope())
 {
@@ -185,6 +182,9 @@ app.UseCors("AllowNextJS");
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Tích hợp Middleware Serilog AuditLog chi tiết theo chuẩn [Phân loại | Hành động | User | Role | IP]
+app.UseMiddleware<CloudService.WebApi.Middlewares.SerilogAuditLoggingMiddleware>();
 
 app.MapControllers();
 app.MapHub<CloudService.WebApi.Hubs.DataSyncHub>("/hubs/datasync");
