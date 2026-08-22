@@ -8,7 +8,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const router = useRouter();
   const [checking, setChecking] = useState(true);
-  const [role, setRole] = useState("Editor");
+  const [role, setRole] = useState<string>("");
   const [username, setUsername] = useState("Admin");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -24,12 +24,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     const verifySession = async () => {
       let token = getAccessToken();
-      if (token && role !== "Unauthorized" && !checking) {
-        // Đã xác thực session trước đó, không cần load spinner lại khi chuyển qua lại giữa các menu
-        return;
-      }
 
       if (!token) {
+        setChecking(true);
         const success = await refreshAccessToken();
         if (!success) {
           router.push("/admin/login");
@@ -70,6 +67,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               if (!isAllowed) {
                 // Tự động chuyển hướng Editor vào trang tin tức nếu truy cập trang bị cấm
                 router.replace("/admin/news");
+                setRole("Editor");
+                setChecking(false);
                 return;
               }
             }
@@ -89,7 +88,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     };
 
     verifySession();
-  }, [pathname, router, role, checking]);
+  }, [pathname, router]);
 
   const handleLogout = async () => {
     try {
