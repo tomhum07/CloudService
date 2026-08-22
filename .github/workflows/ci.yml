@@ -53,3 +53,24 @@ jobs:
 
     - name: Build Frontend
       run: pnpm build
+
+  docker-compose-ci:
+    name: Docker & Docker Compose Verification
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Validate Docker Compose Configuration
+      run: docker compose config
+
+    - name: Build and Start Services with Docker Compose
+      run: docker compose up --build -d
+
+    - name: Verify Container Health & Status
+      run: |
+        sleep 15
+        docker compose ps
+        docker compose logs api
+
+    - name: Graceful Shutdown
+      run: docker compose down -v
