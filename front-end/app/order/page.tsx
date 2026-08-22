@@ -408,9 +408,16 @@ function OrderFormContent() {
             if (payRes.ok) {
               const payData = await payRes.json();
               setPayosData(payData);
+              setPaymentError(null);
+            } else {
+              const errData = await payRes.json().catch(() => ({}));
+              const msg = errData.message || "Cổng thanh toán PayOS chưa được cấu hình API Key trên máy chủ backend.";
+              console.warn("PayOS Link Generation Warning:", msg);
+              setPaymentError(msg);
             }
-          } catch (payErr) {
+          } catch (payErr: any) {
             console.warn("PayOS Link Generation Warning:", payErr);
+            setPaymentError(payErr?.message || "Không thể kết nối cổng PayOS.");
           }
         }
       } else {
@@ -925,61 +932,93 @@ function OrderFormContent() {
                   {/* KHUNG HIỂN THỊ MÃ QR TRỰC TIẾP TRÊN TRANG */}
                   <div className="p-6 bg-slate-50 rounded-3xl border border-slate-200 text-center space-y-4">
                     
-                    {/* Khung chứa ảnh QR Code */}
-                    <div className="inline-block p-4 bg-white border border-slate-200 rounded-3xl shadow-sm relative group">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={
-                          payosData?.qrCode
-                            ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(payosData.qrCode)}`
-                            : `https://img.vietqr.io/image/MB-0333336666-compact2.png?amount=${createdOrder.totalAmount}&addInfo=${encodeURIComponent(payosData?.description || createdOrder.orderCode)}&accountName=CONG%20TY%20CLOUDSERVICE`
-                        }
-                        alt="Payment QR Code"
-                        className="w-56 h-56 mx-auto object-contain rounded-xl"
-                      />
-                      <div className="text-[10px] text-slate-500 font-bold uppercase mt-2.5 tracking-wider flex items-center justify-center gap-1.5">
-                        <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                        <span>VietQR Chuyển Khoản Tự Động 24/7</span>
-                      </div>
-                    </div>
-
-                    {/* Bảng Chi Tiết Thông Tin Chuyển Khoản Trực Tiếp */}
-                    <div className="max-w-md mx-auto bg-white p-4 rounded-2xl border border-slate-200 text-xs text-left space-y-2.5">
-                      <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-                        <span className="text-slate-500">Chủ tài khoản:</span>
-                        <span className="font-bold text-slate-900 uppercase">
-                          {payosData?.accountName || "CONG TY CLOUDSERVICE"}
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-                        <span className="text-slate-500">Số tài khoản:</span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-blue-600 text-sm">
-                            {payosData?.accountNumber || "0333336666"}
-                          </span>
+                    {payosData?.qrCode ? (
+                      <>
+                        {/* Khung chứa ảnh QR Code thật từ PayOS */}
+                        <div className="inline-block p-4 bg-white border border-slate-200 rounded-3xl shadow-sm relative group">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(payosData.qrCode)}`}
+                            alt="PayOS Payment QR Code"
+                            className="w-56 h-56 mx-auto object-contain rounded-xl"
+                          />
+                          <div className="text-[10px] text-slate-500 font-bold uppercase mt-2.5 tracking-wider flex items-center justify-center gap-1.5">
+                            <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            <span>VietQR PayOS Tự Động 24/7</span>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-                        <span className="text-slate-500">Số tiền:</span>
-                        <span className="font-black text-rose-600">
-                          {new Intl.NumberFormat("vi-VN").format(createdOrder.totalAmount)} đ
-                        </span>
-                      </div>
+                        {/* Bảng Chi Tiết Thông Tin Chuyển Khoản Trực Tiếp */}
+                        <div className="max-w-md mx-auto bg-white p-4 rounded-2xl border border-slate-200 text-xs text-left space-y-2.5">
+                          {payosData.accountName && (
+                            <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                              <span className="text-slate-500">Chủ tài khoản:</span>
+                              <span className="font-bold text-slate-900 uppercase">
+                                {payosData.accountName}
+                              </span>
+                            </div>
+                          )}
 
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-500">Nội dung chuyển khoản:</span>
-                        <span className="font-mono font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">
-                          {payosData?.description || createdOrder.orderCode}
-                        </span>
-                      </div>
-                    </div>
+                          {payosData.accountNumber && (
+                            <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                              <span className="text-slate-500">Số tài khoản:</span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono font-bold text-blue-600 text-sm">
+                                  {payosData.accountNumber}
+                                </span>
+                              </div>
+                            </div>
+                          )}
 
-                    {/* Thông báo kết quả kiểm tra thanh toán thủ công */}
-                    {paymentError && (
+                          <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                            <span className="text-slate-500">Số tiền:</span>
+                            <span className="font-black text-rose-600">
+                              {new Intl.NumberFormat("vi-VN").format(createdOrder.totalAmount)} đ
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between items-center">
+                            <span className="text-slate-500">Nội dung chuyển khoản:</span>
+                            <span className="font-mono font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">
+                              {payosData.description || createdOrder.orderCode}
+                            </span>
+                          </div>
+                        </div>
+
+                        {payosData.checkoutUrl && (
+                          <div className="max-w-md mx-auto pt-1">
+                            <a
+                              href={payosData.checkoutUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition-all"
+                            >
+                              <span>Mở Trang Thanh Toán PayOS (Thẻ / VietQR) ↗</span>
+                            </a>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      /* Trường hợp chưa nhận được PayOS Data do chưa cấu hình key trên server */
+                      <div className="p-6 bg-amber-50 border border-amber-200 rounded-2xl text-center space-y-3">
+                        <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
+                          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                        </div>
+                        <h4 className="text-xs font-bold text-amber-900">
+                          Chưa Khởi Tạo Được Cổng Thanh Toán PayOS
+                        </h4>
+                        <p className="text-[11px] text-amber-700 max-w-md mx-auto leading-relaxed">
+                          {paymentError || "Hệ thống máy chủ chưa cấu hình bộ khóa API (ClientId, ApiKey, ChecksumKey) cho cổng thanh toán PayOS."}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Thông báo lỗi khi kiểm tra giao dịch */}
+                    {paymentError && payosData && (
                       <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-700 font-medium flex items-center justify-between gap-3 text-left">
                         <div className="flex items-center gap-2">
                           <svg className="w-4 h-4 text-rose-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">

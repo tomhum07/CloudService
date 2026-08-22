@@ -43,8 +43,21 @@ namespace CloudService.Infrastructure.Services
             _checksumKey = _configuration["PayOS:ChecksumKey"] ?? "";
         }
 
+        private void EnsureConfigured()
+        {
+            if (string.IsNullOrWhiteSpace(_clientId) || _clientId.StartsWith("YOUR_") ||
+                string.IsNullOrWhiteSpace(_apiKey) || _apiKey.StartsWith("YOUR_") ||
+                string.IsNullOrWhiteSpace(_checksumKey) || _checksumKey.StartsWith("YOUR_"))
+            {
+                _logger.LogError("[PayOS] Cấu hình PayOS chưa được thiết lập hoặc đang để giá trị mẫu. Vui lòng cấu hình biến môi trường PayOS:ClientId, PayOS:ApiKey, PayOS:ChecksumKey trên Render.");
+                throw new InvalidOperationException("Cổng thanh toán PayOS chưa được cấu hình API Key (ClientId / ApiKey / ChecksumKey) trên máy chủ Backend.");
+            }
+        }
+
         public async Task<PaymentLinkResponse> CreatePaymentLinkAsync(CreatePaymentLinkRequest request)
         {
+            EnsureConfigured();
+
             var order = await _context.OrderRequests
                 .Include(o => o.PlanPrice)
                     .ThenInclude(p => p!.Plan)
@@ -141,6 +154,8 @@ namespace CloudService.Infrastructure.Services
 
         public async Task<object> GetPaymentLinkInformationAsync(long orderCode)
         {
+            EnsureConfigured();
+
             var httpRequest = new HttpRequestMessage(HttpMethod.Get, $"https://api-merchant.payos.vn/v2/payment-requests/{orderCode}");
             httpRequest.Headers.Add("x-client-id", _clientId);
             httpRequest.Headers.Add("x-api-key", _apiKey);
