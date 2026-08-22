@@ -8,6 +8,10 @@ using CloudService.Application.Interfaces;
 using CloudService.Infrastructure.Services;
 using Serilog;
 
+// Thiết lập mã hóa UTF-8 cho Console giúp hiển thị tiếng Việt sắc nét, không bị lỗi font ?
+Console.OutputEncoding = Encoding.UTF8;
+Console.InputEncoding = Encoding.UTF8;
+
 // Cấu hình Serilog Logger (Ghi log Console và File theo ngày)
 Serilog.Log.Logger = new Serilog.LoggerConfiguration()
     .MinimumLevel.Information()
