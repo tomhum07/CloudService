@@ -13,6 +13,8 @@ export default function MyPlansPage() {
 
   // State cho Modal Thanh Toán QR
   const [selectedPayOrder, setSelectedPayOrder] = useState<any | null>(null);
+  const [payosData, setPayosData] = useState<any | null>(null);
+  const [loadingQr, setLoadingQr] = useState(false);
   const [modalTimeLeft, setModalTimeLeft] = useState<number>(0);
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [checkMessage, setCheckMessage] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
@@ -87,15 +89,41 @@ export default function MyPlansPage() {
     return { isExpired, remainingSeconds, formattedTime };
   };
 
-  // Mở modal thanh toán QR cho đơn hàng cụ thể
-  const handleOpenQrModal = (order: any) => {
+  // Mở modal thanh toán QR cho đơn hàng cụ thể & gọi API PayOS thật
+  const handleOpenQrModal = async (order: any) => {
     const { isExpired, remainingSeconds } = getOrderExpiryInfo(order);
     if (isExpired) return;
 
     setSelectedPayOrder(order);
+    setPayosData(null);
+    setLoadingQr(true);
     setModalTimeLeft(remainingSeconds);
     setCheckMessage(null);
     setPaymentSuccess(false);
+
+    try {
+      const payRes = await apiFetch("/api/payment/create-link", {
+        method: "POST",
+        body: JSON.stringify({
+          orderId: order.id,
+          amount: Math.round(order.price || order.totalAmount || 0),
+          returnUrl: `${window.location.origin}/my-plans`,
+          cancelUrl: `${window.location.origin}/pricing`
+        })
+      });
+
+      if (payRes.ok) {
+        const data = await payRes.json();
+        setPayosData(data);
+      } else {
+        const errData = await payRes.json().catch(() => ({}));
+        console.warn("PayOS Create Link Notice:", errData);
+      }
+    } catch (err) {
+      console.warn("PayOS Create Link Error:", err);
+    } finally {
+      setLoadingQr(false);
+    }
   };
 
   // Đồng hồ đếm lùi và polling kiểm tra thanh toán trong Modal
@@ -118,9 +146,31 @@ export default function MyPlansPage() {
       });
     }, 1000);
 
-    // Polling kiểm tra trạng thái đơn hàng mỗi 4 giây
+    // Polling kiểm tra trạng thái đơn hàng và PayOS mỗi 3 giây
     const interval = setInterval(async () => {
       try {
+        // 1. Kiểm tra qua PayOS info nếu có orderCode
+        if (payosData?.orderCode) {
+          const payRes = await apiFetch(`/api/payment/info/${payosData.orderCode}`);
+          if (payRes.ok) {
+            const payInfo = await payRes.json();
+            const st = payInfo.status || (payInfo.data && payInfo.data.status);
+            if (st === "PAID" || st === "COMPLETED") {
+              setPaymentSuccess(true);
+              clearInterval(interval);
+              clearInterval(timer);
+              // Kích hoạt đơn hàng thành status 2
+              apiFetch(`/api/order-requests/${selectedPayOrder.id}/status`, {
+                method: "PATCH",
+                body: JSON.stringify({ status: 2, notes: `Đã thanh toán thành công qua PayOS [Mã giao dịch: ${payosData.orderCode}]` })
+              }).catch(() => {});
+              loadMyOrders();
+              return;
+            }
+          }
+        }
+
+        // 2. Kiểm tra trực tiếp đơn hàng trong Database
         const res = await apiFetch(`/api/order-requests/${selectedPayOrder.id}`);
         if (res.ok) {
           const freshOrder = await res.json();
@@ -134,13 +184,13 @@ export default function MyPlansPage() {
       } catch (e) {
         console.warn("Polling order error:", e);
       }
-    }, 4000);
+    }, 3000);
 
     return () => {
       clearInterval(timer);
       clearInterval(interval);
     };
-  }, [selectedPayOrder, paymentSuccess]);
+  }, [selectedPayOrder, payosData, paymentSuccess]);
 
   // Kiểm tra giao dịch thủ công khi người dùng bấm nút
   const handleManualCheckPayment = async () => {
@@ -149,7 +199,29 @@ export default function MyPlansPage() {
     setCheckMessage(null);
 
     try {
-      // 1. Kiểm tra trạng thái đơn hàng trực tiếp
+      // 1. Kiểm tra trạng thái qua PayOS nếu có
+      if (payosData?.orderCode) {
+        const payRes = await apiFetch(`/api/payment/info/${payosData.orderCode}`);
+        if (payRes.ok) {
+          const payInfo = await payRes.json();
+          const st = payInfo.status || (payInfo.data && payInfo.data.status);
+          if (st === "PAID" || st === "COMPLETED") {
+            setPaymentSuccess(true);
+            setCheckMessage({
+              type: "success",
+              text: "Giao dịch thành công! Dịch vụ của bạn đã được kích hoạt Đang Hoạt Động."
+            });
+            apiFetch(`/api/order-requests/${selectedPayOrder.id}/status`, {
+              method: "PATCH",
+              body: JSON.stringify({ status: 2, notes: `Đã thanh toán thành công qua PayOS [Mã giao dịch: ${payosData.orderCode}]` })
+            }).catch(() => {});
+            loadMyOrders();
+            return;
+          }
+        }
+      }
+
+      // 2. Kiểm tra trạng thái đơn hàng trực tiếp
       const res = await apiFetch(`/api/order-requests/${selectedPayOrder.id}`);
       if (res.ok) {
         const orderData = await res.json();
@@ -164,16 +236,16 @@ export default function MyPlansPage() {
         }
       }
 
-      // 2. Phản hồi trạng thái
+      // 3. Phản hồi trạng thái
       setCheckMessage({
         type: "info",
-        text: "Hệ thống đang đối soát với ngân hàng. Nếu bạn vừa chuyển khoản, vui lòng chờ trong 10 - 20 giây."
+        text: "Hệ thống đang đối soát với ngân hàng PayOS. Nếu bạn vừa chuyển khoản, vui lòng chờ trong 5 - 10 giây rồi bấm kiểm tra lại!"
       });
     } catch (err) {
       console.warn("Lỗi kiểm tra thanh toán:", err);
       setCheckMessage({
         type: "error",
-        text: "Chưa thể kết nối đến cổng thanh toán. Vui lòng thử lại sau giây lát."
+        text: "Chưa thể kết nối đến cổng thanh toán PayOS. Vui lòng thử lại sau giây lát."
       });
     } finally {
       setCheckingPayment(false);
@@ -510,44 +582,62 @@ export default function MyPlansPage() {
                     </span>
                   </div>
 
-                  {/* Khung Mã QR VietQR Chuẩn Ngân Hàng */}
-                  <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-3">
-                    <div className="inline-block p-3 bg-white border border-slate-200 rounded-2xl shadow-sm">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={`https://api.vietqr.io/image/970422-0987654321-compact2.jpg?amount=${Math.round(selectedPayOrder.price || selectedPayOrder.totalAmount || 0)}&addInfo=${encodeURIComponent(selectedPayOrder.orderCode)}`}
-                        alt="VietQR Payment Code"
-                        className="w-52 h-52 mx-auto object-contain rounded-lg"
-                      />
-                      <div className="text-[10px] text-slate-500 font-bold uppercase mt-2 tracking-wider">
-                        VietQR Tự Động 24/7 (Quét Bằng Mọi Ngân Hàng)
-                      </div>
+                  {/* Khung Mã QR PayOS Thật */}
+                  {loadingQr ? (
+                    <div className="p-12 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-3">
+                      <div className="w-8 h-8 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+                      <p className="text-xs text-slate-600 font-medium">Đang tạo mã QR thanh toán tự động PayOS...</p>
                     </div>
+                  ) : (
+                    <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-3">
+                      <div className="inline-block p-3 bg-white border border-slate-200 rounded-2xl shadow-sm">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={
+                            payosData?.qrCode
+                              ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(payosData.qrCode)}`
+                              : `https://api.vietqr.io/image/970422-0987654321-compact2.jpg?amount=${Math.round(selectedPayOrder.price || selectedPayOrder.totalAmount || 0)}&addInfo=${encodeURIComponent(selectedPayOrder.orderCode)}`
+                          }
+                          alt="PayOS VietQR Payment Code"
+                          className="w-52 h-52 mx-auto object-contain rounded-lg"
+                        />
+                        <div className="text-[10px] text-slate-500 font-bold uppercase mt-2 tracking-wider flex items-center justify-center gap-1.5">
+                          <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          </svg>
+                          <span>Mã QR PayOS Tự Động 24/7 (Quét Bằng Mọi Ngân Hàng)</span>
+                        </div>
+                      </div>
 
-                    {/* Bảng Chi Tiết STK */}
-                    <div className="bg-white p-3.5 rounded-xl border border-slate-200 text-xs text-left space-y-2">
-                      <div className="flex justify-between items-center pb-1.5 border-b border-slate-100">
-                        <span className="text-slate-500">Ngân hàng:</span>
-                        <span className="font-bold text-slate-900">MBBank (Quân Đội)</span>
-                      </div>
-                      <div className="flex justify-between items-center pb-1.5 border-b border-slate-100">
-                        <span className="text-slate-500">Số tài khoản:</span>
-                        <span className="font-mono font-bold text-blue-600 text-sm">0987654321</span>
-                      </div>
-                      <div className="flex justify-between items-center pb-1.5 border-b border-slate-100">
-                        <span className="text-slate-500">Số tiền:</span>
-                        <span className="font-black text-rose-600 text-sm">
-                          {formatPrice(selectedPayOrder.price || selectedPayOrder.totalAmount || 0)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-500">Nội dung chuyển khoản:</span>
-                        <span className="font-mono font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
-                          {selectedPayOrder.orderCode}
-                        </span>
+                      {/* Bảng Chi Tiết STK */}
+                      <div className="bg-white p-3.5 rounded-xl border border-slate-200 text-xs text-left space-y-2">
+                        {payosData?.accountName && (
+                          <div className="flex justify-between items-center pb-1.5 border-b border-slate-100">
+                            <span className="text-slate-500">Chủ tài khoản:</span>
+                            <span className="font-bold text-slate-900 uppercase">{payosData.accountName}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between items-center pb-1.5 border-b border-slate-100">
+                          <span className="text-slate-500">Số tài khoản:</span>
+                          <span className="font-mono font-bold text-blue-600 text-sm">
+                            {payosData?.accountNumber || "0987654321"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center pb-1.5 border-b border-slate-100">
+                          <span className="text-slate-500">Số tiền:</span>
+                          <span className="font-black text-rose-600 text-sm">
+                            {formatPrice(payosData?.amount || selectedPayOrder.price || selectedPayOrder.totalAmount || 0)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-slate-500">Nội dung chuyển khoản:</span>
+                          <span className="font-mono font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                            {payosData?.description || selectedPayOrder.orderCode}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Thông Báo Khi Kiểm Tra */}
                   {checkMessage && (
