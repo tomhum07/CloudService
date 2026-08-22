@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -26,6 +27,8 @@ namespace CloudService.Infrastructure.Services
                 query = query.IgnoreQueryFilters();
             }
 
+            var now = DateTime.UtcNow;
+
             var prices = await query
                 .Where(p => p.PlanId == planId)
                 .Select(p => new PlanPriceDto
@@ -34,9 +37,9 @@ namespace CloudService.Infrastructure.Services
                     PlanId = p.PlanId,
                     BillingCycle = p.BillingCycle,
                     Price = p.Price,
-                    PromotionId = p.PromotionId,
-                    PromotionName = p.Promotion != null ? p.Promotion.Name : null,
-                    DiscountPercentage = p.Promotion != null ? (decimal?)p.Promotion.DiscountPercentage : null,
+                    PromotionId = (p.Promotion != null && p.Promotion.IsActive && (p.Promotion.EndDate == default || p.Promotion.EndDate >= now) && (p.Promotion.StartDate == default || p.Promotion.StartDate <= now)) ? p.PromotionId : null,
+                    PromotionName = (p.Promotion != null && p.Promotion.IsActive && (p.Promotion.EndDate == default || p.Promotion.EndDate >= now) && (p.Promotion.StartDate == default || p.Promotion.StartDate <= now)) ? p.Promotion.Name : null,
+                    DiscountPercentage = (p.Promotion != null && p.Promotion.IsActive && (p.Promotion.EndDate == default || p.Promotion.EndDate >= now) && (p.Promotion.StartDate == default || p.Promotion.StartDate <= now)) ? (decimal?)p.Promotion.DiscountPercentage : null,
                     IsActive = p.IsActive
                 })
                 .ToListAsync();
@@ -94,9 +97,20 @@ namespace CloudService.Infrastructure.Services
             return true;
         }
 
-        public async Task<IEnumerable<PromotionDto>> GetAllPromotionsAsync()
+        public async Task<IEnumerable<PromotionDto>> GetAllPromotionsAsync(bool activeOnly = false)
         {
-            var promotions = await _context.Promotions
+            var now = DateTime.UtcNow;
+            var query = _context.Promotions.IgnoreQueryFilters().AsQueryable();
+
+            if (activeOnly)
+            {
+                query = query.Where(p => p.IsActive
+                    && (p.StartDate == default || p.StartDate <= now)
+                    && (p.EndDate == default || p.EndDate >= now));
+            }
+
+            var promotions = await query
+                .OrderByDescending(p => p.CreatedAt)
                 .Select(p => new PromotionDto
                 {
                     Id = p.Id,
@@ -113,12 +127,16 @@ namespace CloudService.Infrastructure.Services
 
         public async Task<PromotionDto> CreatePromotionAsync(CreatePromotionRequest request)
         {
+            var startDate = request.StartDate == default ? DateTime.UtcNow : request.StartDate.ToUniversalTime();
+            var endDate = request.EndDate == default ? DateTime.UtcNow.AddDays(30) : request.EndDate.ToUniversalTime();
+
             var promotion = new Promotion
             {
-                Name = request.Name,
+                Name = request.Name.Trim(),
                 DiscountPercentage = (int)request.DiscountPercentage,
-                StartDate = request.StartDate,
-                EndDate = request.EndDate
+                StartDate = startDate,
+                EndDate = endDate,
+                IsActive = request.IsActive
             };
 
             _context.Promotions.Add(promotion);
@@ -135,6 +153,50 @@ namespace CloudService.Infrastructure.Services
             };
         }
 
+        public async Task<PromotionDto?> UpdatePromotionAsync(int id, UpdatePromotionRequest request)
+        {
+            var promotion = await _context.Promotions.IgnoreQueryFilters().FirstOrDefaultAsync(p => p.Id == id);
+            if (promotion == null) return null;
+
+            var startDate = request.StartDate == default ? DateTime.UtcNow : request.StartDate.ToUniversalTime();
+            var endDate = request.EndDate == default ? DateTime.UtcNow.AddDays(30) : request.EndDate.ToUniversalTime();
+
+            promotion.Name = request.Name.Trim();
+            promotion.DiscountPercentage = (int)request.DiscountPercentage;
+            promotion.StartDate = startDate;
+            promotion.EndDate = endDate;
+            promotion.IsActive = request.IsActive;
+
+            await _context.SaveChangesAsync();
+
+            return new PromotionDto
+            {
+                Id = promotion.Id,
+                Name = promotion.Name,
+                DiscountPercentage = promotion.DiscountPercentage,
+                StartDate = promotion.StartDate,
+                EndDate = promotion.EndDate,
+                IsActive = promotion.IsActive
+            };
+        }
+
+        public async Task<bool> DeletePromotionAsync(int id)
+        {
+            var promotion = await _context.Promotions.IgnoreQueryFilters().FirstOrDefaultAsync(p => p.Id == id);
+            if (promotion == null) return false;
+
+            // Xóa liên kết khuyến mãi khỏi các PlanPrice trước khi xóa
+            var linkedPrices = await _context.PlanPrices.IgnoreQueryFilters().Where(p => p.PromotionId == id).ToListAsync();
+            foreach (var price in linkedPrices)
+            {
+                price.PromotionId = null;
+            }
+
+            _context.Promotions.Remove(promotion);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<PromotionDto?> ValidatePromotionAsync(string code)
         {
             if (string.IsNullOrWhiteSpace(code)) return null;
@@ -148,7 +210,7 @@ namespace CloudService.Infrastructure.Services
 
             if (promotion == null) return null;
 
-            // Kiểm tra thời hạn hiệu lực (nếu có cấu hình)
+            // Kiểm tra thời hạn hiệu lực (StartDate và EndDate)
             if (promotion.StartDate != default && promotion.StartDate > now) return null;
             if (promotion.EndDate != default && promotion.EndDate < now) return null;
 
@@ -165,6 +227,8 @@ namespace CloudService.Infrastructure.Services
 
         private async Task<PlanPriceDto> GetPriceDtoByIdAsync(int priceId)
         {
+            var now = DateTime.UtcNow;
+
             var price = await _context.PlanPrices
                 .IgnoreQueryFilters()
                 .Where(p => p.Id == priceId)
@@ -174,9 +238,9 @@ namespace CloudService.Infrastructure.Services
                     PlanId = p.PlanId,
                     BillingCycle = p.BillingCycle,
                     Price = p.Price,
-                    PromotionId = p.PromotionId,
-                    PromotionName = p.Promotion != null ? p.Promotion.Name : null,
-                    DiscountPercentage = p.Promotion != null ? (decimal?)p.Promotion.DiscountPercentage : null,
+                    PromotionId = (p.Promotion != null && p.Promotion.IsActive && (p.Promotion.EndDate == default || p.Promotion.EndDate >= now) && (p.Promotion.StartDate == default || p.Promotion.StartDate <= now)) ? p.PromotionId : null,
+                    PromotionName = (p.Promotion != null && p.Promotion.IsActive && (p.Promotion.EndDate == default || p.Promotion.EndDate >= now) && (p.Promotion.StartDate == default || p.Promotion.StartDate <= now)) ? p.Promotion.Name : null,
+                    DiscountPercentage = (p.Promotion != null && p.Promotion.IsActive && (p.Promotion.EndDate == default || p.Promotion.EndDate >= now) && (p.Promotion.StartDate == default || p.Promotion.StartDate <= now)) ? (decimal?)p.Promotion.DiscountPercentage : null,
                     IsActive = p.IsActive
                 })
                 .FirstAsync();

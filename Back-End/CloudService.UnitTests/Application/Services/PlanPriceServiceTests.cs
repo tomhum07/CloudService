@@ -77,6 +77,90 @@ namespace CloudService.UnitTests.Application.Services
         }
 
         [Fact]
+        public async Task GetAllPromotionsAsync_WithActiveOnly_ShouldFilterExpired()
+        {
+            // Arrange
+            var dbName = Guid.NewGuid().ToString();
+            using var context = GetDbContext(dbName);
+            var service = new PlanPriceService(context);
+
+            // Active promo
+            await service.CreatePromotionAsync(new CreatePromotionRequest
+            {
+                Name = "Active Promo",
+                DiscountPercentage = 20,
+                StartDate = DateTime.UtcNow.AddDays(-5),
+                EndDate = DateTime.UtcNow.AddDays(10)
+            });
+
+            // Expired promo
+            await service.CreatePromotionAsync(new CreatePromotionRequest
+            {
+                Name = "Expired Promo",
+                DiscountPercentage = 50,
+                StartDate = DateTime.UtcNow.AddDays(-20),
+                EndDate = DateTime.UtcNow.AddDays(-1)
+            });
+
+            // Act
+            var allPromos = await service.GetAllPromotionsAsync(activeOnly: false);
+            var activePromos = await service.GetAllPromotionsAsync(activeOnly: true);
+
+            // Assert
+            Assert.Equal(2, allPromos.Count());
+            Assert.Single(activePromos);
+            Assert.Equal("Active Promo", activePromos.First().Name);
+        }
+
+        [Fact]
+        public async Task ValidatePromotionAsync_ExpiredPromotion_ShouldReturnNull()
+        {
+            // Arrange
+            var dbName = Guid.NewGuid().ToString();
+            using var context = GetDbContext(dbName);
+            var service = new PlanPriceService(context);
+
+            await service.CreatePromotionAsync(new CreatePromotionRequest
+            {
+                Name = "EXPIRED2026",
+                DiscountPercentage = 30,
+                StartDate = DateTime.UtcNow.AddDays(-30),
+                EndDate = DateTime.UtcNow.AddDays(-1)
+            });
+
+            // Act
+            var result = await service.ValidatePromotionAsync("EXPIRED2026");
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task ValidatePromotionAsync_ActivePromotion_ShouldReturnDto()
+        {
+            // Arrange
+            var dbName = Guid.NewGuid().ToString();
+            using var context = GetDbContext(dbName);
+            var service = new PlanPriceService(context);
+
+            await service.CreatePromotionAsync(new CreatePromotionRequest
+            {
+                Name = "ACTIVE2026",
+                DiscountPercentage = 25,
+                StartDate = DateTime.UtcNow.AddDays(-1),
+                EndDate = DateTime.UtcNow.AddDays(15)
+            });
+
+            // Act
+            var result = await service.ValidatePromotionAsync("ACTIVE2026");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("ACTIVE2026", result.Name);
+            Assert.Equal(25, result.DiscountPercentage);
+        }
+
+        [Fact]
         public async Task CreatePriceAsync_ShouldAddPrice()
         {
             // Arrange
@@ -202,7 +286,7 @@ namespace CloudService.UnitTests.Application.Services
             {
                 Name = "Holiday Special",
                 DiscountPercentage = 50,
-                StartDate = DateTime.UtcNow,
+                StartDate = DateTime.UtcNow.AddDays(-1),
                 EndDate = DateTime.UtcNow.AddDays(10)
             });
 
@@ -220,6 +304,38 @@ namespace CloudService.UnitTests.Application.Services
             Assert.NotNull(result);
             Assert.Equal("Holiday Special", result.PromotionName);
             Assert.Equal(50, result.DiscountPercentage);
+        }
+
+        [Fact]
+        public async Task GetPricesByPlanIdAsync_WithExpiredPromotion_ShouldNotApplyDiscount()
+        {
+            // Arrange
+            var dbName = Guid.NewGuid().ToString();
+            using var context = GetDbContext(dbName);
+            var service = new PlanPriceService(context);
+            
+            var expiredPromo = await service.CreatePromotionAsync(new CreatePromotionRequest
+            {
+                Name = "Expired Holiday",
+                DiscountPercentage = 50,
+                StartDate = DateTime.UtcNow.AddDays(-30),
+                EndDate = DateTime.UtcNow.AddDays(-5)
+            });
+
+            await service.CreatePriceAsync(1, new CreatePlanPriceRequest
+            {
+                BillingCycle = "Yearly",
+                Price = 1000,
+                PromotionId = expiredPromo.Id
+            });
+
+            // Act
+            var prices = (await service.GetPricesByPlanIdAsync(1)).ToList();
+
+            // Assert
+            Assert.Single(prices);
+            Assert.Null(prices[0].PromotionName);
+            Assert.Null(prices[0].DiscountPercentage);
         }
     }
 }

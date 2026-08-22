@@ -109,9 +109,9 @@ namespace CloudService.Infrastructure.Services
                         PlanId = p.PlanId,
                         BillingCycle = p.BillingCycle,
                         Price = p.Price,
-                        PromotionId = p.PromotionId,
-                        PromotionName = p.Promotion != null ? p.Promotion.Name : null,
-                        DiscountPercentage = p.Promotion != null ? (decimal?)p.Promotion.DiscountPercentage : null,
+                        PromotionId = (p.Promotion != null && p.Promotion.IsActive && (p.Promotion.EndDate == default || p.Promotion.EndDate >= DateTime.UtcNow) && (p.Promotion.StartDate == default || p.Promotion.StartDate <= DateTime.UtcNow)) ? p.PromotionId : null,
+                        PromotionName = (p.Promotion != null && p.Promotion.IsActive && (p.Promotion.EndDate == default || p.Promotion.EndDate >= DateTime.UtcNow) && (p.Promotion.StartDate == default || p.Promotion.StartDate <= DateTime.UtcNow)) ? p.Promotion.Name : null,
+                        DiscountPercentage = (p.Promotion != null && p.Promotion.IsActive && (p.Promotion.EndDate == default || p.Promotion.EndDate >= DateTime.UtcNow) && (p.Promotion.StartDate == default || p.Promotion.StartDate <= DateTime.UtcNow)) ? (decimal?)p.Promotion.DiscountPercentage : null,
                         IsActive = p.IsActive
                     }).ToList()
                 })
@@ -132,9 +132,12 @@ namespace CloudService.Infrastructure.Services
                 .IgnoreQueryFilters()
                 .Include(p => p.Category)
                 .Include(p => p.Prices)
+                    .ThenInclude(pr => pr.Promotion)
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             if (plan == null) return null;
+
+            var now = DateTime.UtcNow;
 
             return new ServicePlanDto
             {
@@ -156,9 +159,9 @@ namespace CloudService.Infrastructure.Services
                     PlanId = p.PlanId,
                     BillingCycle = p.BillingCycle,
                     Price = p.Price,
-                    PromotionId = p.PromotionId,
-                    PromotionName = p.Promotion != null ? p.Promotion.Name : null,
-                    DiscountPercentage = p.Promotion != null ? (decimal?)p.Promotion.DiscountPercentage : null,
+                    PromotionId = (p.Promotion != null && p.Promotion.IsActive && (p.Promotion.EndDate == default || p.Promotion.EndDate >= now) && (p.Promotion.StartDate == default || p.Promotion.StartDate <= now)) ? p.PromotionId : null,
+                    PromotionName = (p.Promotion != null && p.Promotion.IsActive && (p.Promotion.EndDate == default || p.Promotion.EndDate >= now) && (p.Promotion.StartDate == default || p.Promotion.StartDate <= now)) ? p.Promotion.Name : null,
+                    DiscountPercentage = (p.Promotion != null && p.Promotion.IsActive && (p.Promotion.EndDate == default || p.Promotion.EndDate >= now) && (p.Promotion.StartDate == default || p.Promotion.StartDate <= now)) ? (decimal?)p.Promotion.DiscountPercentage : null,
                     IsActive = p.IsActive
                 }).ToList()
             };
