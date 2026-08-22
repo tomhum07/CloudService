@@ -4,15 +4,6 @@ import Link from "next/link";
 import { apiFetch } from "@/utils/api";
 import { dataSyncService } from "@/utils/signalr";
 
-const DOMAIN_PRICES = [
-  { tld: ".vn", price: "450.000đ", renew: "350.000đ", popular: true },
-  { tld: ".com", price: "249.000đ", renew: "299.000đ", popular: true },
-  { tld: ".net", price: "289.000đ", renew: "329.000đ", popular: false },
-  { tld: ".com.vn", price: "350.000đ", renew: "250.000đ", popular: false },
-  { tld: ".io", price: "790.000đ", renew: "850.000đ", popular: false }
-];
-
-
 const FEATURES_HIGHLIGHT = [
   {
     iconType: "cpu",
@@ -101,8 +92,6 @@ function FeatureIcon({ type }: { type: string }) {
 }
 
 export default function Home() {
-  const [domainQuery, setDomainQuery] = useState("");
-  const [domainResult, setDomainResult] = useState<{ checked: boolean; domain: string; available?: boolean; price?: string } | null>(null);
   const [plans, setPlans] = useState<any[]>([]);
   const [news, setNews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -169,24 +158,6 @@ export default function Home() {
     return () => unsubscribe();
   }, []);
 
-  const handleDomainCheck = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!domainQuery.trim()) return;
-    
-    let clean = domainQuery.trim().toLowerCase();
-    if (!clean.includes(".")) {
-      clean += ".vn";
-    }
-
-    const available = Math.random() > 0.3;
-    setDomainResult({
-      checked: true,
-      domain: clean,
-      available,
-      price: clean.endsWith(".vn") ? "450.000đ / năm" : "249.000đ / năm"
-    });
-  };
-
   const filteredPlans = plans.filter((p) => {
     if (activeTab === "all") return true;
     const cat = (p.categoryName || "").toLowerCase();
@@ -199,7 +170,7 @@ export default function Home() {
   return (
     <div className="relative min-h-screen bg-slate-50 text-slate-800 selection:bg-blue-600 selection:text-white">
       
-      {/* 1. HERO SECTION & DOMAIN SEARCH */}
+      {/* 1. HERO SECTION */}
       <section className="relative overflow-hidden pt-28 pb-20 border-b border-slate-200 bg-gradient-to-b from-blue-50 via-white to-slate-50">
         <div className="max-w-7xl mx-auto px-6 text-center">
           
@@ -218,95 +189,32 @@ export default function Home() {
           </h1>
 
           <p className="text-sm sm:text-base md:text-lg text-slate-600 max-w-3xl mx-auto mb-10 leading-relaxed">
-            Cung cấp giải pháp <strong>Cloud VPS NVMe</strong>, <strong>Web Hosting LiteSpeed</strong>, <strong>Tên miền</strong>, <strong>Email doanh nghiệp</strong> và <strong>Tường lửa Anti-DDoS</strong> chuyên sâu bảo vệ website an toàn 24/7.
+            Cung cấp giải pháp <strong>Cloud VPS NVMe</strong>, <strong>Web Hosting LiteSpeed</strong>, <strong>Email Doanh Nghiệp</strong> và <strong>Tường Lửa Anti-DDoS</strong> chuyên sâu bảo vệ website an toàn tuyệt đối 24/7.
           </p>
 
-            {/* DOMAIN SEARCH BAR */}
-            <div className="max-w-3xl mx-auto mb-12">
-              <form onSubmit={handleDomainCheck} className="p-2 rounded-2xl bg-white border border-slate-300 shadow-xl flex flex-col sm:flex-row gap-2">
-                <div className="flex-1 flex items-center px-4 gap-3">
-                  <svg className="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <input
-                    type="text"
-                    placeholder="Nhập tên miền bạn muốn kiểm tra (VD: tencongty, myshop.com)..."
-                    value={domainQuery}
-                    onChange={(e) => setDomainQuery(e.target.value)}
-                    className="w-full bg-transparent text-sm text-slate-900 placeholder-slate-400 focus:outline-none py-3"
-                  />
-                  {domainQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setDomainQuery("")}
-                      className="text-xs text-slate-400 hover:text-slate-600 px-1"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-                <button
-                  type="submit"
-                  className="px-8 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm transition-all shadow-md shadow-blue-500/20 shrink-0"
-                >
-                  Kiểm Tra Tên Miền
-                </button>
-              </form>
-
-              {/* Quick Domain Pricing Pills (Click to append TLD) */}
-              <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-4 text-xs">
-                <span className="text-slate-500 font-medium">Đuôi mở rộng hot:</span>
-                {DOMAIN_PRICES.map((d) => (
-                  <button
-                    key={d.tld}
-                    type="button"
-                    onClick={() => {
-                      const base = domainQuery.includes(".") ? domainQuery.split(".")[0] : (domainQuery || "mybrand");
-                      setDomainQuery(`${base}${d.tld}`);
-                    }}
-                    className="px-3 py-1 rounded-lg bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-300 shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
-                    title={`Chọn đuôi ${d.tld}`}
-                  >
-                    <span className="font-bold text-blue-600">{d.tld}</span>
-                    <span className="text-slate-700 font-semibold">{d.price}</span>
-                  </button>
-                ))}
-              </div>
-
-            {/* Domain Check Result Modal/Card */}
-            {domainResult && domainResult.checked && (
-              <div className="mt-6 p-4 rounded-2xl bg-white border border-blue-200 shadow-lg text-left flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in zoom-in-95 duration-200">
-                <div className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white ${domainResult.available ? "bg-emerald-600" : "bg-rose-600"}`}>
-                    {domainResult.available ? "✓" : "✕"}
-                  </div>
-                  <div>
-                    <h4 className="text-base font-bold text-slate-900">{domainResult.domain}</h4>
-                    <p className="text-xs text-slate-600">
-                      {domainResult.available
-                        ? `Tên miền còn trống! Giá đăng ký chỉ từ ${domainResult.price}`
-                        : "Tên miền này đã có người đăng ký. Vui lòng chọn đuôi mở rộng khác."}
-                    </p>
-                  </div>
-                </div>
-                {domainResult.available ? (
-                  <Link
-                    href={`/order?plan=domain&name=${encodeURIComponent(domainResult.domain)}`}
-                    className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors shrink-0 shadow-sm"
-                  >
-                    Đăng Ký Ngay
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setDomainResult(null)}
-                    className="text-xs text-slate-500 hover:text-slate-900 px-3 py-1.5"
-                  >
-                    Đóng
-                  </button>
-                )}
-              </div>
-            )}
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-14">
+            <Link
+              href="/pricing"
+              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm tracking-wide transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"
+            >
+              <span>Xem Bảng Giá Gói Cước</span>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </Link>
+            <Link
+              href="/services"
+              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 font-black text-sm border border-slate-300 shadow-sm transition-all flex items-center justify-center gap-2"
+            >
+              <span>Khám Phá Dịch Vụ</span>
+            </Link>
+            <Link
+              href="/order"
+              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-sm transition-all flex items-center justify-center gap-2"
+            >
+              <span>Đăng Ký Nhanh</span>
+            </Link>
           </div>
 
           {/* Key Metrics Strip */}

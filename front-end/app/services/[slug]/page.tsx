@@ -14,6 +14,7 @@ export const SERVICE_DETAILS_DATA: Record<string, {
   priceStarting: string;
   features: { title: string; desc: string; icon?: string }[];
   plans: {
+    id?: number;
     name: string;
     cpu: string;
     ram: string;
@@ -386,18 +387,145 @@ export const SERVICE_DETAILS_DATA: Record<string, {
   }
 };
 
+import { useState, useEffect } from "react";
+import { apiFetch } from "@/utils/api";
+import { dataSyncService } from "@/utils/signalr";
+
 export default function ServiceDetailPage() {
   const params = useParams();
   const slug = (params?.slug as string) || "";
-  const service = SERVICE_DETAILS_DATA[slug];
+  const staticData = SERVICE_DETAILS_DATA[slug];
 
-  if (!service) {
-    // Fallback to MaxSpeed hosting if unknown
-    const fallback = SERVICE_DETAILS_DATA["maxspeed-hosting"];
-    return <ServiceDetailView service={fallback} slug="maxspeed-hosting" />;
+  const [category, setCategory] = useState<any | null>(null);
+  const [dbPlans, setDbPlans] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchCategoryAndPlans = async () => {
+    try {
+      setLoading(true);
+      const [catRes, planRes] = await Promise.all([
+        apiFetch("/api/service-categories?includeInactive=false"),
+        apiFetch("/api/service-plans?pageSize=100&includeInactive=false")
+      ]);
+
+      let matchedCat: any = null;
+      if (catRes.ok) {
+        const catData = await catRes.json();
+        const cats = catData.items || catData;
+        if (Array.isArray(cats)) {
+          matchedCat = cats.find((c: any) => 
+            (c.slug && c.slug.toLowerCase() === slug.toLowerCase()) ||
+            (c.name && c.name.toLowerCase().replace(/\s+/g, "-") === slug.toLowerCase())
+          );
+          if (matchedCat) setCategory(matchedCat);
+        }
+      }
+
+      if (planRes.ok) {
+        const planData = await planRes.json();
+        const allPlans = planData.items || planData;
+        if (Array.isArray(allPlans)) {
+          let plansForCat: any[] = [];
+          if (matchedCat) {
+            plansForCat = allPlans.filter((p: any) => p.categoryId === matchedCat.id && p.isActive !== false);
+          }
+          if (plansForCat.length === 0) {
+            // Match by slug or keyword
+            const keyword = slug.replace("-hosting", "").replace("vps-", "").replace("-", " ");
+            plansForCat = allPlans.filter((p: any) => 
+              p.isActive !== false &&
+              ((p.categoryName && p.categoryName.toLowerCase().includes(keyword)) ||
+               (p.name && p.name.toLowerCase().includes(keyword)))
+            );
+          }
+
+          if (plansForCat.length > 0) {
+            const formatted = plansForCat.map((p: any, idx: number) => {
+              const activePrice = (p.prices && p.prices.length > 0) ? p.prices[0] : null;
+              const formattedPrice = activePrice
+                ? new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(activePrice.price)
+                : "Liên hệ";
+              return {
+                id: p.id,
+                name: p.name,
+                cpu: p.cpu || "Tối ưu hóa",
+                ram: p.ram || "Tự động co giãn",
+                storage: p.storage || "NVMe Enterprise",
+                bandwidth: p.bandwidth || "Không giới hạn",
+                price: formattedPrice,
+                popular: idx === 1
+              };
+            });
+            setDbPlans(formatted);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Lỗi tải dữ liệu dịch vụ từ CSDL:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategoryAndPlans();
+
+    const unsubscribe = dataSyncService.subscribe((entity) => {
+      if (entity === "plan" || entity === "category" || entity === "price" || entity === "all") {
+        fetchCategoryAndPlans();
+      }
+    });
+
+    return () => unsubscribe();
+  }, [slug]);
+
+  // Combine static rich info or dynamic DB category info
+  const effectiveCategory = category ? category.name : (staticData ? staticData.category : "Dịch Vụ Cloud");
+  const effectiveName = category ? category.name : (staticData ? staticData.name : slug.replace(/-/g, " ").toUpperCase());
+  const effectiveDescription = category?.description || staticData?.description || "Giải pháp hạ tầng điện toán đám mây tốc độ cao, đạt chuẩn quốc tế Datacenter Tier 3 với cam kết SLA 99.99%.";
+  const effectiveBadge = staticData?.badge || "Tiêu Chuẩn Tier 3";
+  const effectiveTagline = staticData?.tagline || `Dịch vụ ${effectiveName} chất lượng cao, an toàn và tối ưu chi phí`;
+  const effectiveHighlightChip = staticData?.highlightChip || "Tự Động Kích Hoạt & Uptime 99.99%";
+  const effectiveFeatures = staticData?.features || [
+    { title: "Hạ Tầng Datacenter Tier 3", desc: "Máy chủ đặt tại các trung tâm dữ liệu hàng đầu với nguồn điện kép và hệ thống làm mát tối ưu." },
+    { title: "Bảo Vệ Anti-DDoS Độc Quyền", desc: "Tường lửa đa tầng tự động ngăn chặn các cuộc tấn công mạng Layer 3, 4 và Layer 7." },
+    { title: "Kích Hoạt Tức Thì", desc: "Hệ thống tự động thiết lập và bàn giao thông tin quản trị dịch vụ trong vòng 60 giây." },
+    { title: "Hỗ Trợ Kỹ Thuật 24/7", desc: "Đội ngũ kỹ sư túc trực 24/7/365 sẵn sàng giải quyết mọi vấn đề của quý khách hàng." }
+  ];
+
+  const effectivePlans = dbPlans.length > 0 ? dbPlans : (staticData?.plans || []);
+  const effectivePriceStarting = effectivePlans.length > 0 ? `${effectivePlans[0].price} / tháng` : (staticData?.priceStarting || "Liên hệ");
+  const effectiveFaqs = staticData?.faqs || [
+    { q: `Dịch vụ ${effectiveName} có được dùng thử miễn phí không?`, a: "Quý khách hàng được hưởng chính sách hoàn tiền 100% trong vòng 30 ngày nếu chất lượng không đáp ứng kỳ vọng." },
+    { q: "Tôi có được hỗ trợ chuyển đổi dữ liệu không?", a: "Đội ngũ kỹ thuật của chúng tôi sẽ hỗ trợ di chuyển toàn bộ dữ liệu của bạn hoàn toàn miễn phí và không gây gián đoạn hoạt động." }
+  ];
+
+  const servicePayload = {
+    category: effectiveCategory,
+    badge: effectiveBadge,
+    name: effectiveName,
+    tagline: effectiveTagline,
+    description: effectiveDescription,
+    speedRating: staticData?.speedRating || 5,
+    highlightChip: effectiveHighlightChip,
+    priceStarting: effectivePriceStarting,
+    features: effectiveFeatures,
+    plans: effectivePlans,
+    faqs: effectiveFaqs
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+        <div className="text-center">
+          <span className="w-10 h-10 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin inline-block mb-3"></span>
+          <p className="text-xs text-slate-500 font-medium">Đang tải thông tin gói cước từ cơ sở dữ liệu...</p>
+        </div>
+      </div>
+    );
   }
 
-  return <ServiceDetailView service={service} slug={slug} />;
+  return <ServiceDetailView service={servicePayload} slug={slug} />;
 }
 
 function ServiceFeatureIcon({ index }: { index: number }) {
@@ -622,7 +750,7 @@ function ServiceDetailView({ service, slug }: { service: typeof SERVICE_DETAILS_
                 </div>
 
                 <Link
-                  href={`/order?plan=${slug}&subplan=${encodeURIComponent(p.name)}`}
+                  href={p.id ? `/order?planId=${p.id}` : `/order?plan=${slug}&subplan=${encodeURIComponent(p.name)}`}
                   className={`w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center transition-all ${
                     p.popular
                       ? "bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20"

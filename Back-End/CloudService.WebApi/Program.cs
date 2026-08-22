@@ -6,9 +6,26 @@ using System.Text;
 using CloudService.Infrastructure.Data;
 using CloudService.Application.Interfaces;
 using CloudService.Infrastructure.Services;
-using Resend;
+using Serilog;
+
+// Cấu hình Serilog Logger (Ghi log Console và File theo ngày)
+Serilog.Log.Logger = new Serilog.LoggerConfiguration()
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore", Serilog.Events.LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .WriteTo.File(
+        path: "logs/cloudservice-.log",
+        rollingInterval: Serilog.RollingInterval.Day,
+        retainedFileCountLimit: 14,
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Tích hợp Serilog vào Host
+builder.Host.UseSerilog();
 
 // Add services to the container.
 
@@ -128,6 +145,9 @@ builder.Services.AddOpenApi(options =>
 });
 
 var app = builder.Build();
+
+// Tích hợp Serilog HTTP Request Logging
+app.UseSerilogRequestLogging();
 
 // Khởi chạy Migrations và Seed Dữ liệu tự động lúc khởi động
 using (var scope = app.Services.CreateScope())
