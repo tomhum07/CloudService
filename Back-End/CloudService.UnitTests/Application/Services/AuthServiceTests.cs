@@ -5,24 +5,26 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Xunit;
+using Moq;
 using CloudService.Application.DTOs.Auth;
 using CloudService.Domain.Entities;
 using CloudService.Infrastructure.Data;
 using CloudService.Infrastructure.Services;
-
 using CloudService.Application.Interfaces;
 
 namespace CloudService.UnitTests.Application.Services
 {
     public class AuthServiceTests
     {
-        private class FakeEmailService : IEmailService
+        private IEmailService GetMockEmailService()
         {
-            public Task<bool> SendEmailAsync(string toEmail, string subject, string htmlBody) => Task.FromResult(true);
-            public Task<bool> SendOtpResetPasswordAsync(string toEmail, string fullName, string otpCode) => Task.FromResult(true);
-            public Task<bool> SendOrderSuccessNotificationAsync(string toEmail, string customerName, string orderCode, string planName, decimal price) => Task.FromResult(true);
-            public Task<bool> SendAffiliateApprovalNotificationAsync(string toEmail, string fullName) => Task.FromResult(true);
-            public Task<bool> SendAffiliateRejectionNotificationAsync(string toEmail, string fullName) => Task.FromResult(true);
+            var mockEmail = new Mock<IEmailService>();
+            mockEmail.Setup(m => m.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
+            mockEmail.Setup(m => m.SendOtpResetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
+            mockEmail.Setup(m => m.SendOrderSuccessNotificationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>())).ReturnsAsync(true);
+            mockEmail.Setup(m => m.SendAffiliateApprovalNotificationAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
+            mockEmail.Setup(m => m.SendAffiliateRejectionNotificationAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
+            return mockEmail.Object;
         }
 
         private ApplicationDbContext GetInMemoryDbContext()
@@ -50,7 +52,7 @@ namespace CloudService.UnitTests.Application.Services
 
         private AuthService CreateAuthService(ApplicationDbContext context, JwtTokenGenerator tokenGen)
         {
-            return new AuthService(context, tokenGen, new FakeEmailService());
+            return new AuthService(context, tokenGen, GetMockEmailService());
         }
 
         [Fact]
