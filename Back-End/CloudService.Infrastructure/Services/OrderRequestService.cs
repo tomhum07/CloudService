@@ -143,11 +143,18 @@ namespace CloudService.Infrastructure.Services
             }
             else if (dto.PlanId.HasValue && dto.PlanId.Value > 0)
             {
-                var price = await _context.PlanPrices
-                    .Where(p => p.PlanId == dto.PlanId.Value && p.IsActive)
-                    .FirstOrDefaultAsync();
+                var priceQuery = _context.PlanPrices.Where(p => p.PlanId == dto.PlanId.Value && p.IsActive);
+                if (!string.IsNullOrWhiteSpace(dto.BillingCycle))
+                {
+                    var exactPrice = await priceQuery.FirstOrDefaultAsync(p => p.BillingCycle.ToLower() == dto.BillingCycle.ToLower());
+                    if (exactPrice != null) planPriceId = exactPrice.Id;
+                }
 
-                if (price != null) planPriceId = price.Id;
+                if (planPriceId == 0)
+                {
+                    var price = await priceQuery.FirstOrDefaultAsync();
+                    if (price != null) planPriceId = price.Id;
+                }
             }
             else if (!string.IsNullOrWhiteSpace(dto.PlanName))
             {
@@ -157,11 +164,18 @@ namespace CloudService.Infrastructure.Services
 
                 if (plan != null)
                 {
-                    var price = await _context.PlanPrices
-                        .Where(p => p.PlanId == plan.Id && p.IsActive)
-                        .FirstOrDefaultAsync();
+                    var priceQuery = _context.PlanPrices.Where(p => p.PlanId == plan.Id && p.IsActive);
+                    if (!string.IsNullOrWhiteSpace(dto.BillingCycle))
+                    {
+                        var exactPrice = await priceQuery.FirstOrDefaultAsync(p => p.BillingCycle.ToLower() == dto.BillingCycle.ToLower());
+                        if (exactPrice != null) planPriceId = exactPrice.Id;
+                    }
 
-                    if (price != null) planPriceId = price.Id;
+                    if (planPriceId == 0)
+                    {
+                        var price = await priceQuery.FirstOrDefaultAsync();
+                        if (price != null) planPriceId = price.Id;
+                    }
                 }
             }
 
@@ -175,10 +189,10 @@ namespace CloudService.Infrastructure.Services
             var entity = new OrderRequest
             {
                 PlanPriceId = planPriceId,
-                CustomerName = dto.CustomerName,
-                CustomerEmail = dto.CustomerEmail,
-                CustomerPhone = dto.CustomerPhone,
-                CompanyName = dto.CompanyName,
+                CustomerName = dto.CustomerName?.Trim() ?? string.Empty,
+                CustomerEmail = dto.CustomerEmail?.Trim() ?? string.Empty,
+                CustomerPhone = dto.CustomerPhone?.Trim() ?? string.Empty,
+                CompanyName = dto.CompanyName?.Trim(),
                 Notes = dto.Notes,
                 Status = 0, // New
                 IsActive = true
@@ -212,15 +226,39 @@ namespace CloudService.Infrastructure.Services
         {
             await AutoCancelExpiredOrdersAsync();
 
+            if (string.IsNullOrWhiteSpace(emailOrUsername))
+            {
+                return Enumerable.Empty<OrderRequestDto>();
+            }
+
             var search = emailOrUsername.ToLower().Trim();
-            var orders = await _context.OrderRequests
+
+            // 1. Tìm thông tin AppUser tương ứng (nếu có) để lấy toàn bộ danh tính: Email, Username, FullName
+            var user = await _context.AppUsers
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Username.ToLower() == search || u.Email.ToLower() == search);
+
+            var userEmail = user?.Email?.ToLower().Trim();
+            var userUsername = user?.Username?.ToLower().Trim();
+            var userFullName = user?.FullName?.ToLower().Trim();
+
+            // 2. Truy vấn đơn hàng khớp với bất kỳ định danh nào của người dùng
+            var query = _context.OrderRequests
                 .IgnoreQueryFilters()
                 .Include(o => o.PlanPrice)
                     .ThenInclude(p => p!.Plan)
                         .ThenInclude(sp => sp!.Category)
-                .Where(o => o.CustomerEmail.ToLower() == search || o.CustomerName.ToLower().Contains(search))
-                .OrderByDescending(o => o.CreatedAt)
                 .AsNoTracking()
+                .Where(o =>
+                    o.CustomerEmail.ToLower() == search ||
+                    o.CustomerName.ToLower().Contains(search) ||
+                    (userEmail != null && o.CustomerEmail.ToLower() == userEmail) ||
+                    (userUsername != null && (o.CustomerEmail.ToLower().Contains(userUsername) || o.CustomerName.ToLower().Contains(userUsername))) ||
+                    (userFullName != null && o.CustomerName.ToLower().Contains(userFullName))
+                );
+
+            var orders = await query
+                .OrderByDescending(o => o.CreatedAt)
                 .ToListAsync();
 
             return orders.Select(MapToDto);
