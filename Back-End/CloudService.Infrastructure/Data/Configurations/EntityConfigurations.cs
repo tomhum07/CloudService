@@ -172,4 +172,23 @@ namespace CloudService.Infrastructure.Data.Configurations
                    .OnDelete(DeleteBehavior.Restrict);
         }
     }
+
+    public class PlanPromotionConfiguration : IEntityTypeConfiguration<PlanPromotion>
+    {
+        public void Configure(EntityTypeBuilder<PlanPromotion> builder)
+        {
+            builder.ToTable("PlanPromotions");
+            builder.HasKey(pp => pp.Id);
+
+            builder.HasOne(pp => pp.Plan)
+                   .WithMany(p => p.PlanPromotions)
+                   .HasForeignKey(pp => pp.PlanId)
+                   .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasOne(pp => pp.Promotion)
+                   .WithMany(p => p.PlanPromotions)
+                   .HasForeignKey(pp => pp.PromotionId)
+                   .OnDelete(DeleteBehavior.Cascade);
+        }
+    }
 }

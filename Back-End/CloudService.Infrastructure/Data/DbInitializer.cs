@@ -24,6 +24,17 @@ namespace CloudService.Infrastructure.Data
                                 IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='NewsArticles' AND column_name='Category') THEN
                                     ALTER TABLE ""NewsArticles"" ADD COLUMN ""Category"" VARCHAR(100) DEFAULT 'Tin Tức';
                                 END IF;
+
+                                IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name='PlanPromotions') THEN
+                                    CREATE TABLE ""PlanPromotions"" (
+                                        ""Id"" SERIAL PRIMARY KEY,
+                                        ""PlanId"" INTEGER NOT NULL,
+                                        ""PromotionId"" INTEGER NOT NULL,
+                                        ""CreatedAt"" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                                        ""LastModifiedAt"" TIMESTAMPTZ,
+                                        ""IsActive"" BOOLEAN NOT NULL DEFAULT TRUE
+                                    );
+                                END IF;
                             END $$;
                         ");
                     }
@@ -248,6 +259,39 @@ namespace CloudService.Infrastructure.Data
                 }
                 await context.SaveChangesAsync();
             }
+
+            // 6.5. Seed PlanPromotions (Mỗi gói cước có 1 danh sách nhiều mã giảm giá áp dụng riêng)
+            var planPromosToSeed = new List<(ServicePlan? Plan, Promotion? Promo)>
+            {
+                (vpsPlan, promoVps1),
+                (vpsPlan, promoVps2),
+                (hostPlan, promoHost1),
+                (hostPlan, promoHost2),
+                (domPlan, promoDom1),
+                (domPlan, promoDom2),
+                (sslPlan, promoSsl1),
+                (sslPlan, promoSsl2),
+                (emailPlan, promoEmail1),
+                (emailPlan, promoEmail2)
+            };
+
+            foreach (var item in planPromosToSeed)
+            {
+                if (item.Plan != null && item.Promo != null)
+                {
+                    var exists = await context.PlanPromotions.AnyAsync(pp => pp.PlanId == item.Plan.Id && pp.PromotionId == item.Promo.Id);
+                    if (!exists)
+                    {
+                        await context.PlanPromotions.AddAsync(new PlanPromotion
+                        {
+                            PlanId = item.Plan.Id,
+                            PromotionId = item.Promo.Id,
+                            IsActive = true
+                        });
+                    }
+                }
+            }
+            await context.SaveChangesAsync();
 
             // 7. Seed NewsArticles
             if (!await context.NewsArticles.AnyAsync())

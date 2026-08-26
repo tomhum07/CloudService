@@ -17,6 +17,12 @@ namespace CloudService.Application.DTOs.Services
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
         public System.Collections.Generic.ICollection<PlanPriceDto> Prices { get; set; } = new System.Collections.Generic.List<PlanPriceDto>();
+        public System.Collections.Generic.ICollection<PromotionDto> ApplicablePromotions { get; set; } = new System.Collections.Generic.List<PromotionDto>();
+    }
+
+    public class SetPlanPromotionsRequest
+    {
+        public System.Collections.Generic.List<int> PromotionIds { get; set; } = new System.Collections.Generic.List<int>();
     }
 
     public class CreateServicePlanRequest

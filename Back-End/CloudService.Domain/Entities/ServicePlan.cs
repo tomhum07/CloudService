@@ -15,5 +15,6 @@ namespace CloudService.Domain.Entities
         public string? Bandwidth { get; set; }
         public string? QrCodeUrl { get; set; }
         public virtual ICollection<PlanPrice> Prices { get; set; } = new List<PlanPrice>();
+        public virtual ICollection<PlanPromotion> PlanPromotions { get; set; } = new List<PlanPromotion>();
     }
 }

@@ -95,5 +95,60 @@ namespace CloudService.WebApi.Controllers
             await _hubContext.Clients.All.SendAsync("DataChanged", "promotion", "delete");
             return NoContent();
         }
+
+        [HttpGet("plan/{planId}")]
+        public async Task<ActionResult<IEnumerable<PromotionDto>>> GetPlanPromotions(int planId, [FromQuery] bool activeOnly = false)
+        {
+            var list = await _planPriceService.GetPromotionsByPlanIdAsync(planId, activeOnly);
+            return Ok(list);
+        }
+
+        [HttpPost("plan/{planId}/{promotionId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AddPromotionToPlan(int planId, int promotionId)
+        {
+            var actor = User?.Identity?.Name ?? "Admin";
+            var success = await _planPriceService.AddPromotionToPlanAsync(planId, promotionId);
+            if (!success)
+            {
+                return BadRequest(new { message = "Không tìm thấy gói cước hoặc chương trình khuyến mãi." });
+            }
+
+            await _auditLogService.LogAsync(actor, "Gán mã khuyến mãi cho gói", $"Gán mã #{promotionId} vào danh sách áp dụng của gói #{planId}");
+            await _hubContext.Clients.All.SendAsync("DataChanged", "promotion", "update");
+            return Ok(new { success = true, message = "Đã thêm mã vào danh sách áp dụng của gói cước." });
+        }
+
+        [HttpDelete("plan/{planId}/{promotionId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> RemovePromotionFromPlan(int planId, int promotionId)
+        {
+            var actor = User?.Identity?.Name ?? "Admin";
+            var success = await _planPriceService.RemovePromotionFromPlanAsync(planId, promotionId);
+            if (!success)
+            {
+                return BadRequest(new { message = "Không thể gỡ bỏ mã khuyến mãi." });
+            }
+
+            await _auditLogService.LogAsync(actor, "Gỡ mã khuyến mãi khỏi gói", $"Gỡ mã #{promotionId} khỏi danh sách áp dụng của gói #{planId}");
+            await _hubContext.Clients.All.SendAsync("DataChanged", "promotion", "update");
+            return Ok(new { success = true, message = "Đã gỡ mã khỏi danh sách áp dụng của gói cước." });
+        }
+
+        [HttpPut("plan/{planId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> SetPlanPromotions(int planId, [FromBody] SetPlanPromotionsRequest request)
+        {
+            var actor = User?.Identity?.Name ?? "Admin";
+            var success = await _planPriceService.SetPlanPromotionsAsync(planId, request.PromotionIds);
+            if (!success)
+            {
+                return BadRequest(new { message = "Không tìm thấy gói cước để cập nhật mã khuyến mãi." });
+            }
+
+            await _auditLogService.LogAsync(actor, "Cập nhật danh sách mã khuyến mãi của gói", $"Cập nhật {request.PromotionIds.Count} mã cho gói #{planId}");
+            await _hubContext.Clients.All.SendAsync("DataChanged", "promotion", "update");
+            return Ok(new { success = true, message = "Đã cập nhật danh sách mã giảm giá cho gói cước." });
+        }
     }
 }

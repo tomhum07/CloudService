@@ -17,5 +17,8 @@ namespace CloudService.Application.Interfaces
         Task<bool> DeletePromotionAsync(int id);
         Task<PromotionDto?> ValidatePromotionAsync(string code);
         Task<(PromotionDto? Promotion, string? ErrorMessage)> ValidatePromotionForPlanAsync(string code, int? planId);
+        Task<bool> AddPromotionToPlanAsync(int planId, int promotionId);
+        Task<bool> RemovePromotionFromPlanAsync(int planId, int promotionId);
+        Task<bool> SetPlanPromotionsAsync(int planId, IEnumerable<int> promotionIds);
     }
 }

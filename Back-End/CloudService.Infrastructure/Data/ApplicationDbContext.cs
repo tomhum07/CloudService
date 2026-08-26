@@ -22,6 +22,7 @@ namespace CloudService.Infrastructure.Data
         public DbSet<ServicePlan> ServicePlans => Set<ServicePlan>();
         public DbSet<PlanPrice> PlanPrices => Set<PlanPrice>();
         public DbSet<Promotion> Promotions => Set<Promotion>();
+        public DbSet<PlanPromotion> PlanPromotions => Set<PlanPromotion>();
         public DbSet<OrderRequest> OrderRequests => Set<OrderRequest>();
         public DbSet<AffiliateApplication> AffiliateApplications => Set<AffiliateApplication>();
         public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
