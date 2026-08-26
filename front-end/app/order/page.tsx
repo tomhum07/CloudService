@@ -253,8 +253,9 @@ function OrderFormContent() {
     setPromoMessage(null);
 
     try {
-      // 1. Gọi API xác thực mã giảm giá từ database
-      const res = await apiFetch(`/api/promotions/validate/${encodeURIComponent(code)}`);
+      // 1. Gọi API xác thực mã giảm giá riêng của gói cước từ database
+      const planQuery = plan?.id ? `?planId=${plan.id}` : "";
+      const res = await apiFetch(`/api/promotions/validate/${encodeURIComponent(code)}${planQuery}`);
       if (res.ok) {
         const data = await res.json();
         const discount = Number(data.discountPercentage) || 0;
@@ -262,7 +263,7 @@ function OrderFormContent() {
         setAppliedPromoName(data.name || code);
         setPromoMessage({
           type: "success",
-          text: `Áp dụng mã ${data.name} thành công! Giảm ${discount}% tổng giá trị.`
+          text: `Áp dụng mã ${data.name} thành công! Giảm ${discount}% cho gói ${plan?.name || "dịch vụ"}.`
         });
       } else {
         const errorData = await res.json().catch(() => null);
@@ -270,38 +271,28 @@ function OrderFormContent() {
         setAppliedPromoName("");
         setPromoMessage({
           type: "error",
-          text: errorData?.message || "Mã giảm giá không tồn tại hoặc đã hết hạn sử dụng."
+          text: errorData?.message || `Mã giảm giá '${code}' không áp dụng cho gói cước ${plan?.name || "này"}.`
         });
       }
-    } catch (err) {
-      console.warn("Lỗi kiểm tra mã giảm giá:", err);
-      // Fallback kiểm tra offline
-      const upperCode = code.toUpperCase();
-      if (upperCode === "CLOUDSERVICE2026" || upperCode === "VIETNIX" || upperCode === "VIETTELIDC") {
-        setDiscountPercent(15);
-        setAppliedPromoName(upperCode);
-        setPromoMessage({
-          type: "success",
-          text: `Áp dụng mã ưu đãi ${upperCode} thành công! Giảm 15% tổng giá trị.`
-        });
-      } else {
-        setDiscountPercent(0);
-        setAppliedPromoName("");
-        setPromoMessage({
-          type: "error",
-          text: "Mã giảm giá không hợp lệ hoặc máy chủ không phản hồi."
-        });
-      }
+    } catch {
+      setDiscountPercent(0);
+      setAppliedPromoName("");
+      setPromoMessage({
+        type: "error",
+        text: "Không thể kết nối đến máy chủ xác thực mã giảm giá."
+      });
     } finally {
       setPromoLoading(false);
     }
   };
 
-  // Tải danh sách khuyến mãi đang còn hiệu lực & Tự động đồng bộ Real-time nếu Admin tắt mã
+  // Tải danh sách khuyến mãi DÀNH RIÊNG cho gói cước đang chọn & Tự động đồng bộ Real-time nếu Admin bật/tắt/sửa mã
   useEffect(() => {
+    if (!plan?.id) return;
+
     async function loadVouchers() {
       try {
-        const res = await apiFetch("/api/promotions?activeOnly=true");
+        const res = await apiFetch(`/api/promotions?planId=${plan?.id}&activeOnly=true`);
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data)) {
@@ -314,7 +305,7 @@ function OrderFormContent() {
             });
             setAvailableVouchers(active);
 
-            // Đồng bộ: Nếu mã khách hàng đang áp dụng vừa bị admin tắt/xóa -> tự động hủy bỏ áp dụng ngay lập tức
+            // Đồng bộ: Nếu mã khách hàng đang áp dụng không thuộc danh sách mã riêng của gói này -> hủy bỏ ngay
             setPromoCode((currentCode) => {
               if (currentCode) {
                 const isValid = active.some((v: any) => v.name?.toLowerCase() === currentCode.trim().toLowerCase());
@@ -324,7 +315,7 @@ function OrderFormContent() {
                   setModalSelectedPromo(null);
                   setPromoMessage({
                     type: "error",
-                    text: "Mã khuyến mãi vừa bị hệ thống đóng hoặc không còn hiệu lực."
+                    text: `Mã giảm giá '${currentCode}' không áp dụng cho gói cước ${plan?.name || "này"}.`
                   });
                   return "";
                 }
@@ -348,7 +339,7 @@ function OrderFormContent() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [plan?.id, plan?.name]);
 
   const handleApplyModalCode = async () => {
     const code = modalSearchCode.trim();
@@ -359,7 +350,8 @@ function OrderFormContent() {
     setPromoLoading(true);
     setModalError(null);
     try {
-      const res = await apiFetch(`/api/promotions/validate/${encodeURIComponent(code)}`);
+      const planQuery = plan?.id ? `?planId=${plan.id}` : "";
+      const res = await apiFetch(`/api/promotions/validate/${encodeURIComponent(code)}${planQuery}`);
       if (res.ok) {
         const data = await res.json();
         setModalSelectedPromo(data);
@@ -369,7 +361,7 @@ function OrderFormContent() {
         setModalSearchCode("");
       } else {
         const errorData = await res.json().catch(() => null);
-        setModalError(errorData?.message || "Mã giảm giá không tồn tại hoặc đã hết hạn sử dụng.");
+        setModalError(errorData?.message || `Mã giảm giá '${code}' không áp dụng cho gói ${plan?.name || "này"}.`);
       }
     } catch {
       setModalError("Không thể kết nối đến máy chủ.");
@@ -453,16 +445,19 @@ function OrderFormContent() {
     // Kiểm tra tính hợp lệ mới nhất của mã khuyến mãi trước khi tạo đơn
     if (promoCode.trim()) {
       try {
-        const valRes = await apiFetch(`/api/promotions/validate/${encodeURIComponent(promoCode.trim())}`);
+        const planQuery = plan?.id ? `?planId=${plan.id}` : "";
+        const valRes = await apiFetch(`/api/promotions/validate/${encodeURIComponent(promoCode.trim())}${planQuery}`);
         if (!valRes.ok) {
+          const errData = await valRes.json().catch(() => null);
           setDiscountPercent(0);
           setAppliedPromoName("");
           setModalSelectedPromo(null);
+          const msg = errData?.message || `Mã giảm giá không áp dụng cho gói cước ${plan?.name || ""}.`;
           setPromoMessage({
             type: "error",
-            text: "Mã khuyến mãi này vừa bị hệ thống đóng hoặc không còn áp dụng được nữa."
+            text: msg
           });
-          setValidationError("Mã khuyến mãi đã hết hạn hoặc bị tắt. Vui lòng kiểm tra lại đơn hàng.");
+          setValidationError(msg);
           setLoading(false);
           return;
         }
@@ -1221,14 +1216,14 @@ function OrderFormContent() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">Chọn Mã Giảm Giá</h3>
-                  <p className="text-[10px] text-slate-500">Ưu đãi áp dụng trực tiếp vào đơn hàng của bạn</p>
+                  <h3 className="text-sm font-bold text-slate-900">Mã Giảm Giá Của Gói {plan?.name ? `"${plan.name}"` : ""}</h3>
+                  <p className="text-[10px] text-slate-500">Chỉ áp dụng các mã ưu đãi hợp lệ được cấp riêng cho gói cước này</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsVoucherModalOpen(false)}
-                className="w-8 h-8 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors font-bold text-sm"
+                className="w-8 h-8 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors font-bold text-sm cursor-pointer"
                 title="Đóng cửa sổ"
               >
                 ✕
@@ -1240,7 +1235,7 @@ function OrderFormContent() {
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="Nhập mã voucher giảm giá..."
+                  placeholder="Nhập mã voucher giảm giá của gói..."
                   value={modalSearchCode}
                   onChange={(e) => {
                     setModalSearchCode(e.target.value.toUpperCase());
@@ -1252,7 +1247,7 @@ function OrderFormContent() {
                   type="button"
                   disabled={promoLoading || !modalSearchCode.trim()}
                   onClick={handleApplyModalCode}
-                  className="px-4 h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 font-bold text-xs transition-colors shadow-xs"
+                  className="px-4 h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 font-bold text-xs transition-colors shadow-xs cursor-pointer"
                 >
                   {promoLoading ? "..." : "Áp Dụng"}
                 </button>
@@ -1267,13 +1262,13 @@ function OrderFormContent() {
             {/* Danh Sách Vé Khuyến Mãi (Ticket Cards) */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/70 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <div className="flex justify-between items-center mb-1">
-                <span className="text-xs font-bold text-slate-800">Mã Khuyến Mãi Khả Dụng</span>
+                <span className="text-xs font-bold text-slate-800">Mã Ưu Đãi Riêng Của Gói</span>
                 <span className="text-[11px] text-slate-400 font-medium">{availableVouchers.length} mã khả dụng</span>
               </div>
 
               {availableVouchers.length === 0 ? (
                 <div className="p-8 text-center bg-white rounded-2xl border border-slate-200 text-xs text-slate-400">
-                  Hiện chưa có chương trình khuyến mãi nào khả dụng.
+                  Gói cước {plan?.name ? `"${plan.name}"` : "này"} hiện chưa có mã giảm giá riêng trong hệ thống.
                 </div>
               ) : (
                 availableVouchers.map((v, idx) => {

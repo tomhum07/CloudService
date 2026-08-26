@@ -96,20 +96,38 @@ namespace CloudService.Infrastructure.Data
                 await context.SaveChangesAsync();
             }
 
-            // 3. Seed Promotions
-            if (!await context.Promotions.AnyAsync())
+            // 3. Seed Promotions (Mã giảm giá theo từng gói cước)
+            var planSpecificPromos = new[]
             {
-                var promotions = new[]
+                // Mã riêng cho gói Cloud VPS
+                new Promotion { Name = "VPSPRO10", DiscountPercentage = 10, StartDate = DateTime.UtcNow.AddDays(-10), EndDate = DateTime.UtcNow.AddDays(180) },
+                new Promotion { Name = "VPSSTART20", DiscountPercentage = 20, StartDate = DateTime.UtcNow.AddDays(-10), EndDate = DateTime.UtcNow.AddDays(180) },
+
+                // Mã riêng cho gói WordPress Hosting
+                new Promotion { Name = "HOSTING15", DiscountPercentage = 15, StartDate = DateTime.UtcNow.AddDays(-10), EndDate = DateTime.UtcNow.AddDays(180) },
+                new Promotion { Name = "WPSPECIAL25", DiscountPercentage = 25, StartDate = DateTime.UtcNow.AddDays(-10), EndDate = DateTime.UtcNow.AddDays(180) },
+
+                // Mã riêng cho gói Tên Miền
+                new Promotion { Name = "DOMAIN5", DiscountPercentage = 5, StartDate = DateTime.UtcNow.AddDays(-10), EndDate = DateTime.UtcNow.AddDays(180) },
+                new Promotion { Name = "COMDEAL10", DiscountPercentage = 10, StartDate = DateTime.UtcNow.AddDays(-10), EndDate = DateTime.UtcNow.AddDays(180) },
+
+                // Mã riêng cho gói SSL Certificate
+                new Promotion { Name = "SSLPRO15", DiscountPercentage = 15, StartDate = DateTime.UtcNow.AddDays(-10), EndDate = DateTime.UtcNow.AddDays(180) },
+                new Promotion { Name = "SECURE20", DiscountPercentage = 20, StartDate = DateTime.UtcNow.AddDays(-10), EndDate = DateTime.UtcNow.AddDays(180) },
+
+                // Mã riêng cho gói Business Email
+                new Promotion { Name = "EMAILBIZ10", DiscountPercentage = 10, StartDate = DateTime.UtcNow.AddDays(-10), EndDate = DateTime.UtcNow.AddDays(180) },
+                new Promotion { Name = "CORPMAIL20", DiscountPercentage = 20, StartDate = DateTime.UtcNow.AddDays(-10), EndDate = DateTime.UtcNow.AddDays(180) }
+            };
+
+            foreach (var promo in planSpecificPromos)
+            {
+                if (!await context.Promotions.AnyAsync(p => p.Name == promo.Name))
                 {
-                    new Promotion { Name = "Mừng Khai Trương", DiscountPercentage = 10, StartDate = DateTime.UtcNow.AddDays(-5), EndDate = DateTime.UtcNow.AddDays(30) },
-                    new Promotion { Name = "Khuyến Mãi Hè rực rỡ", DiscountPercentage = 15, StartDate = DateTime.UtcNow.AddDays(-10), EndDate = DateTime.UtcNow.AddDays(20) },
-                    new Promotion { Name = "Đăng ký dài hạn 2 năm", DiscountPercentage = 20, StartDate = DateTime.UtcNow.AddDays(-30), EndDate = DateTime.UtcNow.AddDays(180) },
-                    new Promotion { Name = "Black Friday Săn Deal", DiscountPercentage = 30, StartDate = DateTime.UtcNow.AddDays(90), EndDate = DateTime.UtcNow.AddDays(95) },
-                    new Promotion { Name = "Chào bạn mới - Cloud Start", DiscountPercentage = 5, StartDate = DateTime.UtcNow.AddDays(-60), EndDate = DateTime.UtcNow.AddDays(365) }
-                };
-                await context.Promotions.AddRangeAsync(promotions);
-                await context.SaveChangesAsync();
+                    await context.Promotions.AddAsync(promo);
+                }
             }
+            await context.SaveChangesAsync();
 
             // 4. Seed ServiceCategories
             if (!await context.ServiceCategories.AnyAsync())
@@ -147,30 +165,87 @@ namespace CloudService.Infrastructure.Data
                 await context.SaveChangesAsync();
             }
 
-            // 6. Seed PlanPrices
+            // 6. Seed PlanPrices (Mỗi gói có các chu kỳ và được gán mã giảm giá riêng)
+            var allPlans = await context.ServicePlans.ToListAsync();
+            var allPromos = await context.Promotions.ToListAsync();
+
+            var vpsPlan = allPlans.FirstOrDefault(p => p.Name == "Cloud VPS Pro S1");
+            var hostPlan = allPlans.FirstOrDefault(p => p.Name == "WordPress Hosting Basic");
+            var domPlan = allPlans.FirstOrDefault(p => p.Name == "Domain .COM");
+            var sslPlan = allPlans.FirstOrDefault(p => p.Name == "Sectigo PositiveSSL");
+            var emailPlan = allPlans.FirstOrDefault(p => p.Name == "Business Email Pro E1");
+
+            var promoVps1 = allPromos.FirstOrDefault(p => p.Name == "VPSPRO10");
+            var promoVps2 = allPromos.FirstOrDefault(p => p.Name == "VPSSTART20");
+            var promoHost1 = allPromos.FirstOrDefault(p => p.Name == "HOSTING15");
+            var promoHost2 = allPromos.FirstOrDefault(p => p.Name == "WPSPECIAL25");
+            var promoDom1 = allPromos.FirstOrDefault(p => p.Name == "DOMAIN5");
+            var promoDom2 = allPromos.FirstOrDefault(p => p.Name == "COMDEAL10");
+            var promoSsl1 = allPromos.FirstOrDefault(p => p.Name == "SSLPRO15");
+            var promoSsl2 = allPromos.FirstOrDefault(p => p.Name == "SECURE20");
+            var promoEmail1 = allPromos.FirstOrDefault(p => p.Name == "EMAILBIZ10");
+            var promoEmail2 = allPromos.FirstOrDefault(p => p.Name == "CORPMAIL20");
+
             if (!await context.PlanPrices.AnyAsync())
             {
-                var vpsPlan = await context.ServicePlans.FirstAsync(p => p.Name == "Cloud VPS Pro S1");
-                var hostPlan = await context.ServicePlans.FirstAsync(p => p.Name == "WordPress Hosting Basic");
-                var domPlan = await context.ServicePlans.FirstAsync(p => p.Name == "Domain .COM");
-                var sslPlan = await context.ServicePlans.FirstAsync(p => p.Name == "Sectigo PositiveSSL");
-                var emailPlan = await context.ServicePlans.FirstAsync(p => p.Name == "Business Email Pro E1");
+                var initialPrices = new List<PlanPrice>();
 
-                var promo1 = await context.Promotions.FirstAsync(p => p.Name == "Mừng Khai Trương");
-                var promo2 = await context.Promotions.FirstAsync(p => p.Name == "Khuyến Mãi Hè rực rỡ");
-
-                var prices = new[]
+                if (vpsPlan != null)
                 {
-                    new PlanPrice { PlanId = vpsPlan.Id, BillingCycle = "Tháng", Price = 250000, PromotionId = promo1.Id },
-                    new PlanPrice { PlanId = vpsPlan.Id, BillingCycle = "Năm", Price = 2700000, PromotionId = promo2.Id },
-                    new PlanPrice { PlanId = hostPlan.Id, BillingCycle = "Tháng", Price = 50000, PromotionId = null },
-                    new PlanPrice { PlanId = hostPlan.Id, BillingCycle = "Năm", Price = 540000, PromotionId = promo1.Id },
-                    new PlanPrice { PlanId = domPlan.Id, BillingCycle = "Năm", Price = 350000, PromotionId = null },
-                    new PlanPrice { PlanId = sslPlan.Id, BillingCycle = "Năm", Price = 220000, PromotionId = null },
-                    new PlanPrice { PlanId = emailPlan.Id, BillingCycle = "Tháng", Price = 30000, PromotionId = null },
-                    new PlanPrice { PlanId = emailPlan.Id, BillingCycle = "Năm", Price = 320000, PromotionId = promo1.Id }
-                };
-                await context.PlanPrices.AddRangeAsync(prices);
+                    initialPrices.Add(new PlanPrice { PlanId = vpsPlan.Id, BillingCycle = "Tháng", Price = 250000, PromotionId = promoVps1?.Id });
+                    initialPrices.Add(new PlanPrice { PlanId = vpsPlan.Id, BillingCycle = "Năm", Price = 2700000, PromotionId = promoVps2?.Id });
+                }
+                if (hostPlan != null)
+                {
+                    initialPrices.Add(new PlanPrice { PlanId = hostPlan.Id, BillingCycle = "Tháng", Price = 50000, PromotionId = promoHost1?.Id });
+                    initialPrices.Add(new PlanPrice { PlanId = hostPlan.Id, BillingCycle = "Năm", Price = 540000, PromotionId = promoHost2?.Id });
+                }
+                if (domPlan != null)
+                {
+                    initialPrices.Add(new PlanPrice { PlanId = domPlan.Id, BillingCycle = "Tháng", Price = 35000, PromotionId = promoDom1?.Id });
+                    initialPrices.Add(new PlanPrice { PlanId = domPlan.Id, BillingCycle = "Năm", Price = 350000, PromotionId = promoDom2?.Id });
+                }
+                if (sslPlan != null)
+                {
+                    initialPrices.Add(new PlanPrice { PlanId = sslPlan.Id, BillingCycle = "Tháng", Price = 25000, PromotionId = promoSsl1?.Id });
+                    initialPrices.Add(new PlanPrice { PlanId = sslPlan.Id, BillingCycle = "Năm", Price = 220000, PromotionId = promoSsl2?.Id });
+                }
+                if (emailPlan != null)
+                {
+                    initialPrices.Add(new PlanPrice { PlanId = emailPlan.Id, BillingCycle = "Tháng", Price = 30000, PromotionId = promoEmail1?.Id });
+                    initialPrices.Add(new PlanPrice { PlanId = emailPlan.Id, BillingCycle = "Năm", Price = 320000, PromotionId = promoEmail2?.Id });
+                }
+
+                await context.PlanPrices.AddRangeAsync(initialPrices);
+                await context.SaveChangesAsync();
+            }
+            else
+            {
+                // Cập nhật liên kết mã riêng nếu bảng PlanPrices đã tồn tại từ trước
+                var existingPrices = await context.PlanPrices.ToListAsync();
+                foreach (var price in existingPrices)
+                {
+                    if (vpsPlan != null && price.PlanId == vpsPlan.Id && price.PromotionId == null)
+                    {
+                        price.PromotionId = price.BillingCycle == "Năm" ? promoVps2?.Id : promoVps1?.Id;
+                    }
+                    else if (hostPlan != null && price.PlanId == hostPlan.Id && price.PromotionId == null)
+                    {
+                        price.PromotionId = price.BillingCycle == "Năm" ? promoHost2?.Id : promoHost1?.Id;
+                    }
+                    else if (domPlan != null && price.PlanId == domPlan.Id && price.PromotionId == null)
+                    {
+                        price.PromotionId = promoDom1?.Id;
+                    }
+                    else if (sslPlan != null && price.PlanId == sslPlan.Id && price.PromotionId == null)
+                    {
+                        price.PromotionId = promoSsl1?.Id;
+                    }
+                    else if (emailPlan != null && price.PlanId == emailPlan.Id && price.PromotionId == null)
+                    {
+                        price.PromotionId = price.BillingCycle == "Năm" ? promoEmail2?.Id : promoEmail1?.Id;
+                    }
+                }
                 await context.SaveChangesAsync();
             }
 

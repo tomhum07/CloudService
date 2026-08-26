@@ -28,19 +28,27 @@ namespace CloudService.WebApi.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<PromotionDto>>> GetAll([FromQuery] bool activeOnly = false)
+        public async Task<ActionResult<IEnumerable<PromotionDto>>> GetAll(
+            [FromQuery] int? planId = null,
+            [FromQuery] bool activeOnly = false)
         {
+            if (planId.HasValue && planId.Value > 0)
+            {
+                var planPromos = await _planPriceService.GetPromotionsByPlanIdAsync(planId.Value, activeOnly);
+                return Ok(planPromos);
+            }
+
             var promotions = await _planPriceService.GetAllPromotionsAsync(activeOnly);
             return Ok(promotions);
         }
 
         [HttpGet("validate/{code}")]
-        public async Task<ActionResult<PromotionDto>> Validate(string code)
+        public async Task<IActionResult> Validate(string code, [FromQuery] int? planId = null)
         {
-            var promotion = await _planPriceService.ValidatePromotionAsync(code);
+            var (promotion, errorMessage) = await _planPriceService.ValidatePromotionForPlanAsync(code, planId);
             if (promotion == null)
             {
-                return NotFound(new { message = "Mã giảm giá không tồn tại hoặc đã hết hạn sử dụng." });
+                return BadRequest(new { message = errorMessage ?? "Mã giảm giá không tồn tại hoặc không áp dụng được." });
             }
             return Ok(promotion);
         }
