@@ -8,19 +8,27 @@ export default function AdminLogin() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [statusMessage, setStatusMessage] = useState("");
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    if (status === "loading" || status === "success") return;
+
+    setStatus("idle");
+    setStatusMessage("");
+
     const trimmedUsername = username.trim();
     if (!trimmedUsername || !password) {
-      setError("Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.");
-      setLoading(false);
+      setStatus("error");
+      setStatusMessage("Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.");
       return;
     }
+
+    // Ẩn nút đăng nhập và hiển thị thông báo đang đăng nhập
+    setStatus("loading");
+    setStatusMessage("Đang xác thực hệ thống quản trị, vui lòng chờ...");
 
     try {
       const res = await apiFetch("/api/auth/login", {
@@ -46,21 +54,28 @@ export default function AdminLogin() {
           }
         }
 
-        if (userRole === "Admin") {
-          router.push("/admin/dashboard");
-        } else if (userRole === "Editor") {
-          router.push("/admin/news");
-        } else {
-          router.push("/");
-        }
+        // Hiển thị thông báo đăng nhập thành công
+        setStatus("success");
+        setStatusMessage("Đăng nhập quản trị thành công! Đang chuyển hướng...");
+
+        // Chờ 900ms để người dùng nhìn thấy thông báo thành công rồi mới chuyển trang
+        setTimeout(() => {
+          if (userRole === "Admin") {
+            router.push("/admin/dashboard");
+          } else if (userRole === "Editor") {
+            router.push("/admin/news");
+          } else {
+            router.push("/");
+          }
+        }, 900);
       } else {
-        const errData = await res.json();
-        setError(errData.message || "Tài khoản hoặc mật khẩu không chính xác.");
+        const errData = await res.json().catch(() => ({}));
+        setStatus("error");
+        setStatusMessage(errData.message || "Tài khoản hoặc mật khẩu không chính xác.");
       }
     } catch {
-      setError("Không thể kết nối đến máy chủ Backend.");
-    } finally {
-      setLoading(false);
+      setStatus("error");
+      setStatusMessage("Không thể kết nối đến máy chủ Backend.");
     }
   };
 
@@ -77,12 +92,31 @@ export default function AdminLogin() {
           <p className="text-xs text-slate-500">Hệ thống CloudAdmin dành cho Quản trị viên và Biên tập viên</p>
         </div>
 
-        {error && (
-          <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium mb-6 flex items-center gap-2">
+        {/* Thông báo Đang đăng nhập */}
+        {status === "loading" && (
+          <div className="p-3.5 mb-6 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold flex items-center justify-center gap-2.5 animate-pulse">
+            <span className="w-4 h-4 border-2 border-blue-600/30 border-t-blue-600 rounded-full animate-spin"></span>
+            <span>{statusMessage}</span>
+          </div>
+        )}
+
+        {/* Thông báo Đăng nhập thành công */}
+        {status === "success" && (
+          <div className="p-3.5 mb-6 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center justify-center gap-2 animate-in fade-in">
+            <svg className="w-4 h-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span>{statusMessage}</span>
+          </div>
+        )}
+
+        {/* Thông báo Đăng nhập thất bại */}
+        {status === "error" && (
+          <div className="p-3.5 mb-6 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
             <svg className="w-4 h-4 text-rose-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span>{error}</span>
+            <span>Đăng nhập thất bại: {statusMessage}</span>
           </div>
         )}
 
@@ -92,10 +126,14 @@ export default function AdminLogin() {
             <input
               type="text"
               required
+              disabled={status === "loading" || status === "success"}
               placeholder="VD: admin, editor"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
+              onChange={(e) => {
+                setUsername(e.target.value);
+                if (status === "error") setStatus("idle");
+              }}
+              className="w-full h-11 px-4 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all disabled:opacity-60"
             />
           </div>
 
@@ -110,15 +148,20 @@ export default function AdminLogin() {
               <input
                 type={showPassword ? "text" : "password"}
                 required
+                disabled={status === "loading" || status === "success"}
                 placeholder="Nhập mật khẩu quản trị"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-11 pl-4 pr-11 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (status === "error") setStatus("idle");
+                }}
+                className="w-full h-11 pl-4 pr-11 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all disabled:opacity-60"
               />
               <button
                 type="button"
+                disabled={status === "loading" || status === "success"}
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 focus:outline-none"
+                className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 focus:outline-none disabled:opacity-50"
                 title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
               >
                 {showPassword ? (
@@ -135,13 +178,15 @@ export default function AdminLogin() {
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-xs transition-all shadow-md shadow-blue-500/20"
-          >
-            {loading ? "Đang xác thực hệ thống..." : "Đăng Nhập Quản Trị"}
-          </button>
+          {/* Nút Đăng Nhập: Tự động ẩn đi khi đang đăng nhập hoặc đã thành công */}
+          {status !== "loading" && status !== "success" && (
+            <button
+              type="submit"
+              className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-all shadow-md shadow-blue-500/20 cursor-pointer"
+            >
+              Đăng Nhập Quản Trị
+            </button>
+          )}
         </form>
 
         <div className="mt-6 pt-6 border-t border-slate-100 text-center">

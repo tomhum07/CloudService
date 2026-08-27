@@ -5,8 +5,10 @@
 /Test_template/
 /Docs/
 /docs/
-/.github/
-/docker-compose.yml
+/Chi_Tiet.md
+Chi_Tiet.md
+/ERD.md
+ERD.md
 /.agents/
 /skills-lock.json
 # =========================================================================

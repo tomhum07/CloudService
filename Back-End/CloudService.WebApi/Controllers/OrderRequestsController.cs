@@ -129,13 +129,19 @@ namespace CloudService.WebApi.Controllers
         [HttpGet("my-orders")]
         public async Task<IActionResult> GetMyOrders([FromQuery] string? email)
         {
-            var user = User.Identity?.Name ?? email;
-            if (string.IsNullOrWhiteSpace(user))
+            var userEmail = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+            var username = User.Identity?.Name;
+            
+            var lookupTarget = !string.IsNullOrWhiteSpace(email) 
+                ? email 
+                : (!string.IsNullOrWhiteSpace(userEmail) ? userEmail : username);
+
+            if (string.IsNullOrWhiteSpace(lookupTarget))
             {
                 return BadRequest(new { message = "Vui lòng cung cấp email hoặc đăng nhập để tra cứu." });
             }
 
-            var orders = await _orderService.GetCustomerOrdersAsync(user);
+            var orders = await _orderService.GetCustomerOrdersAsync(lookupTarget);
             return Ok(orders);
         }
     }
