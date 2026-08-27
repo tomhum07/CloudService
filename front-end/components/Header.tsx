@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { getAccessToken, refreshAccessToken, apiFetch, setAccessToken } from "@/utils/api";
 import { dataSyncService } from "@/utils/signalr";
+import { getCategoryPlanSpecs } from "@/utils/planSpecs";
 
 interface UserProfile {
   username: string;
@@ -389,6 +390,10 @@ export default function Header() {
                             <div
                               key={cat.id}
                               onMouseEnter={() => setActiveCategoryTab(cat.id)}
+                              onClick={() => {
+                                setIsServicesOpen(false);
+                                router.push(`/services/${cat.slug}`);
+                              }}
                               className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${
                                 isSelected
                                   ? "bg-blue-50 text-blue-700 font-bold border border-blue-200 shadow-xs"
@@ -419,25 +424,30 @@ export default function Header() {
                           <>
                             {/* Category Header */}
                             <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
-                              <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                              <Link
+                                href={`/services/${currentCategory.slug}`}
+                                onClick={() => setIsServicesOpen(false)}
+                                className="flex items-center gap-3 group/catheader"
+                              >
+                                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover/catheader:bg-blue-600 group-hover/catheader:text-white transition-colors">
                                   <CategoryIcon name={currentCategory.name} className="w-5 h-5" />
                                 </div>
                                 <div>
-                                  <h3 className="text-sm font-bold text-slate-900">
-                                    {currentCategory.name}
+                                  <h3 className="text-sm font-bold text-slate-900 group-hover/catheader:text-blue-600 transition-colors flex items-center gap-1.5">
+                                    <span>{currentCategory.name}</span>
+                                    <span className="text-xs text-blue-600 opacity-0 group-hover/catheader:opacity-100 transition-opacity">→</span>
                                   </h3>
                                   <p className="text-[11px] text-slate-500 line-clamp-1">
                                     {currentCategory.description || "Hệ thống dịch vụ đám mây hiệu năng cao tiêu chuẩn quốc tế"}
                                   </p>
                                 </div>
-                              </div>
+                              </Link>
                               <Link
-                                href="/pricing"
+                                href={`/services/${currentCategory.slug}`}
                                 onClick={() => setIsServicesOpen(false)}
                                 className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline shrink-0"
                               >
-                                Xem Bảng giá →
+                                Xem Chi Tiết Danh Mục →
                               </Link>
                             </div>
 
@@ -455,6 +465,8 @@ export default function Header() {
                                     ? new Intl.NumberFormat("vi-VN").format(firstPrice) + "đ/th"
                                     : "Liên hệ";
 
+                                  const planSpecs = getCategoryPlanSpecs(currentCategory.name, plan);
+
                                   return (
                                     <Link
                                       key={plan.id}
@@ -469,12 +481,14 @@ export default function Header() {
                                         <span className="text-xs font-black text-blue-600 shrink-0">{formattedPrice}</span>
                                       </div>
                                       <p className="text-[11px] text-slate-500 line-clamp-1 mb-2.5">
-                                        {plan.description || `${plan.cpu || ""} ${plan.ram || ""} ${plan.storage || ""}`}
+                                        {plan.description || "Hạ tầng đám mây tốc độ cao"}
                                       </p>
                                       <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-slate-600 font-medium">
-                                        {plan.cpu && <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 font-mono">{plan.cpu}</span>}
-                                        {plan.ram && <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 font-mono">{plan.ram}</span>}
-                                        {plan.storage && <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 font-mono">{plan.storage}</span>}
+                                        {planSpecs.slice(0, 3).map((spec, sIdx) => (
+                                          <span key={sIdx} className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 font-mono text-[10px]">
+                                            {spec.value}
+                                          </span>
+                                        ))}
                                       </div>
                                     </Link>
                                   );
@@ -727,10 +741,23 @@ export default function Header() {
                   const catPlans = dbPlans.filter((p) => p.categoryId === cat.id);
                   return (
                     <div key={cat.id} className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                      <span className="text-xs font-bold text-blue-700 block mb-1.5 flex items-center gap-2">
-                        <CategoryIcon name={cat.name} className="w-3.5 h-3.5" />
-                        <span>{cat.name}</span>
-                      </span>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <Link
+                          href={`/services/${cat.slug}`}
+                          onClick={() => setIsOpen(false)}
+                          className="text-xs font-bold text-blue-700 hover:text-blue-800 flex items-center gap-2"
+                        >
+                          <CategoryIcon name={cat.name} className="w-3.5 h-3.5" />
+                          <span>{cat.name}</span>
+                        </Link>
+                        <Link
+                          href={`/services/${cat.slug}`}
+                          onClick={() => setIsOpen(false)}
+                          className="text-[10px] text-blue-600 font-bold hover:underline"
+                        >
+                          Chi tiết →
+                        </Link>
+                      </div>
                       <div className="space-y-1.5 pl-2">
                         {catPlans.length === 0 ? (
                           <span className="text-[11px] text-slate-400 italic block py-0.5">Chưa có gói cước</span>

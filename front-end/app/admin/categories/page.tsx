@@ -253,7 +253,18 @@ export default function CategoriesPage() {
                 filteredCategories.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((category) => (
                   <tr key={category.id} className="hover:bg-slate-50/60 transition-colors">
                     <td className="py-3.5 px-4 font-bold text-slate-900">
-                      {category.name}
+                      <a 
+                        href={`/services/${category.slug}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="hover:text-blue-600 hover:underline inline-flex items-center gap-1.5"
+                        title="Bấm để mở trang chi tiết danh mục này"
+                      >
+                        <span>{category.name}</span>
+                        <svg className="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
                     </td>
                     <td className="py-3.5 px-4">
                       <span className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg font-mono text-[11px]">
@@ -275,6 +286,18 @@ export default function CategoriesPage() {
                       )}
                     </td>
                     <td className="py-3.5 px-4 text-right space-x-1 whitespace-nowrap">
+                      <a 
+                        href={`/services/${category.slug}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-bold text-[11px] border border-blue-200 inline-flex items-center gap-1 transition-colors"
+                        title="Xem trang chi tiết danh mục này trên giao diện người dùng"
+                      >
+                        <span>Xem Chi Tiết</span>
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
                       <button 
                         onClick={() => handleOpenFormModal(category)}
                         className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-[11px] transition-colors"

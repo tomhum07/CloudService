@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { apiFetch } from "@/utils/api";
 import { dataSyncService } from "@/utils/signalr";
+import { getCategoryPlanSpecs } from "@/utils/planSpecs";
 
 function CategoryIcon({ name = "", className = "w-6 h-6" }: { name?: string; className?: string }) {
   const lower = name.toLowerCase();
@@ -148,16 +149,22 @@ export default function ServicesPage() {
                 >
                   <div>
                     <div className="flex justify-between items-start mb-4">
-                      <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors duration-200">
+                      <Link
+                        href={`/services/${cat.slug}`}
+                        className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors duration-200"
+                        title={`Xem chi tiết danh mục ${cat.name}`}
+                      >
                         <CategoryIcon name={cat.name} className="w-6 h-6" />
-                      </div>
+                      </Link>
                       <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                         {catPlans.length} gói cước
                       </span>
                     </div>
-                    <h2 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">
-                      {cat.name}
-                    </h2>
+                    <Link href={`/services/${cat.slug}`}>
+                      <h2 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">
+                        {cat.name}
+                      </h2>
+                    </Link>
                     <p className="text-xs text-slate-500 leading-relaxed mb-6">
                       {cat.description || "Hệ sinh thái hạ tầng đám mây chuyên nghiệp, tốc độ cao và an toàn tuyệt đối."}
                     </p>
@@ -179,6 +186,9 @@ export default function ServicesPage() {
                             ? new Intl.NumberFormat("vi-VN").format(priceNum) + "đ"
                             : "Liên hệ";
 
+                          const specs = getCategoryPlanSpecs(cat.name, p);
+                          const specPreview = specs.slice(0, 3).map(s => s.value).join(" • ");
+
                           return (
                             <Link
                               key={p.id}
@@ -190,7 +200,7 @@ export default function ServicesPage() {
                                   {p.name}
                                 </div>
                                 <div className="text-[10px] text-slate-500 truncate">
-                                  {p.cpu && `${p.cpu} • `}{p.ram && `${p.ram} • `}{p.storage || ""}
+                                  {specPreview || "Hạ tầng đám mây tốc độ cao"}
                                 </div>
                               </div>
                               <span className="text-xs font-black text-blue-600 shrink-0">
@@ -204,10 +214,10 @@ export default function ServicesPage() {
                   </div>
 
                   <Link
-                    href={`/pricing`}
+                    href={`/services/${cat.slug}`}
                     className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center transition-colors shadow-md shadow-blue-500/20"
                   >
-                    Xem Bảng Giá & Đăng Ký →
+                    Xem Chi Tiết Danh Mục & Gói Cước →
                   </Link>
                 </div>
               );

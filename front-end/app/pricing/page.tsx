@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { apiFetch } from "@/utils/api";
 import { dataSyncService } from "@/utils/signalr";
+import { getCategoryPlanSpecs } from "@/utils/planSpecs";
 
 export default function PricingPage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -240,31 +241,23 @@ export default function PricingPage() {
                       </div>
                     )}
 
-                    {/* Hardware Specs Table */}
+                    {/* Category-Tailored Specs Table */}
                     <div className="py-3 my-4 border-t border-b border-slate-100 space-y-2.5 text-xs">
-                      <div className="flex justify-between items-center text-slate-600">
-                        <span className="text-slate-500 font-medium">Vi xử lý (CPU)</span>
-                        <span className="font-semibold text-slate-900 font-mono text-[11px]">{plan.cpu || "1 vCPU"}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-slate-600">
-                        <span className="text-slate-500 font-medium">Bộ nhớ (RAM)</span>
-                        <span className="font-semibold text-slate-900 font-mono text-[11px]">{plan.ram || "2 GB RAM"}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-slate-600">
-                        <span className="text-slate-500 font-medium">Lưu trữ (Disk)</span>
-                        <span className="font-semibold text-slate-900 font-mono text-[11px]">{plan.storage || "30 GB NVMe"}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-slate-600">
-                        <span className="text-slate-500 font-medium">Băng thông</span>
-                        <span className="font-semibold text-slate-900">{plan.bandwidth || "1 Gbps Không giới hạn"}</span>
-                      </div>
+                      {getCategoryPlanSpecs(plan.category?.name || "", plan).map((spec, sIdx) => (
+                        <div key={sIdx} className="flex justify-between items-center text-slate-600">
+                          <span className="text-slate-500 font-medium">{spec.label}</span>
+                          <span className={`font-semibold text-slate-900 ${spec.isMono ? "font-mono text-[11px]" : "text-xs"}`}>
+                            {spec.value}
+                          </span>
+                        </div>
+                      ))}
                       <div className="flex justify-between items-center text-slate-600 pt-0.5">
-                        <span className="text-slate-500 font-medium">Tường lửa</span>
+                        <span className="text-slate-500 font-medium">Bảo vệ & Uptime</span>
                         <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 text-[11px]">
                           <svg className="w-3.5 h-3.5 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
-                          Anti-DDoS 100Gbps
+                          SLA 99.99%
                         </span>
                       </div>
                     </div>

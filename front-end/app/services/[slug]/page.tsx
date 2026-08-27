@@ -390,6 +390,7 @@ export const SERVICE_DETAILS_DATA: Record<string, {
 import { useState, useEffect } from "react";
 import { apiFetch } from "@/utils/api";
 import { dataSyncService } from "@/utils/signalr";
+import { getCategoryPlanSpecs } from "@/utils/planSpecs";
 
 export default function ServiceDetailPage() {
   const params = useParams();
@@ -448,10 +449,10 @@ export default function ServiceDetailPage() {
               return {
                 id: p.id,
                 name: p.name,
-                cpu: p.cpu || "Tối ưu hóa",
-                ram: p.ram || "Tự động co giãn",
-                storage: p.storage || "NVMe Enterprise",
-                bandwidth: p.bandwidth || "Không giới hạn",
+                cpu: p.cpu,
+                ram: p.ram,
+                storage: p.storage,
+                bandwidth: p.bandwidth,
                 price: formattedPrice,
                 popular: idx === 1
               };
@@ -483,15 +484,61 @@ export default function ServiceDetailPage() {
   const effectiveCategory = category ? category.name : (staticData ? staticData.category : "Dịch Vụ Cloud");
   const effectiveName = category ? category.name : (staticData ? staticData.name : slug.replace(/-/g, " ").toUpperCase());
   const effectiveDescription = category?.description || staticData?.description || "Giải pháp hạ tầng điện toán đám mây tốc độ cao, đạt chuẩn quốc tế Datacenter Tier 3 với cam kết SLA 99.99%.";
-  const effectiveBadge = staticData?.badge || "Tiêu Chuẩn Tier 3";
-  const effectiveTagline = staticData?.tagline || `Dịch vụ ${effectiveName} chất lượng cao, an toàn và tối ưu chi phí`;
+  const effectiveBadge = staticData?.badge || (effectiveCategory.toLowerCase().includes("domain") ? "Kích Hoạt Tức Thì" : "Tiêu Chuẩn Tier 3");
+  
+  const getCategoryTagline = () => {
+    if (staticData?.tagline) return staticData.tagline;
+    const lower = (effectiveCategory + " " + slug).toLowerCase();
+    if (lower.includes("domain") || lower.includes("tên miền") || lower.includes("ten-mien")) {
+      return "Đăng ký & Quản lý tên miền quốc tế, Việt Nam - Kích hoạt tự động, DNS Anycast tốc độ cao";
+    }
+    if (lower.includes("ssl") || lower.includes("chứng chỉ")) {
+      return "Chứng chỉ số bảo mật HTTPS hàng đầu thế giới - Mã hóa 256-bit, tăng điểm SEO và độ uy tín";
+    }
+    if (lower.includes("email") || lower.includes("thư") || lower.includes("mail")) {
+      return "Email doanh nghiệp theo tên miền riêng - Cam kết vào Inbox 99.9%, bộ lọc chống Spam bằng AI";
+    }
+    return `Hệ thống dịch vụ ${effectiveName} chất lượng cao, an toàn và tối ưu chi phí`;
+  };
+
+  const getCategoryFeatures = () => {
+    if (staticData?.features) return staticData.features;
+    const lower = (effectiveCategory + " " + slug).toLowerCase();
+    if (lower.includes("domain") || lower.includes("tên miền") || lower.includes("ten-mien")) {
+      return [
+        { title: "Quản Trị DNS Anycast Miễn Phí", desc: "Hệ thống DNS phân giải tốc độ cao toàn cầu, ổn định và bảo mật tối đa." },
+        { title: "Bảo Vệ Thông Tin Whois", desc: "Ẩn danh hoàn toàn thông tin cá nhân của chủ sở hữu khỏi spam và thu thập trái phép." },
+        { title: "Khóa Tên Miền An Toàn (Domain Lock)", desc: "Ngăn chặn triệt để nguy cơ đánh cắp hoặc chuyển nhượng tên miền trái phép." },
+        { title: "Kích Hoạt Tự Động Trong 60s", desc: "Hệ thống tự động đăng ký và bàn giao quyền quản trị ngay sau khi thanh toán thành công." }
+      ];
+    }
+    if (lower.includes("ssl") || lower.includes("chứng chỉ")) {
+      return [
+        { title: "Mã Hóa 256-bit Tiêu Chuẩn Quốc Tế", desc: "Bảo mật tuyệt đối thông tin truyền tải, tương thích 99.9% các trình duyệt web và thiết bị di động." },
+        { title: "Hạn Mức Bảo Hiểm Uy Tín", desc: "Bảo vệ giao dịch trực tuyến với gói bồi thường thiệt hại từ các tổ chức CA hàng đầu." },
+        { title: "Xác Thực Nhanh Chóng", desc: "Quy trình xác thực tự động qua bản ghi DNS hoặc Email, nhận chứng chỉ chỉ trong 15 phút." },
+        { title: "Nâng Cao Thứ Hạng SEO Google", desc: "Google ưu tiên đánh giá cao các website có HTTPS, gia tăng mức độ tin cậy từ khách hàng." }
+      ];
+    }
+    if (lower.includes("email") || lower.includes("thư") || lower.includes("mail")) {
+      return [
+        { title: "Email Theo Tên Miền Doanh Nghiệp", desc: "Khẳng định uy tín và chuyên nghiệp cho thương hiệu khi liên hệ với đối tác, khách hàng." },
+        { title: "Bộ Lọc Antispam & Antivirus AI", desc: "Hệ thống bảo vệ đa tầng tự động loại bỏ thư rác và các liên kết mã độc hại." },
+        { title: "Cam Kết Tỷ Lệ Vào Inbox 99.9%", desc: "Dải IP máy chủ gửi thư uy tín cao, đảm bảo email không bị chuyển vào thư mục Spam." },
+        { title: "Đồng Bộ Mượt Mà Mọi Thiết Bị", desc: "Tương thích hoàn hảo với Outlook, Thunderbird, Webmail Pro và ứng dụng di động." }
+      ];
+    }
+    return [
+      { title: "Hạ Tầng Datacenter Tier 3", desc: "Máy chủ đặt tại các trung tâm dữ liệu hàng đầu với nguồn điện kép và hệ thống làm mát tối ưu." },
+      { title: "Bảo Vệ Anti-DDoS Độc Quyền", desc: "Tường lửa đa tầng tự động ngăn chặn các cuộc tấn công mạng Layer 3, 4 và Layer 7." },
+      { title: "Kích Hoạt Tức Thì", desc: "Hệ thống tự động thiết lập và bàn giao thông tin quản trị dịch vụ trong vòng 60 giây." },
+      { title: "Hỗ Trợ Kỹ Thuật 24/7", desc: "Đội ngũ kỹ sư túc trực 24/7/365 sẵn sàng giải quyết mọi vấn đề của quý khách hàng." }
+    ];
+  };
+
+  const effectiveTagline = getCategoryTagline();
   const effectiveHighlightChip = staticData?.highlightChip || "Tự Động Kích Hoạt & Uptime 99.99%";
-  const effectiveFeatures = staticData?.features || [
-    { title: "Hạ Tầng Datacenter Tier 3", desc: "Máy chủ đặt tại các trung tâm dữ liệu hàng đầu với nguồn điện kép và hệ thống làm mát tối ưu." },
-    { title: "Bảo Vệ Anti-DDoS Độc Quyền", desc: "Tường lửa đa tầng tự động ngăn chặn các cuộc tấn công mạng Layer 3, 4 và Layer 7." },
-    { title: "Kích Hoạt Tức Thì", desc: "Hệ thống tự động thiết lập và bàn giao thông tin quản trị dịch vụ trong vòng 60 giây." },
-    { title: "Hỗ Trợ Kỹ Thuật 24/7", desc: "Đội ngũ kỹ sư túc trực 24/7/365 sẵn sàng giải quyết mọi vấn đề của quý khách hàng." }
-  ];
+  const effectiveFeatures = getCategoryFeatures();
 
   const effectivePlans = dbPlans.length > 0 ? dbPlans : (staticData?.plans || []);
   const effectivePriceStarting = effectivePlans.length > 0 ? `${effectivePlans[0].price} / tháng` : (staticData?.priceStarting || "Liên hệ");
@@ -708,42 +755,26 @@ function ServiceDetailView({ service, slug }: { service: typeof SERVICE_DETAILS_
                 <div>
                   <h3 className="text-base font-bold text-slate-900 mb-2">{p.name}</h3>
                   <div className="text-2xl font-black text-blue-600 mb-4">
-                    {p.price} <span className="text-xs text-slate-500 font-normal">/ tháng</span>
+                    {p.price}{!p.price.includes("/") && <span className="text-xs text-slate-500 font-normal"> / tháng</span>}
                   </div>
                   
-                  {/* Clean Specs Table */}
-                  <div className="py-3 my-4 border-t border-b border-slate-100 space-y-2 text-xs">
-                    {p.cpu && (
-                      <div className="flex justify-between items-center text-slate-600">
-                        <span className="text-slate-500 font-medium">Vi xử lý</span>
-                        <span className="font-semibold text-slate-900 font-mono text-[11px]">{p.cpu}</span>
+                  {/* Category-Tailored Specs Table */}
+                  <div className="py-3 my-4 border-t border-b border-slate-100 space-y-2.5 text-xs">
+                    {getCategoryPlanSpecs(service.category, p).map((spec, sIdx) => (
+                      <div key={sIdx} className="flex justify-between items-center text-slate-600">
+                        <span className="text-slate-500 font-medium">{spec.label}</span>
+                        <span className={`font-semibold text-slate-900 ${spec.isMono ? "font-mono text-[11px]" : "text-xs"}`}>
+                          {spec.value}
+                        </span>
                       </div>
-                    )}
-                    {p.ram && (
-                      <div className="flex justify-between items-center text-slate-600">
-                        <span className="text-slate-500 font-medium">Bộ nhớ</span>
-                        <span className="font-semibold text-slate-900 font-mono text-[11px]">{p.ram}</span>
-                      </div>
-                    )}
-                    {p.storage && (
-                      <div className="flex justify-between items-center text-slate-600">
-                        <span className="text-slate-500 font-medium">Ổ cứng</span>
-                        <span className="font-semibold text-slate-900 font-mono text-[11px]">{p.storage}</span>
-                      </div>
-                    )}
-                    {p.bandwidth && (
-                      <div className="flex justify-between items-center text-slate-600">
-                        <span className="text-slate-500 font-medium">Băng thông</span>
-                        <span className="font-semibold text-slate-900">{p.bandwidth}</span>
-                      </div>
-                    )}
+                    ))}
                     <div className="flex justify-between items-center text-slate-600 pt-0.5">
-                      <span className="text-slate-500 font-medium">Tường lửa</span>
+                      <span className="text-slate-500 font-medium">Bảo vệ & Kích hoạt</span>
                       <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 text-[11px]">
                         <svg className="w-3.5 h-3.5 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
-                        Anti-DDoS WAF
+                        Tự động tức thì
                       </span>
                     </div>
                   </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { apiFetch } from "@/utils/api";
+import { getCategorySpecConfig, getCategoryPlanSpecs } from "@/utils/planSpecs";
 
 interface Category {
   id: string | number;
@@ -328,7 +329,7 @@ export default function PlansPage() {
             <thead className="bg-slate-50 text-slate-700 uppercase font-bold border-b border-slate-200">
               <tr>
                 <th className="py-3.5 px-4">Gói Cước & Danh Mục</th>
-                <th className="py-3.5 px-4">Thông Số Phần Cứng</th>
+                <th className="py-3.5 px-4">Cấu Hình & Thông Số Kỹ Thuật</th>
                 <th className="py-3.5 px-4">Mã QR Code</th>
                 <th className="py-3.5 px-4">Trạng Thái</th>
                 <th className="py-3.5 px-4 text-right">Thao Tác</th>
@@ -344,21 +345,31 @@ export default function PlansPage() {
                   <td colSpan={5} className="p-8 text-center text-slate-400">Không tìm thấy gói cước nào.</td>
                 </tr>
               ) : (
-                plans.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((plan) => (
-                  <tr key={plan.id} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="py-3.5 px-4">
-                      <div className="font-bold text-slate-900 text-sm mb-1">{plan.name}</div>
-                      <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold">
-                        {getCategoryName(plan.categoryId, plan.category)}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-700">
-                      <div className="space-y-1 text-[11px]">
-                        <div><strong className="text-blue-600">CPU:</strong> {plan.cpu || "-"}</div>
-                        <div><strong className="text-blue-600">RAM:</strong> {plan.ram || "-"} | <strong className="text-blue-600">Ổ cứng:</strong> {plan.storage || "-"}</div>
-                        <div><strong className="text-blue-600">Băng thông:</strong> {plan.bandwidth || "-"}</div>
-                      </div>
-                    </td>
+                plans.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((plan) => {
+                  const catName = getCategoryName(plan.categoryId, plan.category);
+                  const specs = getCategoryPlanSpecs(catName, plan);
+
+                  return (
+                    <tr key={plan.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-3.5 px-4">
+                        <div className="font-bold text-slate-900 text-sm mb-1">{plan.name}</div>
+                        <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold">
+                          {catName}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-700">
+                        <div className="space-y-1 text-[11px]">
+                          {specs.length > 0 ? (
+                            specs.map((s, idx) => (
+                              <div key={idx}>
+                                <strong className="text-blue-600">{s.label}:</strong> {s.value}
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-slate-400 italic">Chưa cấu hình thông số</div>
+                          )}
+                        </div>
+                      </td>
                     <td className="py-3.5 px-4 whitespace-nowrap">
                       {plan.qrCodeUrl ? (
                         <div className="flex items-center gap-2">
@@ -431,8 +442,9 @@ export default function PlansPage() {
                         {plan.isActive !== false ? "Ẩn" : "Hiện"}
                       </button>
                     </td>
-                  </tr>
-                ))
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -511,51 +523,78 @@ export default function PlansPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Vi Xử Lý (CPU)</label>
-                  <input
-                    type="text"
-                    placeholder="VD: 2 vCPUs AMD EPYC"
-                    value={formData.cpu}
-                    onChange={(e) => setFormData({ ...formData, cpu: e.target.value })}
-                    className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Bộ Nhớ RAM</label>
-                  <input
-                    type="text"
-                    placeholder="VD: 4 GB RAM ECC"
-                    value={formData.ram}
-                    onChange={(e) => setFormData({ ...formData, ram: e.target.value })}
-                    className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
-                  />
-                </div>
-              </div>
+              {/* Category-Tailored Specs Form Inputs */}
+              {(() => {
+                const selectedCategoryName = categories.find(c => c.id.toString() === formData.categoryId.toString())?.name || "";
+                const specConfig = getCategorySpecConfig(selectedCategoryName);
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Dung Lượng Ổ Cứng</label>
-                  <input
-                    type="text"
-                    placeholder="VD: 60 GB Enterprise NVMe"
-                    value={formData.storage}
-                    onChange={(e) => setFormData({ ...formData, storage: e.target.value })}
-                    className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Băng Thông Mạng</label>
-                  <input
-                    type="text"
-                    placeholder="VD: 1 Gbps Không giới hạn"
-                    value={formData.bandwidth}
-                    onChange={(e) => setFormData({ ...formData, bandwidth: e.target.value })}
-                    className="w-full h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
-                  />
-                </div>
-              </div>
+                return (
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-800 uppercase">
+                        Thông Số Kỹ Thuật {selectedCategoryName ? `(${selectedCategoryName})` : ""}
+                      </span>
+                      <span className="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                        Tùy chỉnh theo danh mục
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-bold text-slate-700 block mb-1">
+                          {specConfig.field1Label}
+                        </label>
+                        <input
+                          type="text"
+                          placeholder={specConfig.field1Placeholder}
+                          value={formData.cpu}
+                          onChange={(e) => setFormData({ ...formData, cpu: e.target.value })}
+                          className="w-full h-10 px-3.5 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-slate-700 block mb-1">
+                          {specConfig.field2Label}
+                        </label>
+                        <input
+                          type="text"
+                          placeholder={specConfig.field2Placeholder}
+                          value={formData.ram}
+                          onChange={(e) => setFormData({ ...formData, ram: e.target.value })}
+                          className="w-full h-10 px-3.5 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 font-medium"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-bold text-slate-700 block mb-1">
+                          {specConfig.field3Label}
+                        </label>
+                        <input
+                          type="text"
+                          placeholder={specConfig.field3Placeholder}
+                          value={formData.storage}
+                          onChange={(e) => setFormData({ ...formData, storage: e.target.value })}
+                          className="w-full h-10 px-3.5 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-slate-700 block mb-1">
+                          {specConfig.field4Label}
+                        </label>
+                        <input
+                          type="text"
+                          placeholder={specConfig.field4Placeholder}
+                          value={formData.bandwidth}
+                          onChange={(e) => setFormData({ ...formData, bandwidth: e.target.value })}
+                          className="w-full h-10 px-3.5 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 font-medium"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">Mô Tả Chi Tiết Gói</label>

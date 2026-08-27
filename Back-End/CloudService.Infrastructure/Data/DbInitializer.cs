@@ -166,13 +166,44 @@ namespace CloudService.Infrastructure.Data
 
                 var plans = new[]
                 {
-                    new ServicePlan { CategoryId = vpsCat.Id, Name = "Cloud VPS Pro S1", Description = "Phù hợp cho website doanh nghiệp vừa và nhỏ", Cpu = "2 vCPU", Ram = "4 GB RAM", Storage = "50 GB SSD NVMe", Bandwidth = "Không giới hạn", QrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https%3A%2F%2Ftomhum07.me%2Forder%3FplanId%3D1" },
-                    new ServicePlan { CategoryId = hostCat.Id, Name = "WordPress Hosting Basic", Description = "Tối ưu cho blog cá nhân và web giới thiệu", Cpu = "1 vCPU", Ram = "1 GB RAM", Storage = "10 GB SSD", Bandwidth = "100 GB/Tháng", QrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https%3A%2F%2Ftomhum07.me%2Forder%3FplanId%3D2" },
-                    new ServicePlan { CategoryId = domCat.Id, Name = "Domain .COM", Description = "Tên miền phổ biến nhất thế giới", Cpu = "N/A", Ram = "N/A", Storage = "N/A", Bandwidth = "N/A", QrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https%3A%2F%2Ftomhum07.me%2Forder%3FplanId%3D3" },
-                    new ServicePlan { CategoryId = sslCat.Id, Name = "Sectigo PositiveSSL", Description = "Mã hóa https cơ bản và nhanh chóng", Cpu = "N/A", Ram = "N/A", Storage = "N/A", Bandwidth = "N/A", QrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https%3A%2F%2Ftomhum07.me%2Forder%3FplanId%3D4" },
-                    new ServicePlan { CategoryId = emailCat.Id, Name = "Business Email Pro E1", Description = "Hộp thư tên miền riêng dung lượng lớn", Cpu = "N/A", Ram = "N/A", Storage = "20 GB/Hộp thư", Bandwidth = "Không giới hạn", QrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https%3A%2F%2Ftomhum07.me%2Forder%3FplanId%3D5" }
+                    new ServicePlan { CategoryId = vpsCat.Id, Name = "Cloud VPS Pro S1", Description = "Phù hợp cho website doanh nghiệp vừa và nhỏ", Cpu = "2 vCPU AMD", Ram = "4 GB ECC RAM", Storage = "50 GB SSD NVMe", Bandwidth = "Không giới hạn", QrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https%3A%2F%2Ftomhum07.me%2Forder%3FplanId%3D1" },
+                    new ServicePlan { CategoryId = hostCat.Id, Name = "WordPress Hosting Basic", Description = "Tối ưu cho blog cá nhân và web giới thiệu", Cpu = "1 Core", Ram = "1 GB RAM", Storage = "10 GB SSD", Bandwidth = "100 GB/Tháng", QrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https%3A%2F%2Ftomhum07.me%2Forder%3FplanId%3D2" },
+                    new ServicePlan { CategoryId = domCat.Id, Name = "Domain .COM", Description = "Tên miền phổ biến nhất thế giới", Cpu = ".COM Quốc Tế", Ram = "DNS Anycast Tốc Độ Cao", Storage = "Ẩn Danh Whois Miễn Phí", Bandwidth = "Từ 1 - 10 Năm", QrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https%3A%2F%2Ftomhum07.me%2Forder%3FplanId%3D3" },
+                    new ServicePlan { CategoryId = sslCat.Id, Name = "Sectigo PositiveSSL", Description = "Mã hóa https cơ bản và nhanh chóng", Cpu = "Xác thực Domain (DV)", Ram = "1 Tên miền", Storage = "Mã hóa 256-bit SHA-2", Bandwidth = "Bảo hiểm $10,000 USD", QrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https%3A%2F%2Ftomhum07.me%2Forder%3FplanId%3D4" },
+                    new ServicePlan { CategoryId = emailCat.Id, Name = "Business Email Pro E1", Description = "Hộp thư tên miền riêng dung lượng lớn", Cpu = "10 Hộp thư riêng", Ram = "Webmail Pro & Outlook", Storage = "20 GB / Hộp thư", Bandwidth = "Antispam AI & 99.9% Inbox", QrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https%3A%2F%2Ftomhum07.me%2Forder%3FplanId%3D5" }
                 };
                 await context.ServicePlans.AddRangeAsync(plans);
+                await context.SaveChangesAsync();
+            }
+
+            // Tự động làm sạch và cập nhật thông số chuẩn cho các gói cũ nếu từng chứa 'N/A'
+            var oldPlansWithNa = await context.ServicePlans.Where(p => p.Cpu == "N/A" || p.Ram == "N/A").ToListAsync();
+            if (oldPlansWithNa.Any())
+            {
+                foreach (var p in oldPlansWithNa)
+                {
+                    if (p.Name.Contains("Domain") || p.Name.Contains(".COM"))
+                    {
+                        p.Cpu = ".COM Quốc Tế";
+                        p.Ram = "DNS Anycast Tốc Độ Cao";
+                        p.Storage = "Ẩn Danh Whois Miễn Phí";
+                        p.Bandwidth = "Từ 1 - 10 Năm";
+                    }
+                    else if (p.Name.Contains("SSL") || p.Name.Contains("Sectigo"))
+                    {
+                        p.Cpu = "Xác thực Domain (DV)";
+                        p.Ram = "1 Tên miền";
+                        p.Storage = "Mã hóa 256-bit SHA-2";
+                        p.Bandwidth = "Bảo hiểm $10,000 USD";
+                    }
+                    else if (p.Name.Contains("Email"))
+                    {
+                        p.Cpu = "10 Hộp thư riêng";
+                        p.Ram = "Webmail Pro & Outlook";
+                        p.Storage = "20 GB / Hộp thư";
+                        p.Bandwidth = "Antispam AI & 99.9% Inbox";
+                    }
+                }
                 await context.SaveChangesAsync();
             }
 

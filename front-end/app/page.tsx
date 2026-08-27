@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { apiFetch } from "@/utils/api";
 import { dataSyncService } from "@/utils/signalr";
+import { getCategoryPlanSpecs } from "@/utils/planSpecs";
 
 const FEATURES_HIGHLIGHT = [
   {
@@ -489,30 +490,23 @@ export default function Home() {
 
                 {/* Specs Table */}
                 <div className="py-3 my-3 border-t border-b border-slate-100 space-y-2 text-xs">
-                  {plan.cpu && (
-                    <div className="flex justify-between items-center text-slate-600">
-                      <span className="text-slate-500 font-medium">Vi xử lý (CPU)</span>
-                      <span className="font-semibold text-slate-900 font-mono text-[11px]">{plan.cpu}</span>
+                  {getCategoryPlanSpecs(plan.category?.name || plan.categoryName || "", plan).map((spec, sIdx) => (
+                    <div key={sIdx} className="flex justify-between items-center text-slate-600">
+                      <span className="text-slate-500 font-medium">{spec.label}</span>
+                      <span className={`font-semibold text-slate-900 ${spec.isMono ? "font-mono text-[11px]" : "text-xs"}`}>
+                        {spec.value}
+                      </span>
                     </div>
-                  )}
-                  {plan.ram && (
-                    <div className="flex justify-between items-center text-slate-600">
-                      <span className="text-slate-500 font-medium">Bộ nhớ (RAM)</span>
-                      <span className="font-semibold text-slate-900 font-mono text-[11px]">{plan.ram}</span>
-                    </div>
-                  )}
-                  {plan.storage && (
-                    <div className="flex justify-between items-center text-slate-600">
-                      <span className="text-slate-500 font-medium">Lưu trữ (Disk)</span>
-                      <span className="font-semibold text-slate-900 font-mono text-[11px]">{plan.storage}</span>
-                    </div>
-                  )}
-                  {plan.bandwidth && (
-                    <div className="flex justify-between items-center text-slate-600">
-                      <span className="text-slate-500 font-medium">Băng thông</span>
-                      <span className="font-semibold text-slate-900">{plan.bandwidth}</span>
-                    </div>
-                  )}
+                  ))}
+                  <div className="flex justify-between items-center text-slate-600 pt-0.5">
+                    <span className="text-slate-500 font-medium">Bảo vệ & Uptime</span>
+                    <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 text-[11px]">
+                      <svg className="w-3.5 h-3.5 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Uptime 99.99%
+                    </span>
+                  </div>
                 </div>
               </div>
 
