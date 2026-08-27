@@ -133,11 +133,39 @@ namespace CloudService.Infrastructure.Services
                 .Include(p => p.Category)
                 .Include(p => p.Prices)
                     .ThenInclude(pr => pr.Promotion)
+                .Include(p => p.PlanPromotions)
+                    .ThenInclude(pp => pp.Promotion)
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             if (plan == null) return null;
 
             var now = DateTime.UtcNow;
+
+            var directPromos = plan.PlanPromotions
+                .Where(pp => pp.IsActive && pp.Promotion != null && pp.Promotion.IsActive &&
+                             (pp.Promotion.EndDate == default || pp.Promotion.EndDate >= now) &&
+                             (pp.Promotion.StartDate == default || pp.Promotion.StartDate <= now))
+                .Select(pp => pp.Promotion!);
+
+            var pricePromos = plan.Prices
+                .Where(p => p.IsActive && p.Promotion != null && p.Promotion.IsActive &&
+                            (p.Promotion.EndDate == default || p.Promotion.EndDate >= now) &&
+                            (p.Promotion.StartDate == default || p.Promotion.StartDate <= now))
+                .Select(p => p.Promotion!);
+
+            var allApplicable = directPromos.Union(pricePromos)
+                .GroupBy(p => p.Id)
+                .Select(g => g.First())
+                .Select(p => new PromotionDto
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    DiscountPercentage = p.DiscountPercentage,
+                    StartDate = p.StartDate,
+                    EndDate = p.EndDate,
+                    IsActive = p.IsActive
+                })
+                .ToList();
 
             return new ServicePlanDto
             {
@@ -163,7 +191,8 @@ namespace CloudService.Infrastructure.Services
                     PromotionName = (p.Promotion != null && p.Promotion.IsActive && (p.Promotion.EndDate == default || p.Promotion.EndDate >= now) && (p.Promotion.StartDate == default || p.Promotion.StartDate <= now)) ? p.Promotion.Name : null,
                     DiscountPercentage = (p.Promotion != null && p.Promotion.IsActive && (p.Promotion.EndDate == default || p.Promotion.EndDate >= now) && (p.Promotion.StartDate == default || p.Promotion.StartDate <= now)) ? (decimal?)p.Promotion.DiscountPercentage : null,
                     IsActive = p.IsActive
-                }).ToList()
+                }).ToList(),
+                ApplicablePromotions = allApplicable
             };
         }
 

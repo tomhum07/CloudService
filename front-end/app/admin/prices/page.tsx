@@ -71,6 +71,13 @@ export default function PricesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
+  // Danh sách mã giảm giá được gán cho gói cước đang chọn
+  const [planPromotions, setPlanPromotions] = useState<Promotion[]>([]);
+  const [isLoadingPlanPromos, setIsLoadingPlanPromos] = useState(false);
+  const [isAssignPromoModalOpen, setIsAssignPromoModalOpen] = useState(false);
+  const [selectedPromoIdsToAssign, setSelectedPromoIdsToAssign] = useState<number[]>([]);
+  const [isSavingPlanPromos, setIsSavingPlanPromos] = useState(false);
+
   useEffect(() => {
     fetchPlans();
     fetchPromotions();
@@ -79,10 +86,60 @@ export default function PricesPage() {
   useEffect(() => {
     if (selectedPlanId) {
       fetchPrices(selectedPlanId);
+      fetchPlanPromotions(selectedPlanId);
     } else {
       setPrices([]);
+      setPlanPromotions([]);
     }
   }, [selectedPlanId]);
+
+  const fetchPlanPromotions = async (planId: string) => {
+    setIsLoadingPlanPromos(true);
+    try {
+      const res = await apiFetch(`/api/promotions/plan/${planId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setPlanPromotions(Array.isArray(data) ? data : []);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setIsLoadingPlanPromos(false);
+    }
+  };
+
+  const handleRemovePromoFromPlan = async (promotionId: number) => {
+    if (!selectedPlanId) return;
+    try {
+      const res = await apiFetch(`/api/promotions/plan/${selectedPlanId}/${promotionId}`, { method: "DELETE" });
+      if (res.ok) {
+        fetchPlanPromotions(selectedPlanId);
+        fetchPrices(selectedPlanId);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleSavePlanPromotions = async () => {
+    if (!selectedPlanId) return;
+    setIsSavingPlanPromos(true);
+    try {
+      const res = await apiFetch(`/api/promotions/plan/${selectedPlanId}`, {
+        method: "PUT",
+        body: JSON.stringify({ promotionIds: selectedPromoIdsToAssign })
+      });
+      if (res.ok) {
+        setIsAssignPromoModalOpen(false);
+        fetchPlanPromotions(selectedPlanId);
+        fetchPrices(selectedPlanId);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setIsSavingPlanPromos(false);
+    }
+  };
 
   const fetchPlans = async () => {
     setIsLoadingPlans(true);
@@ -298,10 +355,20 @@ export default function PricesPage() {
 
       if (!res.ok) throw new Error(editingPromo ? "Cập nhật khuyến mãi thất bại." : "Tạo mã khuyến mãi thất bại.");
 
+      if (!editingPromo && selectedPlanId) {
+        const createdPromo = await res.clone().json().catch(() => null);
+        if (createdPromo?.id) {
+          await apiFetch(`/api/promotions/plan/${selectedPlanId}/${createdPromo.id}`, { method: "POST" });
+        }
+      }
+
       setIsPromoModalOpen(false);
       setEditingPromo(null);
       fetchPromotions();
-      if (selectedPlanId) fetchPrices(selectedPlanId);
+      if (selectedPlanId) {
+        fetchPrices(selectedPlanId);
+        fetchPlanPromotions(selectedPlanId);
+      }
     } catch (err: any) {
       setFormError(err.message || "Không thể lưu khuyến mãi.");
     } finally {
@@ -520,6 +587,113 @@ export default function PricesPage() {
                               }`}
                             >
                               {p.isActive ? "Tắt" : "Bật"}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* DANH SÁCH MÃ GIẢM GIÁ ÁP DỤNG CHO GÓI NÀY */}
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+            <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xs font-bold text-slate-900 uppercase">
+                    Danh Sách Mã Giảm Giá Áp Dụng Cho Gói: <span className="text-blue-600 font-extrabold">{plans.find(p => p.id.toString() === selectedPlanId)?.name}</span>
+                  </h3>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-200">
+                    {planPromotions.length} mã áp dụng
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Khách hàng chỉ có thể áp dụng các mã giảm giá nằm trong danh sách này khi đăng ký gói cước.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedPromoIdsToAssign(planPromotions.map((p) => p.id));
+                    setIsAssignPromoModalOpen(true);
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>Gán Mã Cho Gói Này</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleOpenPromoModal()}
+                  className="px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs transition-colors border border-purple-200 flex items-center gap-1 cursor-pointer"
+                >
+                  <span>+ Tạo Mã Mới</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-700 uppercase font-bold border-b border-slate-200">
+                  <tr>
+                    <th className="py-3 px-4">Tên Mã Ưu Đãi</th>
+                    <th className="py-3 px-4">Mức Giảm</th>
+                    <th className="py-3 px-4">Hiệu Lực Từ</th>
+                    <th className="py-3 px-4">Hạn Sử Dụng</th>
+                    <th className="py-3 px-4">Trạng Thái</th>
+                    <th className="py-3 px-4 text-right">Thao Tác</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {isLoadingPlanPromos ? (
+                    <tr>
+                      <td colSpan={6} className="p-6 text-center text-slate-400">Đang tải danh sách mã của gói...</td>
+                    </tr>
+                  ) : planPromotions.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="p-8 text-center text-slate-400">
+                        Gói cước này hiện chưa có mã giảm giá nào. Nhấn nút <strong>"Gán Mã Cho Gói Này"</strong> để thêm các mã giảm giá cho gói.
+                      </td>
+                    </tr>
+                  ) : (
+                    planPromotions.map((promo) => {
+                      const status = getPromoStatus(promo);
+                      return (
+                        <tr key={promo.id} className="hover:bg-slate-50/60 transition-colors">
+                          <td className="py-3 px-4 font-mono font-bold text-blue-700">
+                            {promo.name}
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className="font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100">
+                              -{promo.discountPercentage}%
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-slate-600">
+                            {promo.startDate ? new Date(promo.startDate).toLocaleDateString("vi-VN") : "Ngay bây giờ"}
+                          </td>
+                          <td className="py-3 px-4 text-slate-600">
+                            {promo.endDate ? new Date(promo.endDate).toLocaleDateString("vi-VN") : "Vô thời hạn"}
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold ${status.color}`}>
+                              {status.label}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePromoFromPlan(promo.id)}
+                              className="px-2.5 py-1 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg font-bold text-[11px] border border-rose-200 transition-colors cursor-pointer"
+                            >
+                              Gỡ Khỏi Gói
                             </button>
                           </td>
                         </tr>
@@ -876,6 +1050,113 @@ export default function PricesPage() {
               >
                 {isSubmitting ? "Đang xóa..." : "Xác Nhận Xóa"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assign Promotions To Plan Modal */}
+      {isAssignPromoModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="w-full max-w-lg bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl flex flex-col max-h-[85vh]">
+            <div className="flex justify-between items-start pb-4 border-b border-slate-100">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">
+                  Gán Mã Giảm Giá Cho Gói Cước
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Gói: <strong className="text-blue-600">{plans.find(p => p.id.toString() === selectedPlanId)?.name}</strong>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAssignPromoModalOpen(false)}
+                className="w-8 h-8 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center font-bold text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-xl my-3 text-xs text-blue-800 flex items-center gap-2">
+              <svg className="w-4 h-4 text-blue-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Chọn các mã giảm giá được phép áp dụng khi khách hàng đặt mua gói cước này.</span>
+            </div>
+
+            {/* List of Promotions to Check */}
+            <div className="flex-1 overflow-y-auto divide-y divide-slate-100 pr-1 space-y-1">
+              {promotions.length === 0 ? (
+                <div className="p-6 text-center text-xs text-slate-400">
+                  Hệ thống chưa có mã khuyến mãi nào. Vui lòng tạo mã mới trước.
+                </div>
+              ) : (
+                promotions.map((promo) => {
+                  const isChecked = selectedPromoIdsToAssign.includes(promo.id);
+                  const status = getPromoStatus(promo);
+                  return (
+                    <label
+                      key={promo.id}
+                      className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-colors ${
+                        isChecked ? "bg-blue-50/60 border border-blue-200" : "hover:bg-slate-50 border border-transparent"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedPromoIdsToAssign([...selectedPromoIdsToAssign, promo.id]);
+                            } else {
+                              setSelectedPromoIdsToAssign(selectedPromoIdsToAssign.filter((id) => id !== promo.id));
+                            }
+                          }}
+                          className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500"
+                        />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-xs text-slate-900">{promo.name}</span>
+                            <span className="font-bold text-[11px] text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-100">
+                              -{promo.discountPercentage}%
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-slate-400 mt-0.5">
+                            {promo.startDate ? new Date(promo.startDate).toLocaleDateString("vi-VN") : "Ngay bây giờ"} - {promo.endDate ? new Date(promo.endDate).toLocaleDateString("vi-VN") : "Vô thời hạn"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold ${status.color}`}>
+                        {status.label}
+                      </span>
+                    </label>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="pt-4 border-t border-slate-100 flex justify-between items-center mt-3">
+              <span className="text-xs text-slate-500">
+                Đã chọn: <strong className="text-blue-600">{selectedPromoIdsToAssign.length}</strong> mã
+              </span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAssignPromoModalOpen(false)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 rounded-xl"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSavePlanPromotions}
+                  disabled={isSavingPlanPromos}
+                  className="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl shadow-md shadow-blue-500/20"
+                >
+                  {isSavingPlanPromos ? "Đang lưu..." : "Lưu Danh Sách Mã Cho Gói"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

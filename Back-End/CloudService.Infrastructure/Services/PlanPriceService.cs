@@ -197,24 +197,107 @@ namespace CloudService.Infrastructure.Services
             return true;
         }
 
+        public async Task<IEnumerable<PromotionDto>> GetPromotionsByPlanIdAsync(int planId, bool activeOnly = false)
+        {
+            var now = DateTime.UtcNow;
+
+            // 1. Lấy PromotionId từ bảng PlanPromotions (quan hệ trực tiếp danh sách mã của gói)
+            var planPromoIds = await _context.PlanPromotions
+                .IgnoreQueryFilters()
+                .Where(pp => pp.PlanId == planId && pp.IsActive)
+                .Select(pp => pp.PromotionId)
+                .ToListAsync();
+
+            // 2. Lấy PromotionId từ các chu kỳ giá của gói trong PlanPrices (tương thích ngược)
+            var pricePromoIds = await _context.PlanPrices
+                .IgnoreQueryFilters()
+                .Where(pp => pp.PlanId == planId && pp.PromotionId != null && pp.IsActive)
+                .Select(pp => pp.PromotionId!.Value)
+                .ToListAsync();
+
+            var combinedPromoIds = planPromoIds.Union(pricePromoIds).Distinct().ToList();
+
+            var query = _context.Promotions
+                .IgnoreQueryFilters()
+                .Where(p => combinedPromoIds.Contains(p.Id));
+
+            if (activeOnly)
+            {
+                query = query.Where(p => p.IsActive &&
+                                        (p.StartDate == default || p.StartDate <= now) &&
+                                        (p.EndDate == default || p.EndDate >= now));
+            }
+
+            var list = await query
+                .OrderByDescending(p => p.DiscountPercentage)
+                .Select(p => new PromotionDto
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    DiscountPercentage = p.DiscountPercentage,
+                    StartDate = p.StartDate,
+                    EndDate = p.EndDate,
+                    IsActive = p.IsActive
+                })
+                .ToListAsync();
+
+            return list;
+        }
+
         public async Task<PromotionDto?> ValidatePromotionAsync(string code)
         {
-            if (string.IsNullOrWhiteSpace(code)) return null;
+            var (promo, _) = await ValidatePromotionForPlanAsync(code, null);
+            return promo;
+        }
+
+        public async Task<(PromotionDto? Promotion, string? ErrorMessage)> ValidatePromotionForPlanAsync(string code, int? planId)
+        {
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                return (null, "Vui lòng nhập mã giảm giá.");
+            }
 
             var trimmedCode = code.Trim().ToLower();
             var now = DateTime.UtcNow;
 
+            // 1. Tìm mã khuyến mãi trong hệ thống
             var promotion = await _context.Promotions
                 .Where(p => p.IsActive && p.Name.ToLower() == trimmedCode)
                 .FirstOrDefaultAsync();
 
-            if (promotion == null) return null;
+            if (promotion == null)
+            {
+                return (null, "Mã giảm giá không tồn tại hoặc đã hết hạn sử dụng.");
+            }
 
-            // Kiểm tra thời hạn hiệu lực (StartDate và EndDate)
-            if (promotion.StartDate != default && promotion.StartDate > now) return null;
-            if (promotion.EndDate != default && promotion.EndDate < now) return null;
+            // 2. Kiểm tra thời hạn hiệu lực (StartDate và EndDate)
+            if (promotion.StartDate != default && promotion.StartDate > now)
+            {
+                return (null, $"Mã giảm giá '{promotion.Name}' chưa đến ngày có hiệu lực.");
+            }
+            if (promotion.EndDate != default && promotion.EndDate < now)
+            {
+                return (null, $"Mã giảm giá '{promotion.Name}' đã hết hạn sử dụng.");
+            }
 
-            return new PromotionDto
+            // 3. Nếu có planId, kiểm tra mã có thuộc danh sách mã giảm giá của gói cước này không
+            if (planId.HasValue && planId.Value > 0)
+            {
+                var isLinkedViaPlanPromotions = await _context.PlanPromotions
+                    .AnyAsync(pp => pp.PlanId == planId.Value && pp.PromotionId == promotion.Id && pp.IsActive);
+
+                var isLinkedViaPlanPrices = await _context.PlanPrices
+                    .AnyAsync(pp => pp.PlanId == planId.Value && pp.PromotionId == promotion.Id && pp.IsActive);
+
+                if (!isLinkedViaPlanPromotions && !isLinkedViaPlanPrices)
+                {
+                    var plan = await _context.ServicePlans.FindAsync(planId.Value);
+                    var planName = plan != null ? plan.Name : "gói cước đã chọn";
+                    return (null, $"Mã giảm giá '{promotion.Name}' không áp dụng cho {planName}. Vui lòng sử dụng mã giảm giá nằm trong danh sách mã ưu đãi của gói cước này.");
+                }
+            }
+
+            var dto = new PromotionDto
             {
                 Id = promotion.Id,
                 Name = promotion.Name,
@@ -223,6 +306,98 @@ namespace CloudService.Infrastructure.Services
                 EndDate = promotion.EndDate,
                 IsActive = promotion.IsActive
             };
+
+            return (dto, null);
+        }
+
+        public async Task<bool> AddPromotionToPlanAsync(int planId, int promotionId)
+        {
+            var planExists = await _context.ServicePlans.AnyAsync(p => p.Id == planId);
+            var promoExists = await _context.Promotions.AnyAsync(p => p.Id == promotionId);
+            if (!planExists || !promoExists) return false;
+
+            var existing = await _context.PlanPromotions
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(pp => pp.PlanId == planId && pp.PromotionId == promotionId);
+
+            if (existing != null)
+            {
+                if (!existing.IsActive)
+                {
+                    existing.IsActive = true;
+                    await _context.SaveChangesAsync();
+                }
+                return true;
+            }
+
+            var planPromo = new PlanPromotion
+            {
+                PlanId = planId,
+                PromotionId = promotionId,
+                IsActive = true
+            };
+
+            await _context.PlanPromotions.AddAsync(planPromo);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> RemovePromotionFromPlanAsync(int planId, int promotionId)
+        {
+            var existing = await _context.PlanPromotions
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(pp => pp.PlanId == planId && pp.PromotionId == promotionId);
+
+            if (existing != null)
+            {
+                _context.PlanPromotions.Remove(existing);
+            }
+
+            // Gỡ bỏ cả trong PlanPrices nếu có
+            var linkedPrices = await _context.PlanPrices
+                .Where(pp => pp.PlanId == planId && pp.PromotionId == promotionId)
+                .ToListAsync();
+
+            foreach (var lp in linkedPrices)
+            {
+                lp.PromotionId = null;
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> SetPlanPromotionsAsync(int planId, IEnumerable<int> promotionIds)
+        {
+            var plan = await _context.ServicePlans.FindAsync(planId);
+            if (plan == null) return false;
+
+            var targetIds = promotionIds.Distinct().ToList();
+
+            // Xóa các liên kết cũ trong PlanPromotions
+            var currentLinks = await _context.PlanPromotions
+                .IgnoreQueryFilters()
+                .Where(pp => pp.PlanId == planId)
+                .ToListAsync();
+
+            _context.PlanPromotions.RemoveRange(currentLinks);
+
+            // Thêm danh sách mới
+            foreach (var promoId in targetIds)
+            {
+                if (await _context.Promotions.AnyAsync(p => p.Id == promoId))
+                {
+                    _context.PlanPromotions.Add(new PlanPromotion
+                    {
+                        PlanId = planId,
+                        PromotionId = promoId,
+                        IsActive = true
+                    });
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         private async Task<PlanPriceDto> GetPriceDtoByIdAsync(int priceId)

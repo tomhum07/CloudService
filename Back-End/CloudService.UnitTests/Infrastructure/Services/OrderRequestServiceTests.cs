@@ -193,5 +193,51 @@ namespace CloudService.UnitTests.Infrastructure.Services
             Assert.NotNull(result);
             Assert.Single(result);
         }
+
+        [Fact]
+        public async Task GetCustomerOrdersAsync_WhenLookedUpByUsername_ShouldFindOrdersWithMatchingUserAccountEmail()
+        {
+            using var context = CreateInMemoryDbContext();
+            var user = new AppUser
+            {
+                Username = "customer_vip",
+                Email = "vip@example.com",
+                FullName = "VIP Customer",
+                PasswordHash = "hash"
+            };
+            context.AppUsers.Add(user);
+
+            var category = new ServiceCategory { Name = "Cloud VPS", Slug = "cloud-vps" };
+            context.ServiceCategories.Add(category);
+            await context.SaveChangesAsync();
+
+            var plan = new ServicePlan { Name = "VPS Pro", CategoryId = category.Id };
+            context.ServicePlans.Add(plan);
+            await context.SaveChangesAsync();
+
+            var price = new PlanPrice { PlanId = plan.Id, BillingCycle = "Yearly", Price = 1200000 };
+            context.PlanPrices.Add(price);
+            await context.SaveChangesAsync();
+
+            var order = new OrderRequest
+            {
+                PlanPriceId = price.Id,
+                CustomerName = "VIP Customer",
+                CustomerEmail = "vip@example.com",
+                CustomerPhone = "0911223344",
+                Status = 0
+            };
+            context.OrderRequests.Add(order);
+            await context.SaveChangesAsync();
+
+            var service = new OrderRequestService(context);
+
+            // Look up by username "customer_vip" even though order was placed with email "vip@example.com"
+            var result = await service.GetCustomerOrdersAsync("customer_vip");
+
+            Assert.NotNull(result);
+            Assert.Single(result);
+            Assert.Equal("vip@example.com", System.Linq.Enumerable.First(result).CustomerEmail);
+        }
     }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using CloudService.Application.DTOs.Services;
+using CloudService.Domain.Entities;
 using CloudService.Infrastructure.Data;
 using CloudService.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
@@ -336,6 +337,241 @@ namespace CloudService.UnitTests.Application.Services
             Assert.Single(prices);
             Assert.Null(prices[0].PromotionName);
             Assert.Null(prices[0].DiscountPercentage);
+        }
+
+        [Fact]
+        public async Task GetPromotionsByPlanIdAsync_ShouldReturnOnlyPromotionsLinkedToSpecificPlan()
+        {
+            // Arrange
+            var dbName = Guid.NewGuid().ToString();
+            using var context = GetDbContext(dbName);
+            var service = new PlanPriceService(context);
+
+            var promoPlan1 = await service.CreatePromotionAsync(new CreatePromotionRequest
+            {
+                Name = "VPSPRO10",
+                DiscountPercentage = 10,
+                StartDate = DateTime.UtcNow.AddDays(-1),
+                EndDate = DateTime.UtcNow.AddDays(30)
+            });
+
+            var promoPlan2 = await service.CreatePromotionAsync(new CreatePromotionRequest
+            {
+                Name = "HOSTING15",
+                DiscountPercentage = 15,
+                StartDate = DateTime.UtcNow.AddDays(-1),
+                EndDate = DateTime.UtcNow.AddDays(30)
+            });
+
+            // Gán promoPlan1 cho Plan 1
+            await service.CreatePriceAsync(1, new CreatePlanPriceRequest
+            {
+                BillingCycle = "Monthly",
+                Price = 200,
+                PromotionId = promoPlan1.Id
+            });
+
+            // Gán promoPlan2 cho Plan 2
+            await service.CreatePriceAsync(2, new CreatePlanPriceRequest
+            {
+                BillingCycle = "Monthly",
+                Price = 100,
+                PromotionId = promoPlan2.Id
+            });
+
+            // Act
+            var plan1Promos = (await service.GetPromotionsByPlanIdAsync(1, activeOnly: true)).ToList();
+            var plan2Promos = (await service.GetPromotionsByPlanIdAsync(2, activeOnly: true)).ToList();
+
+            // Assert
+            Assert.Single(plan1Promos);
+            Assert.Equal("VPSPRO10", plan1Promos[0].Name);
+
+            Assert.Single(plan2Promos);
+            Assert.Equal("HOSTING15", plan2Promos[0].Name);
+        }
+
+        [Fact]
+        public async Task ValidatePromotionForPlanAsync_WhenCodeBelongsToPlan_ShouldReturnSuccess()
+        {
+            // Arrange
+            var dbName = Guid.NewGuid().ToString();
+            using var context = GetDbContext(dbName);
+            var service = new PlanPriceService(context);
+
+            var promo = await service.CreatePromotionAsync(new CreatePromotionRequest
+            {
+                Name = "VPSPRO10",
+                DiscountPercentage = 10,
+                StartDate = DateTime.UtcNow.AddDays(-1),
+                EndDate = DateTime.UtcNow.AddDays(30)
+            });
+
+            await service.CreatePriceAsync(1, new CreatePlanPriceRequest
+            {
+                BillingCycle = "Monthly",
+                Price = 200,
+                PromotionId = promo.Id
+            });
+
+            // Act
+            var (validPromo, errorMsg) = await service.ValidatePromotionForPlanAsync("VPSPRO10", 1);
+
+            // Assert
+            Assert.NotNull(validPromo);
+            Assert.Null(errorMsg);
+            Assert.Equal("VPSPRO10", validPromo.Name);
+            Assert.Equal(10, validPromo.DiscountPercentage);
+        }
+
+        [Fact]
+        public async Task ValidatePromotionForPlanAsync_WhenCodeBelongsToOtherPlan_ShouldReturnErrorMessage()
+        {
+            // Arrange
+            var dbName = Guid.NewGuid().ToString();
+            using var context = GetDbContext(dbName);
+            var service = new PlanPriceService(context);
+
+            var promo = await service.CreatePromotionAsync(new CreatePromotionRequest
+            {
+                Name = "HOSTING15",
+                DiscountPercentage = 15,
+                StartDate = DateTime.UtcNow.AddDays(-1),
+                EndDate = DateTime.UtcNow.AddDays(30)
+            });
+
+            // Gán promo HOSTING15 cho Plan 2 (Hosting)
+            await service.CreatePriceAsync(2, new CreatePlanPriceRequest
+            {
+                BillingCycle = "Monthly",
+                Price = 100,
+                PromotionId = promo.Id
+            });
+
+            // Act: Cố tình áp dụng HOSTING15 cho Plan 1 (VPS)
+            var (validPromo, errorMsg) = await service.ValidatePromotionForPlanAsync("HOSTING15", 1);
+
+            // Assert
+            Assert.Null(validPromo);
+            Assert.NotNull(errorMsg);
+            Assert.Contains("không áp dụng cho", errorMsg);
+        }
+
+        [Fact]
+        public async Task AddPromotionToPlanAsync_ShouldAddMultiplePromotionsToPlan()
+        {
+            // Arrange
+            var dbName = Guid.NewGuid().ToString();
+            using var context = GetDbContext(dbName);
+            var service = new PlanPriceService(context);
+
+            var plan = new ServicePlan { Id = 10, Name = "Plan Multi Promo" };
+            await context.ServicePlans.AddAsync(plan);
+            await context.SaveChangesAsync();
+
+            var promo1 = await service.CreatePromotionAsync(new CreatePromotionRequest
+            {
+                Name = "PROMO1",
+                DiscountPercentage = 10,
+                StartDate = DateTime.UtcNow.AddDays(-1),
+                EndDate = DateTime.UtcNow.AddDays(30)
+            });
+
+            var promo2 = await service.CreatePromotionAsync(new CreatePromotionRequest
+            {
+                Name = "PROMO2",
+                DiscountPercentage = 20,
+                StartDate = DateTime.UtcNow.AddDays(-1),
+                EndDate = DateTime.UtcNow.AddDays(30)
+            });
+
+            // Act
+            var added1 = await service.AddPromotionToPlanAsync(10, promo1.Id);
+            var added2 = await service.AddPromotionToPlanAsync(10, promo2.Id);
+
+            var planPromos = (await service.GetPromotionsByPlanIdAsync(10, activeOnly: true)).ToList();
+
+            // Assert
+            Assert.True(added1);
+            Assert.True(added2);
+            Assert.Equal(2, planPromos.Count);
+            Assert.Contains(planPromos, p => p.Name == "PROMO1");
+            Assert.Contains(planPromos, p => p.Name == "PROMO2");
+
+            // Xác thực cả 2 mã đều hợp lệ cho plan 10
+            var (v1, e1) = await service.ValidatePromotionForPlanAsync("PROMO1", 10);
+            var (v2, e2) = await service.ValidatePromotionForPlanAsync("PROMO2", 10);
+            Assert.NotNull(v1);
+            Assert.Null(e1);
+            Assert.NotNull(v2);
+            Assert.Null(e2);
+        }
+
+        [Fact]
+        public async Task RemovePromotionFromPlanAsync_ShouldRemovePromoFromPlanList()
+        {
+            // Arrange
+            var dbName = Guid.NewGuid().ToString();
+            using var context = GetDbContext(dbName);
+            var service = new PlanPriceService(context);
+
+            var plan = new ServicePlan { Id = 11, Name = "Plan Remove Promo" };
+            await context.ServicePlans.AddAsync(plan);
+            await context.SaveChangesAsync();
+
+            var promo = await service.CreatePromotionAsync(new CreatePromotionRequest
+            {
+                Name = "PROMO_TO_REMOVE",
+                DiscountPercentage = 15,
+                StartDate = DateTime.UtcNow.AddDays(-1),
+                EndDate = DateTime.UtcNow.AddDays(30)
+            });
+
+            await service.AddPromotionToPlanAsync(11, promo.Id);
+
+            // Act
+            var removed = await service.RemovePromotionFromPlanAsync(11, promo.Id);
+            var planPromos = (await service.GetPromotionsByPlanIdAsync(11)).ToList();
+
+            // Assert
+            Assert.True(removed);
+            Assert.Empty(planPromos);
+
+            // Xác thực sau khi gỡ sẽ bị báo lỗi không áp dụng được
+            var (v, err) = await service.ValidatePromotionForPlanAsync("PROMO_TO_REMOVE", 11);
+            Assert.Null(v);
+            Assert.NotNull(err);
+        }
+
+        [Fact]
+        public async Task SetPlanPromotionsAsync_ShouldReplaceExistingPromos()
+        {
+            // Arrange
+            var dbName = Guid.NewGuid().ToString();
+            using var context = GetDbContext(dbName);
+            var service = new PlanPriceService(context);
+
+            var plan = new ServicePlan { Id = 12, Name = "Plan Batch Set" };
+            await context.ServicePlans.AddAsync(plan);
+            await context.SaveChangesAsync();
+
+            var p1 = await service.CreatePromotionAsync(new CreatePromotionRequest { Name = "BATCH1", DiscountPercentage = 5 });
+            var p2 = await service.CreatePromotionAsync(new CreatePromotionRequest { Name = "BATCH2", DiscountPercentage = 10 });
+            var p3 = await service.CreatePromotionAsync(new CreatePromotionRequest { Name = "BATCH3", DiscountPercentage = 15 });
+
+            // Ban đầu gán p1
+            await service.AddPromotionToPlanAsync(12, p1.Id);
+
+            // Act: Set danh sách mới thành [p2, p3]
+            var success = await service.SetPlanPromotionsAsync(12, new[] { p2.Id, p3.Id });
+            var planPromos = (await service.GetPromotionsByPlanIdAsync(12)).ToList();
+
+            // Assert
+            Assert.True(success);
+            Assert.Equal(2, planPromos.Count);
+            Assert.DoesNotContain(planPromos, p => p.Name == "BATCH1");
+            Assert.Contains(planPromos, p => p.Name == "BATCH2");
+            Assert.Contains(planPromos, p => p.Name == "BATCH3");
         }
     }
 }

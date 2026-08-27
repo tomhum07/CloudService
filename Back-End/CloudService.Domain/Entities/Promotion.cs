@@ -11,5 +11,6 @@ namespace CloudService.Domain.Entities
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public virtual ICollection<PlanPrice> Prices { get; set; } = new List<PlanPrice>();
+        public virtual ICollection<PlanPromotion> PlanPromotions { get; set; } = new List<PlanPromotion>();
     }
 }

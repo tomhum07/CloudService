@@ -33,7 +33,7 @@ export default function MyPlansPage() {
     return () => unsubscribe();
   }, []);
 
-  const loadMyOrders = async () => {
+  const loadMyOrders = async (customLookup?: string) => {
     setLoading(true);
     let token = getAccessToken();
     if (!token) {
@@ -41,21 +41,42 @@ export default function MyPlansPage() {
       if (ok) token = getAccessToken();
     }
 
+    let userEmail = customLookup || "";
+    let username = "";
+    let fullName = "";
+
     if (token) {
       try {
         const payloadPart = token.split(".")[1];
         if (payloadPart) {
           const payload = JSON.parse(window.atob(payloadPart));
-          const username = payload["sub"] || payload["name"] || payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || "";
-          setUser({ username });
+          username = payload["sub"] || payload["name"] || payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || "";
+          if (!userEmail) {
+            userEmail = payload["email"] || payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"] || "";
+          }
+          setUser({ username, email: userEmail });
         }
       } catch (e) {
         console.error("Lỗi giải mã token:", e);
       }
     }
 
+    // Nếu có token, cũng thử lấy profile để có thông tin mới nhất
+    if (token && !userEmail) {
+      try {
+        const profRes = await apiFetch("/api/auth/profile");
+        if (profRes.ok) {
+          const profData = await profRes.json();
+          if (profData.email) userEmail = profData.email;
+          if (profData.fullName) fullName = profData.fullName;
+          setUser({ username: profData.username || username, email: userEmail, fullName });
+        }
+      } catch {}
+    }
+
     try {
-      const res = await apiFetch("/api/order-requests/my-orders");
+      const queryParam = userEmail ? `?email=${encodeURIComponent(userEmail)}` : "";
+      const res = await apiFetch(`/api/order-requests/my-orders${queryParam}`);
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {
@@ -318,26 +339,29 @@ export default function MyPlansPage() {
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
               Theo dõi tình trạng máy chủ Cloud VPS, Web Hosting, thanh toán mã QR và quản lý chu kỳ dịch vụ
+              {user?.email && <span className="font-semibold text-blue-600 ml-1">({user.email})</span>}
             </p>
           </div>
 
-          <Link
-            href="/pricing"
-            className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition-all flex items-center gap-2 whitespace-nowrap"
-          >
-            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            <span>Đăng Ký Gói Mới</span>
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/pricing"
+              className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition-all flex items-center gap-2 whitespace-nowrap"
+            >
+              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              <span>Đăng Ký Gói Mới</span>
+            </Link>
+          </div>
         </div>
 
-        {/* Filter Bar */}
+        {/* Filter & Quick Lookup Bar */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
           <div className="sm:col-span-2 relative">
             <input
               type="text"
-              placeholder="Tìm theo mã đơn (ORD-...), tên gói cước..."
+              placeholder="Tìm theo mã đơn (ORD-...), tên gói cước, email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full h-11 pl-10 pr-9 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white transition-all"
@@ -376,20 +400,47 @@ export default function MyPlansPage() {
             <p className="text-xs text-slate-500 font-medium">Đang tải danh sách dịch vụ của bạn...</p>
           </div>
         ) : filteredOrders.length === 0 ? (
-          <div className="py-16 text-center bg-white rounded-3xl border border-slate-200 shadow-sm p-8 max-w-lg mx-auto">
-            <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-3xl mx-auto mb-4 text-blue-600">
+          <div className="py-16 text-center bg-white rounded-3xl border border-slate-200 shadow-sm p-8 max-w-lg mx-auto space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-3xl mx-auto text-blue-600">
               📭
             </div>
             <h3 className="text-lg font-bold text-slate-900 mb-1">Chưa Có Gói Dịch Vụ Nào</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto mb-6 leading-relaxed">
-              Bạn chưa đăng ký dịch vụ nào hoặc chưa có đơn hàng nào được tạo. Hãy tham khảo bảng giá dịch vụ Cloud VPS & Hosting để trải nghiệm.
+            <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+              Bạn chưa có đơn hàng nào khớp với tài khoản hiện tại. Nếu bạn đã đặt hàng bằng địa chỉ email khác, vui lòng nhập email để tra cứu.
             </p>
-            <Link
-              href="/pricing"
-              className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition-all inline-block"
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (searchTerm.trim()) {
+                  loadMyOrders(searchTerm.trim());
+                }
+              }}
+              className="flex gap-2 max-w-xs mx-auto"
             >
-              Khám Phá Bảng Giá Dịch Vụ →
-            </Link>
+              <input
+                type="text"
+                placeholder="Nhập email đã đặt hàng..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="flex-1 px-3 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:border-blue-600"
+              />
+              <button
+                type="submit"
+                className="px-4 py-2 bg-slate-900 text-white font-bold text-xs rounded-xl hover:bg-slate-800 transition cursor-pointer"
+              >
+                Tra Cứu
+              </button>
+            </form>
+
+            <div className="pt-2">
+              <Link
+                href="/pricing"
+                className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition-all inline-block"
+              >
+                Khám Phá Bảng Giá Dịch Vụ →
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
