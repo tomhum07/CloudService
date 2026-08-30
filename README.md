@@ -70,9 +70,9 @@ Hệ thống đã tự động cấu hình sẵn dữ liệu mẫu (Seed Data) k
 
 | Tài khoản (Username) | Mật khẩu (Password) | Vai trò (Role) | Mô tả quyền hạn |
 | :--- | :--- | :--- | :--- |
-| **`admin`** | **`Admin@123456`** hoặc **`123123`** | **Admin** | Toàn quyền quản trị hệ thống, quản lý tài khoản, dịch vụ, xuất báo cáo |
-| **`editor`** | **`Editor@123456`** hoặc **`123123`** | **Editor** | Biên tập bài viết tin tức, quản lý đơn hàng |
-| **`customer`** | **`Customer@123456`** | **Customer** | Khách hàng thành viên trải nghiệm dịch vụ & `/my-plans` |
+| **`admin`** | **`123123`** | **Admin** | Toàn quyền quản trị hệ thống, quản lý tài khoản, dịch vụ, xuất báo cáo |
+| **`Editor`** | **`123123`** | **Editor** | Biên tập bài viết tin tức, quản lý đơn hàng |
+| **`Tự tạo`** | **`Tự tạo`** | **Customer** | Khách hàng thành viên trải nghiệm dịch vụ & `/my-plans` |
 
 ---
 
@@ -158,7 +158,7 @@ Passed!  - Failed:     0, Passed:   102, Skipped:     0, Total:   102, Duration:
 | :--- | :--- | :--- | :---: |
 | **Võ Nguyễn Nguyên Hùng** *(Trưởng nhóm)* | **Architecture & Full-Stack Lead** | - Phụ trách toàn diện kiến trúc Clean Architecture 4 tầng & CSDL PostgreSQL 11 bảng chuẩn 3NF.<br/>- Xây dựng lõi xác thực JWT/RBAC, toàn bộ Core API, Cổng VietQR PayOS 24/7, Realtime SignalR, Dashboard, Xuất Excel.<br/>- Xây dựng toàn bộ Frontend Next.js 16 (25 routes, Dark Glassmorphism, Admin Portal).<br/>- Viết 102/102 ca Unit Tests, thiết lập Docker & Pipeline CI/CD GitHub Actions.<br/>- Biên soạn Báo cáo học thuật. | **100% (Xuất sắc)** |
 | **Hồ Nguyễn Đức Anh Hào** | **CMS & Testimonials** | - Xây dựng phân hệ Đánh giá Khách hàng (Testimonials: Entity, DTOs, Service, Controller, Migration).<br/>- Xây dựng các DTOs Phân hệ Tin tức & Hỗ trợ Soft-delete. | **100% (Tốt)** |
-| **Huỳnh Nhật Duy ** |  |  | **0%** |
+| **Huỳnh Nhật Duy** |  |  | **0%** |
 | **Hà Thanh Tồn** |  |  | **0%** |
 
 ---
