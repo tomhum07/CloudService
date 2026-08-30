@@ -1,6 +1,6 @@
-# ☁️ CloudService - Hệ Thống Bán Dịch Vụ Điện Toán Đám Mây
+# ☁️ CloudService - Nền Tảng Dịch Vụ Điện Toán Đám Mây
 
-> **Báo cáo Bài Tập Lớn môn Phát Triển Phần Mềm Hướng Đối Tượng (PTPMHDT - IN4211)**  
+> **Báo cáo Bài Tập Lớn môn Phát Triển Phần Mềm Hướng Đối Tượng (IN4211)**  
 > Trường Đại học Đồng Tháp (DTHU) — Khoa Công nghệ & Kỹ thuật
 
 [![.NET 10](https://img.shields.io/badge/.NET-10.0%20LTS-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
@@ -15,48 +15,26 @@
 
 ## 📖 1. Giới Thiệu Dự Án
 
-**CloudService** là nền tảng thương mại điện tử chuyên cung cấp và quản trị các giải pháp hạ tầng điện toán đám mây thế hệ mới (Cloud VPS, Dedicated Server, NVMe Hosting, SSL Certificate, Tên miền, Email Doanh Nghiệp, Firewall Anti-DDoS). Hệ thống được xây dựng theo tiêu chuẩn công nghiệp với kiến trúc phân tầng **Clean Architecture 4 Tầng** ở phía Backend và giao diện tối ưu trải nghiệm người dùng **Glassmorphism / Slate Dark Theme** hiện đại phía Frontend.
+**CloudService** là nền tảng thương mại điện tử cung cấp các giải pháp hạ tầng điện toán đám mây (Cloud VPS, Web Hosting, Domain, SSL, Business Email, Firewall Anti-DDoS). Hệ thống được xây dựng theo chuẩn **Clean Architecture 4 Tầng** (.NET 10 Web API) và Frontend **Next.js 16 App Router** (Dark Glassmorphism).
 
-### ✨ Các Tính Năng Nổi Bật:
-1. **Khách hàng (Client Portal)**:
-   - Tra cứu bảng giá trực tiếp, tính toán chi phí linh hoạt theo chu kỳ (1 - 36 tháng).
-   - Tùy biến thông số kỹ thuật động theo loại dịch vụ (Tên miền hiển thị TLD/DNS/Whois; VPS hiển thị CPU/RAM/NVMe).
-   - Đặt hàng dịch vụ trực tuyến yêu cầu đăng nhập tài khoản, áp dụng danh sách nhiều mã giảm giá (`PlanPromotions`).
-   - Thanh toán tự động qua mã VietQR PayOS 24/7 với cơ chế đối soát ngân hàng trong 3 giây.
-   - Trang cá nhân `/my-plans` quản lý các gói cước đã mua và giữ chỗ thanh toán trong 30 phút (tự động hủy quá hạn).
-   - Cổng thông tin Blog công nghệ, tin tức khuyến mãi TinyMCE và đánh giá khách hàng (Testimonials).
-   - Trang đăng ký làm Đối tác tiếp thị liên kết (Affiliate Program) hoa hồng lên đến 30%.
-2. **Quản trị viên (Admin Portal)**:
-   - **Dashboard số liệu**: 4 thẻ KPI tổng quan, biểu đồ cột SVG doanh thu theo tháng, thống kê gói cước phổ biến.
-   - **Quản lý Dịch vụ & Gói cước**: CRUD Danh mục, Gói cước cấu hình đa hình, Bảng giá chu kỳ và tự động sinh mã QR.
-   - **Quản lý Đơn hàng & CTV**: Phê duyệt hoặc từ chối đơn đặt mua và hồ sơ CTV; Tự động đồng bộ Realtime SignalR.
-   - **Quản lý Tin tức / Blog**: Soạn thảo bài viết Rich Text với TinyMCE, tải ảnh lên Supabase Storage CDN.
-   - **Quản lý Nhân sự & Phân quyền**: Quản lý tài khoản RBAC (Admin/Editor/Customer), khóa tài khoản, reset mật khẩu.
-   - **Xuất báo cáo**: Kết xuất danh sách đơn hàng ra file Excel `.xlsx` chuyên nghiệp (ClosedXML) và CSV UTF-8 BOM.
-   - **Nhật ký hệ thống (Audit Logs)**: Ghi vết toàn bộ hành vi quản trị viên và truy cập an ninh.
+### ✨ Tính Năng Nổi Bật:
+* **Khách hàng**: Tra cứu bảng giá chu kỳ, tùy biến thông số kỹ thuật động theo dịch vụ (`planSpecs.ts`), đặt hàng bắt buộc đăng nhập, áp dụng nhiều mã giảm giá (`PlanPromotions`), thanh toán tự động VietQR PayOS 24/7 (đối soát 3s), trang `/my-plans` giữ chỗ 30 phút.
+* **Quản trị viên**: Dashboard KPI & Biểu đồ doanh thu SVG, CRUD Danh mục & Gói cước (sinh mã QR động), Bảng giá & Khuyến mãi, Quản lý Đơn hàng & Duyệt CTV Affiliate, Soạn thảo tin tức TinyMCE, Phân quyền RBAC (Admin/Editor/Customer), Xuất file Excel ClosedXML / CSV, Nhật ký Audit Logs.
+* **Thời gian thực**: WebSocket SignalR `DataSyncHub` tự động đồng bộ dữ liệu hai chiều tức thì.
 
 ---
 
-## 🏛️ 2. Kiến Trúc Hệ Thống
-
-Dự án áp dụng nguyên lý thiết kế **Domain-Driven Design (DDD)** kết hợp **Clean Architecture 4 Tầng**:
+## 🏛️ 2. Kiến Trúc Clean Architecture 4 Tầng
 
 ```
 BTL_PTPMHDT/
 ├── Back-End/
-│   ├── CloudService.Domain/           # Entities (11 Bảng), Enums, BaseEntity, Value Objects
-│   ├── CloudService.Application/      # DTOs, Business Interfaces, Service Contracts, Mappers
-│   ├── CloudService.Infrastructure/   # DbContext, Repositories, UnitOfWork, PayOS, ClosedXML, BCrypt
-│   ├── CloudService.WebApi/           # Controllers, JWT Middleware, SignalR Hubs, Swagger, Program.cs
-│   └── CloudService.UnitTests/        # 102 Unit Tests (xUnit + Moq + FluentAssertions - 100% Pass)
-├── front-end/                         # Next.js 16 (App Router) + Tailwind CSS v4 (25 Routes)
-│   ├── app/
-│   │   ├── (public)/                  # Landing page, Pricing, Services, News, Order, My-plans, Affiliate
-│   │   └── admin/                     # Dashboard, Categories, Plans, Prices, News, Users, Orders, Audit Logs
-│   ├── components/                    # Header, Footer, Hero, PlanCard, Testimonials, UI Glassmorphism
-│   ├── services/                      # dataSyncService.ts (SignalR Client WebSocket)
-│   └── utils/                         # apiFetch, JWT Silent Refresh, planSpecs.ts
-├── In_Out/                            # Báo cáo học thuật Word/PDF 20 trang, ERD.md, Chi_Tiet.md
+│   ├── CloudService.Domain/           # 11 Entities, BaseEntity (Soft delete), Enums
+│   ├── CloudService.Application/      # Interfaces, DTOs, Service Contracts, Mappers
+│   ├── CloudService.Infrastructure/   # DbContext (PostgreSQL 15 Supabase), Repositories, PayOS, ClosedXML
+│   ├── CloudService.WebApi/           # Controllers, JWT Middleware, SignalR DataSyncHub, Swagger
+│   └── CloudService.UnitTests/        # 102 Unit Tests (xUnit + Moq - 100% Pass)
+├── front-end/                         # Next.js 16 App Router + Tailwind CSS v4 (25 Routes)
 └── docker-compose.yml                 # Khởi chạy cụm PostgreSQL 15 + Web API
 ```
 
@@ -64,104 +42,70 @@ BTL_PTPMHDT/
 
 ## 🔐 3. Tài Khoản Trải Nghiệm Mẫu
 
-Hệ thống đã tự động cấu hình sẵn dữ liệu mẫu (Seed Data) khi khởi động:
-
 | Tài khoản (Username) | Mật khẩu (Password) | Vai trò (Role) | Mô tả quyền hạn |
 | :--- | :--- | :--- | :--- |
-| **`admin`** | **`Admin@123456`** hoặc **`123123`** | **Admin** | Toàn quyền quản trị hệ thống, quản lý tài khoản, dịch vụ, báo cáo |
+| **`admin`** | **`Admin@123456`** hoặc **`123123`** | **Admin** | Toàn quyền quản trị hệ thống, tài khoản, dịch vụ, xuất báo cáo |
 | **`editor`** | **`Editor@123456`** hoặc **`123123`** | **Editor** | Biên tập bài viết tin tức, quản lý đơn hàng |
 | **`customer`** | **`Customer@123456`** | **Customer** | Khách hàng thành viên trải nghiệm dịch vụ & `/my-plans` |
 
 ---
 
-## 🚀 4. Hướng Dẫn Cài Đặt & Chạy Ứng Dụng
+## 🚀 4. Hướng Dẫn Cài Đặt & Khởi Chạy
 
-### Cách 1: Chạy Tự Động Với Docker Compose (Khuyên dùng)
-
-Yêu cầu máy tính đã cài đặt [Docker Desktop](https://www.docker.com/products/docker-desktop).
-
+### Cách 1: Chạy bằng Docker Compose (Khuyên dùng)
 ```bash
-# 1. Clone repository về máy
-git clone https://github.com/tomhum07/CloudService.git
-cd CloudService
-
-# 2. Khởi chạy toàn bộ hệ thống
 docker compose up -d --build
 ```
+* **Frontend Web**: `http://localhost:3000`
+* **Backend API & Swagger**: `http://localhost:5074/swagger`
 
-- **Frontend Website**: `http://localhost:3000`
-- **Backend API & Swagger**: `http://localhost:5074/swagger`
+### Cách 2: Chạy Thủ Công (Development Mode)
+```bash
+# Terminal 1 - Backend API:
+cd Back-End/CloudService.WebApi && dotnet run
+
+# Terminal 2 - Frontend Next.js:
+cd front-end && pnpm install && pnpm run dev
+```
 
 ---
 
-### Cách 2: Chạy Thủ Công Từng Phân Hệ (Development Mode)
+## 🧪 5. Kiểm Thử Hệ Thống (Unit Testing)
 
-#### 1. Yêu cầu môi trường:
-- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
-- [Node.js v20+](https://nodejs.org/) & pnpm / npm
-
-#### 2. Khởi chạy Backend Web API:
-```bash
-cd Back-End/CloudService.WebApi
-dotnet run
-```
-> Backend sẽ lắng nghe tại: `http://localhost:5074` (Tài liệu Swagger OpenAPI tại `http://localhost:5074/swagger`).
-
-#### 3. Khởi chạy Frontend Next.js:
-```bash
-cd front-end
-pnpm install
-pnpm run dev
-```
-> Frontend sẽ mở tại: `http://localhost:3000`.
-
----
-
-## 🧪 5. Kiểm Thử Hệ Thống (Unit Testing & Code Coverage)
-
-Bộ kiểm thử tự động toàn diện bao gồm **102 bài test** (xUnit + Moq + FluentAssertions) kiểm tra toàn bộ các tầng nghiệp vụ: Khởi tạo Entity, DTOs Validation, Xác thực JWT, Mã hóa mật khẩu BCrypt, CRUD dịch vụ, Tính toán giá & Đa khuyến mãi, Tự động hủy đơn quá hạn 30 phút, Thống kê Dashboard và Export dữ liệu.
+Hệ thống sở hữu bộ kiểm thử tự động toàn diện gồm **102 ca Unit Tests** (xUnit + Moq + FluentAssertions) đạt tỷ lệ **100% PASS** (thời gian chạy 9s, độ bao phủ code > 82.5%):
 
 ```bash
-# Chạy toàn bộ 102 ca Unit Tests:
 dotnet test Back-End/CloudService.UnitTests/CloudService.UnitTests.csproj
 ```
 
-**Kết quả kiểm thử thực tế:**
 ```text
-Test run for Back-End/CloudService.UnitTests/bin/Debug/net10.0/CloudService.UnitTests.dll (.NETCoreApp,Version=v10.0)
-A total of 1 test files matched the specified pattern.
-
-Passed!  - Failed:     0, Passed:   102, Skipped:     0, Total:   102, Duration: 9 s - CloudService.UnitTests.dll (net10.0)
+Passed!  - Failed: 0, Passed: 102, Skipped: 0, Total: 102, Duration: 9 s
 ```
 
-### Bảng Phân Bổ 102 Test Cases Theo Phân Tầng:
-| Phân hệ kiểm thử (Test Suite) | Số ca Test | Trạng thái | Độ bao phủ (Coverage) |
-| :--- | :---: | :---: | :---: |
-| **`EntityTests`** (Domain Entities & Ràng buộc) | 12 Tests | **12/12 PASS** | 94.4% |
-| **`DtoTests` & `ServiceDtosTests`** (Application DTOs) | 23 Tests | **23/23 PASS** | 85.0% |
-| **`AuthServiceTests`** (JWT, BCrypt Hash, RBAC Roles, Reset OTP) | 18 Tests | **18/18 PASS** | 78.0% |
-| **`PlanPriceServiceTests`** (Bảng giá, Đa Khuyến mãi PlanPromotions) | 15 Tests | **15/15 PASS** | 88.6% |
-| **`ServicePlanServiceTests`** (Gói cước, Soft Delete, QR Code) | 9 Tests | **9/9 PASS** | 75.2% |
-| **`ServiceCategoryServiceTests`** (Danh mục dịch vụ, Slug) | 8 Tests | **8/8 PASS** | 82.0% |
-| **`StatisticsServiceTests`** (Thống kê KPI, Biểu đồ Dashboard) | 5 Tests | **5/5 PASS** | 91.3% |
-| **`OrderRequestServiceTests`** (Tạo đơn, Hủy đơn 30p, ClosedXML Excel) | 6 Tests | **6/6 PASS** | 63.7% |
-| **`ApplicationDbContextTests`** (EF Core Model, Filters, Index) | 6 Tests | **6/6 PASS** | 98.2% |
-| **TỔNG CỘNG HỆ THỐNG** | **102 Tests** | **102/102 PASS (100%)** | **Trung bình 82.5%** |
+| Phân hệ kiểm thử | Số ca Test | Trạng thái | Nội dung kiểm thử chính |
+| :--- | :---: | :---: | :--- |
+| `EntityTests` | 12 Tests | **PASS** | Kiểm tra ràng buộc và khởi tạo 11 Domain Entities. |
+| `DtoTests` & `ServiceDtosTests` | 23 Tests | **PASS** | Kiểm tra tính hợp lệ dữ liệu DTOs. |
+| `AuthServiceTests` | 18 Tests | **PASS** | Xác thực JWT, Hash BCrypt, Phân quyền RBAC, Reset OTP. |
+| `PlanPriceServiceTests` | 15 Tests | **PASS** | Tính toán bảng giá, gán đa khuyến mãi `PlanPromotions`. |
+| `ServicePlanServiceTests` | 9 Tests | **PASS** | CRUD gói cước, Soft delete, Sinh mã QR Code. |
+| `ServiceCategoryServiceTests` | 8 Tests | **PASS** | CRUD danh mục dịch vụ, tự động sinh Slug URL. |
+| `StatisticsServiceTests` | 5 Tests | **PASS** | Tính toán KPI doanh thu, thống kê Dashboard. |
+| `OrderRequestServiceTests` | 6 Tests | **PASS** | Tạo đơn, Hủy đơn quá hạn 30p, Xuất Excel ClosedXML. |
+| `ApplicationDbContextTests` | 6 Tests | **PASS** | Cấu hình EF Core, Global Query Filters, B-Tree Index. |
 
 ---
 
-## 👥 6. Phân Công Thành Viên & Đánh Giá Đóng Góp Chi Tiết
+## 👥 6. Phân Công Thành Viên & Đánh Giá Đóng Góp
 
-Dự án được triển khai theo quy trình phát triển chuyên nghiệp trên GitHub với mô hình phân nhánh tính năng (`feature/*`) và kiểm soát chất lượng qua Pull Requests (PR):
-
-| Thành viên | Vai trò | Chi tiết các hạng mục công việc đã thực hiện | Đánh giá hoàn thành |
+| Thành viên | Vai trò | Hạng mục công việc chính phụ trách | Đánh giá |
 | :--- | :--- | :--- | :---: |
-| **Nguyễn Duy Tường** *(Trưởng nhóm)* | **Architecture, Full-Stack Lead & DevOps** | - **Phụ trách toàn diện và hoàn thiện toàn bộ hệ thống từ đầu đến cuối**.<br/>- Thiết kế kiến trúc Clean Architecture 4 tầng (.NET 10 Web API).<br/>- Thiết kế CSDL PostgreSQL trên Supabase 11 bảng chuẩn 3NF, Migration & Seed Data.<br/>- Hiện thực hóa lõi xác thực JWT, Cookie HttpOnly Silent Refresh, mã hóa BCrypt, phân quyền RBAC (Admin, Editor, Customer).<br/>- Hiện thực hóa toàn bộ nghiệp vụ Core: Danh mục (`ServiceCategories`), Gói cước (`ServicePlans`), Bảng giá chu kỳ (`PlanPrices`), Tự động sinh mã QR động.<br/>- Phát triển tính năng Quản lý đa mã khuyến mãi (`PlanPromotions` N-N).<br/>- Xây dựng quy trình Đơn hàng (`OrderRequests`), Tích hợp cổng thanh toán VietQR PayOS 24/7, cơ chế giữ chỗ 30 phút và tự động hủy quá hạn `AutoCancelExpiredOrdersAsync()`.<br/>- Xây dựng kênh đồng bộ thời gian thực SignalR `DataSyncHub` phát sóng hai chiều.<br/>- Xây dựng Dashboard số liệu KPI, Biểu đồ doanh thu SVG, Nhật ký hệ thống `AuditLogs`, Xuất báo cáo Excel (`ClosedXML`) và CSV UTF-8.<br/>- Xây dựng toàn bộ Frontend Next.js 16 App Router (25 routes, Dark Glassmorphism Theme, Tailwind CSS v4, `planSpecs.ts`, `/my-plans`, `/order`, `/admin/*`).<br/>- Viết toàn bộ **102/102 ca Unit Tests** (xUnit, Moq, Coverage 82.5%).<br/>- Thiết lập Docker Multi-stage, `docker-compose.yml` và Pipeline CI/CD GitHub Actions (3 Jobs Xanh 100%).<br/>- Biên soạn tài liệu Báo cáo học thuật Word/PDF 20 trang, `ERD.md`, `Chi_Tiet.md` và `README.md`. | **100% (Hoàn thành xuất sắc toàn bộ dự án)** |
-| **Thành viên 3** *(Nhánh `feature/member3-news-blog`)* | **CMS & Testimonials Module** | - **Xây dựng phân hệ Đánh giá Khách hàng (Testimonials)**:<br/>  + Xây dựng thực thể `Testimonial.cs` trong tầng Domain.<br/>  + Định nghĩa các DTOs: `CreateTestimonialRequest.cs`, `TestimonialDto.cs`, `UpdateTestimonialRequest.cs`.<br/>  + Khai báo Interface `ITestimonialService.cs` và hiện thực hóa `TestimonialService.cs` trong tầng Infrastructure.<br/>  + Xây dựng Controller `TestimonialsController.cs` và tạo Migration CSDL `20260815170951_AddTestimonials`.<br/>- **Xây dựng DTOs Phân hệ Tin tức / Blog công nghệ**:<br/>  + `CreateNewsArticleRequest.cs`, `NewsArticleDto.cs`, `PagedNewsResult.cs`, `UpdateNewsArticleRequest.cs`.<br/>- Hỗ trợ triển khai cơ chế Soft-delete cho bài viết tin tức và cấu hình bảo mật quyền truy cập cho Controller Testimonials. | **100% (Hoàn thành tốt các phần việc được giao)** |
-| **Thành viên 2** | **Analytics & Reporting Support** | - Hỗ trợ thiết kế các truy vấn thống kê doanh thu và báo cáo Dashboard.<br/>- Hỗ trợ kiểm thử định dạng file kết xuất Excel (ClosedXML) và CSV UTF-8. | **100% (Đạt yêu cầu)** |
-| **Thành viên 4** | **Order Flow & Affiliate Support** | - Hỗ trợ kiểm thử luồng đặt mua dịch vụ và đối soát thanh toán VietQR PayOS.<br/>- Hỗ trợ rà soát giao diện tiếp nhận đơn đăng ký CTV Affiliate. | **100% (Đạt yêu cầu)** |
+| **Nguyễn Duy Tường** *(Trưởng nhóm)* | **Architecture, Full-Stack Lead & DevOps** | **Phụ trách toàn diện và hoàn thiện toàn bộ hệ thống:**<br/>- Thiết kế kiến trúc Clean Architecture 4 tầng (.NET 10 Web API);<br/>- Thiết kế CSDL PostgreSQL Supabase 11 bảng chuẩn 3NF, Migration & Seed Data;<br/>- Lõi xác thực JWT, Cookie HttpOnly Silent Refresh, BCrypt, phân quyền RBAC;<br/>- Core Catalog: Danh mục (`ServiceCategories`), Gói cước (`ServicePlans`), Bảng giá (`PlanPrices`), Sinh mã QR động;<br/>- Quản lý đa mã giảm giá (`PlanPromotions` N-N);<br/>- Quy trình Đơn hàng (`OrderRequests`), Tích hợp thanh toán VietQR PayOS 24/7, Giữ chỗ 30 phút & `AutoCancelExpiredOrdersAsync()`;<br/>- Kênh đồng bộ thời gian thực SignalR `DataSyncHub` hai chiều;<br/>- Dashboard KPI, Biểu đồ SVG, Nhật ký `AuditLogs`, Xuất Excel (`ClosedXML`) và CSV UTF-8;<br/>- Toàn bộ Frontend Next.js 16 (25 routes, Dark Glassmorphism, `planSpecs.ts`, `/my-plans`, `/order`, `/admin/*`);<br/>- Viết 102/102 ca Unit Tests (xUnit, Moq); Docker & CI/CD GitHub Actions (3 Jobs Xanh);<br/>- Biên soạn Báo cáo học thuật Word/PDF 20 trang, `ERD.md`, `Chi_Tiet.md`. | **100% (Xuất sắc)** |
+| **Thành viên 3** *(Nhánh `feature/member3-news-blog`)* | **CMS & Testimonials Module** | - **Phân hệ Đánh giá Khách hàng (Testimonials)**: Entity `Testimonial.cs`, DTOs, Interface `ITestimonialService`, `TestimonialService.cs`, `TestimonialsController.cs`, Migration `AddTestimonials`.<br/>- **DTOs Phân hệ Tin tức / Blog**: `CreateNewsArticleRequest.cs`, `NewsArticleDto.cs`, `PagedNewsResult.cs`, `UpdateNewsArticleRequest.cs`; Hỗ trợ Soft-delete tin tức. | **100% (Tốt)** |
+| **Thành viên 2** | **Analytics Support** | - Hỗ trợ thiết kế truy vấn thống kê Dashboard & kiểm thử xuất file Excel/CSV. | **100%** |
+| **Thành viên 4** | **Order & Affiliate Support** | - Hỗ trợ kiểm thử luồng đặt mua VietQR PayOS & rà soát giao diện CTV Affiliate. | **100%** |
 
 ---
 
-## 📄 7. Giấy Phép & Đóng Góp
-Dự án được xây dựng phục vụ mục đích học tập và nghiên cứu môn **Phát Triển Phần Mềm Hướng Đối Tượng (IN4211)** tại Trường Đại học Đồng Tháp. Mọi quyền sở hữu trí tuệ thuộc về nhóm sinh viên thực hiện.
+## 📄 7. Giấy Phép & Bản Quyền
+Dự án phục vụ học tập và nghiên cứu môn **Phát Triển Phần Mềm Hướng Đối Tượng (IN4211)** tại Trường Đại học Đồng Tháp. Mọi quyền sở hữu trí tuệ thuộc về nhóm sinh viên thực hiện.
